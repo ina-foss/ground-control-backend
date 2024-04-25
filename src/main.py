@@ -1,14 +1,9 @@
 
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import projects,tasks,users
-
-from database import get_db
-
-import crud, models, schemas
-from database import SessionLocal, engine
+from src.routers import projects,tasks
+from src.routers import users
 
 app = FastAPI()
 

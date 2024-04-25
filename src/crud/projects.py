@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from models.project_model import *
-from schemas.project_schemas import *
+from src.models.project_model import *
+
 
 def get_projects(db: Session, skip: int=0, limit: int= 100):
     return db.query(Project).offset(skip).limit(limit).all()

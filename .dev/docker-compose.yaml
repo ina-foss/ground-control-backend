@@ -1,0 +1,52 @@
+services:
+
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: user
+      POSTGRES_DB: ground_control_db
+    ports:
+      - 5432
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    command: ['start-dev --import-realm']
+    volumes:
+      - ./realm-config:/opt/keycloak/data/import
+    environment:
+      - KC_DB=dev-file
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_FEATURES=scripts
+      - KC_HTTP_PORT=9080
+      - KC_HTTPS_PORT=9443
+    ports:
+      - 127.0.0.1:9080:9080
+      - 127.0.0.1:9443:9443
+
+  backend:
+    build:
+      context: ./
+    volumes:
+      - ./backend:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    command: /bin/bash -c "pip install -r /app/requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug"
+
+  frontend:
+    build:
+      context: ../../frontend
+    volumes:
+      - ../../frontend:/app
+    ports:
+      - 3000:3000
+
+volumes:
+  postgres_data:

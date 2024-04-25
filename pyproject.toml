@@ -1,0 +1,35 @@
+[project]
+name = "ground_control_backend"
+dynamic = [
+    "version",
+    "dependencies"
+]
+description = "INA Ground Control"
+authors = [
+    {name = "Pablo RAOULT", email="pratouit-prestataire@ina.fr"},
+    {name = "Benjamin ELKAYS", email="belkays@ina.fr"},
+    {name = "Molka JELASSI", email="mjelassi-prestataire@ina.fr"},
+    {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"}
+]
+
+readme = "README.md"
+requires-python = ">=3.10"
+
+keywords = [
+    "ground truth"
+]
+
+[project.urls]
+repository = "https://git.infra.sas.ina/ia/code/ground-control/backend.git"
+
+[build-system]
+requires = [
+    "setuptools==68.2.2",
+    "setuptools-scm==8.0.3"
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages]
+find = {namespaces = false}
