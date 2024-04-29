@@ -10,7 +10,7 @@ class TaskBaseDto(BaseModel):
     id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    projectid: int
+    project_id: int
 
     class Config:
         orm_mode = True
@@ -24,4 +24,3 @@ class TaskListDto(TaskBaseDto):
     
 class TaskDetailDto(TaskListDto):
     data: Optional[Dict[str, Any]]= []
-    

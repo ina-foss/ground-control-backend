@@ -1,4 +1,4 @@
-from database import Base
+from src.database import Base
 
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship, column_property, backref
@@ -16,7 +16,7 @@ class Task(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     data = Column(JSON)
-    projectid = Column(Integer, ForeignKey('project.id'))
+    project_id = Column(Integer, ForeignKey('project.id'))
     # users = relationship("User", secondary=UserTask.__table__, back_populates="tasks")
     # user_task= relationship("UserTask",backref="tasks")
 

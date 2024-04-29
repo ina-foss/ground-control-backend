@@ -11,5 +11,5 @@ class PredictionDto(BaseModel):
     score: Optional[float]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    taskid: int
-    projectid: int
+    task_id: int
+    project_id: int

@@ -1,4 +1,4 @@
-from database import Base
+from src.database import Base
 
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship, column_property, backref
@@ -14,5 +14,5 @@ class Prediction(Base):
     score = Column(Float)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
-    taskid = Column(Integer, ForeignKey('task.id'))
-    projectid = Column(Integer, ForeignKey('project.id'))
+    task_id = Column(Integer, ForeignKey('task.id'))
+    project_id = Column(Integer, ForeignKey('project.id'))

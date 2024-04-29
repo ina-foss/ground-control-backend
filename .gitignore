@@ -1,5 +1,4 @@
 gc-demo-env
-idea
 .ipynb_checkpoints
 .mypy_cache
 .vscode
@@ -21,3 +20,15 @@ site_build
 venv
 docs.zip
 archive.zip
+build/
+dist/
+*.egg-info
+.tox
+conf.ini
+junit_*
+venv/
+data/
+*-priv.pem
+*-pub.pem
+.vscode/
+.idea/

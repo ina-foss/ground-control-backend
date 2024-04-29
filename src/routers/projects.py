@@ -1,37 +1,47 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database import get_db
-from src.schemas.project_schemas import ProjectDetail, ProjectBase, ProjectList
-from src.crud.projects import *
 
+from src.schemas.project_schemas import *
+from src.services.project_service import *
 router = APIRouter(tags=["project"])
 
 
-@router.get("/projects/", response_model=list[ProjectDetail])
+@router.get("/projects/", response_model=list[ProjectDetailDto])
 def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     projects = get_projects(db, skip=skip, limit=limit)
     return projects
 
-@router.post("/project/", response_model=ProjectDetail)
+@router.post("/project/", response_model=ProjectDetailDto)
 def create_project(
-    project: ProjectBase, db:Session = Depends(get_db)
+        project: ProjectBaseDto, db:Session = Depends(get_db)
 ):
     return create_project_crud(db, project)
 
-@router.get("/project/{projectid}", response_model=ProjectList,response_model_by_alias=False)
-def read_project(projectid: int, db: Session = Depends(get_db)):
-    project = get_project_by_id(db, projectid = projectid)
+@router.get("/project/{project_id}", response_model=ProjectListDto,response_model_by_alias=False)
+def read_project(project_id:int, db: Session = Depends(get_db)):
+    project = get_project_by_id(db, project_id = project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-@router.put("/project/{projectid}", response_model=ProjectDetail)
+@router.put("/project/{project_id}", response_model=ProjectDetailDto)
 def update_project(
-    projectid: int, 
-    project: ProjectBase, 
-    db: Session = Depends(get_db)
+        project_id: int,
+        project: ProjectBaseDto,
+        db: Session = Depends(get_db)
 ):
-    updated_project = update_project_crud(db, project, projectid)
+    updated_project = update_project_crud(db, project, project_id)
     if updated_project is None:
-          raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     return updated_project
+
+@router.delete("/project/{project_id}", response_model=ProjectDetailDto)
+def delete_project(
+        project_id: int,
+        db: Session = Depends(get_db)
+):
+    deleted_project = delete_project_crud(db, project_id)
+    if deleted_project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return deleted_project

@@ -7,13 +7,13 @@ from .user_base_schemas import UserBaseDto
 
 class AnnotationDto(BaseModel):
     id: int
-    userid: int
+    user_id: int
     result: Optional[Dict[str, Any]]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     validated_at: Optional[datetime]
-    taskid: int
-    projectid: int
+    task_id: int
+    project_id: int
     status: str
     user: UserBaseDto
 
