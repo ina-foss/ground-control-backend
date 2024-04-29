@@ -2,8 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.routers import projects,tasks
-from src.routers import users
+from src.routers import projects,tasks,users
 
 app = FastAPI()
 
@@ -28,9 +27,9 @@ app.add_middleware(
 
 # models.Base.metadata.create_all(bind=engine)
 
-@app.get("/")
-def root():
-    return {"message": "Hello World"}
+# @app.get("/")
+# def root():
+#     return {"message": "Hello World"}
 
 # @app.get("/users/", response_model=list[schemas.User],response_model_by_alias=False)
 # def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database import get_db
+from src.schemas.project_schemas import ProjectDetail, ProjectBase, ProjectList
+from src.crud.projects import *
 
 router = APIRouter(tags=["project"])
 
@@ -17,7 +19,7 @@ def create_project(
     return create_project_crud(db, project)
 
 @router.get("/project/{projectid}", response_model=ProjectList,response_model_by_alias=False)
-def read_project(projectid:int, db: Session = Depends(get_db)):
+def read_project(projectid: int, db: Session = Depends(get_db)):
     project = get_project_by_id(db, projectid = projectid)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")

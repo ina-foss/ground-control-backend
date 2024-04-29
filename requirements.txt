@@ -1,7 +1,9 @@
 fastapi==0.110.2
 pydantic==2.6.4
 pydantic_core==2.16.3
+pydantic[email]
 SQLAlchemy==2.0.29
 uvicorn==0.29.0
 fastapi-keycloak==1.0.10
 dynaconf==3.2.4
+psycopg2
