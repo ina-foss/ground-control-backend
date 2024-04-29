@@ -18,7 +18,7 @@ def create_project_crud(db: Session, project: ProjectBaseDto):
     return db_project
 
 def update_project_crud(db: Session, project: ProjectBaseDto, projectid: int):
-    db_project = db.query(Project).filter(Project.projectid == projectid).first()
+    db_project = db.query(Project).filter(Project.id == projectid).first()
     if(db_project is not None):
         db_project.title = project.title
         db_project.description = project.description
