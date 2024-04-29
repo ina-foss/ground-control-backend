@@ -7,14 +7,14 @@ from sqlalchemy.sql import select, func
 class Annotation(Base):
     __tablename__ = 'annotation'
 
-    annotationid = Column(Integer, primary_key=True)
-    userid = Column(Integer, ForeignKey('user.userid'))
+    id = Column(Integer, primary_key=True)
+    userid = Column(Integer, ForeignKey('user.id'))
     result = Column(JSON)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     validated_at = Column(DateTime)
-    taskid = Column(Integer, ForeignKey('task.taskid'))
-    projectid = Column(Integer, ForeignKey('project.projectid'))
+    taskid = Column(Integer, ForeignKey('task.id'))
+    projectid = Column(Integer, ForeignKey('project.id'))
     status = Column(String)
 
     user = relationship("User", backref="annotations")

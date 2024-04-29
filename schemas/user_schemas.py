@@ -3,21 +3,21 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
-from .user_base_schemas import UserBase
-from .project_schemas import ProjectDetail
-from .task_schemas import TaskList
+from .user_base_schemas import UserBaseDto
+from .project_schemas import ProjectDetailDto
+from .task_schemas import TaskListDto
 
 
 
-class User(UserBase):
+class UserDto(UserBaseDto):
 
-    projects: list[ProjectDetail]= []
+    projects: list[ProjectDetailDto]= []
 
     class Config:
         orm_mode: True
 
 
 
-class UserWithTasks(User):
-    tasks: list[TaskList] = []
+class UserWithTasksDto(UserDto):
+    tasks: list[TaskListDto] = []
 

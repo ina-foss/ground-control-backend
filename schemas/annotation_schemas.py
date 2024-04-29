@@ -3,10 +3,10 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from .user_base_schemas import UserBase
+from .user_base_schemas import UserBaseDto
 
-class Annotation(BaseModel):
-    annotationid: int
+class AnnotationDto(BaseModel):
+    id: int
     userid: int
     result: Optional[Dict[str, Any]]
     created_at: Optional[datetime]
@@ -15,7 +15,7 @@ class Annotation(BaseModel):
     taskid: int
     projectid: int
     status: str
-    user: UserBase
+    user: UserBaseDto
 
     class Config:
         orm_mode: True

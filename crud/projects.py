@@ -8,16 +8,16 @@ def get_projects(db: Session, skip: int=0, limit: int= 100):
     return db.query(Project).offset(skip).limit(limit).all()
 
 def get_project_by_id(db: Session, projectid: int):
-    return db.query(Project).options(joinedload(Project.tasks)).filter(Project.projectid == projectid).first()
+    return db.query(Project).options(joinedload(Project.tasks)).filter(Project.id == projectid).first()
 
-def create_project_crud(db: Session, project: ProjectBase):
+def create_project_crud(db: Session, project: ProjectBaseDto):
     db_project= Project(title=project.title, description= project.description, created_by= project.created_by)
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
     return db_project
 
-def update_project_crud(db: Session, project: ProjectBase, projectid: int):
+def update_project_crud(db: Session, project: ProjectBaseDto, projectid: int):
     db_project = db.query(Project).filter(Project.projectid == projectid).first()
     if(db_project is not None):
         db_project.title = project.title
@@ -25,4 +25,11 @@ def update_project_crud(db: Session, project: ProjectBase, projectid: int):
         db_project.updated_at = datetime.now()
         db.commit()
         db.refresh(db_project)
+    return db_project
+
+def delete_project_crud( db: Session, projectid: int):
+    db_project = db.query(Project).filter(Project.id==projectid).first()
+    if(db_project is not None):
+        db.delete(db_project)
+        db.commit()
     return db_project

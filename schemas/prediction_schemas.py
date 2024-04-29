@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-class Prediction(BaseModel):
-    predictionid: int
+class PredictionDto(BaseModel):
+    id: int
     model_name: Optional[str]
     model_version: Optional[str]
     result: Optional[Dict[str, Any]]

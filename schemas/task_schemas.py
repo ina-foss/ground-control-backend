@@ -6,8 +6,8 @@ from datetime import datetime
 from .annotation_schemas import *
 from .prediction_schemas import *
 
-class TaskBase(BaseModel):
-    taskid: int
+class TaskBaseDto(BaseModel):
+    id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     projectid: int
@@ -15,13 +15,13 @@ class TaskBase(BaseModel):
     class Config:
         orm_mode = True
 
-class TaskList(TaskBase):  
+class TaskListDto(TaskBaseDto):  
     name: Optional[str]
     instruction: Optional[str]
-    annotations: list[Annotation] = []
-    predictions: list[Prediction] = []
+    annotations: list[AnnotationDto] = []
+    predictions: list[PredictionDto] = []
 
     
-class TaskDetail(TaskList):
+class TaskDetailDto(TaskListDto):
     data: Optional[Dict[str, Any]]= []
     

@@ -4,8 +4,8 @@ from typing import Optional
 from datetime import datetime
 
 
-class UserBase(BaseModel):
-    userid: int
+class UserBaseDto(BaseModel):
+    id: int
     email: EmailStr
     role: str
     created_at: Optional[datetime]

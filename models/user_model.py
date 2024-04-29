@@ -8,7 +8,7 @@ from sqlalchemy.sql import select, func
 class User(Base):
     __tablename__ = 'user'
 
-    userid = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     email = Column(String)
     role = Column(String)
     created_at = Column(DateTime)

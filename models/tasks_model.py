@@ -10,13 +10,13 @@ from .prediction_model import Prediction
 class Task(Base):
     __tablename__ = 'task'
 
-    taskid = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     instruction = Column(String)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     data = Column(JSON)
-    projectid = Column(Integer, ForeignKey('project.projectid'))
+    projectid = Column(Integer, ForeignKey('project.id'))
     # users = relationship("User", secondary=UserTask.__table__, back_populates="tasks")
     # user_task= relationship("UserTask",backref="tasks")
 

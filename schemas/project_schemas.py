@@ -3,9 +3,9 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
-from .task_schemas import TaskBase, TaskList
+from .task_schemas import TaskBaseDto, TaskListDto
 
-class ProjectBase(BaseModel):
+class ProjectBaseDto(BaseModel):
     title: Optional[str]
     description: Optional[str]
     created_by: int
@@ -14,17 +14,17 @@ class ProjectBase(BaseModel):
         orm_mode: True
 
 
-class ProjectDetail(ProjectBase):
-    projectid: int
+class ProjectDetailDto(ProjectBaseDto):
+    id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    tasks: list[TaskBase] = []  
+    tasks: list[TaskBaseDto] = []  
     total_tasks: int  
 
     class Config:
         orm_mode: True
 
-class ProjectList(ProjectBase):
-    tasks: list[TaskList] = []
+class ProjectListDto(ProjectBaseDto):
+    tasks: list[TaskListDto] = []
 
     

@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 
-from schemas.task_schemas import TaskDetail
+from schemas.task_schemas import TaskDetailDto
 from crud.tasks import get_task_by_id
 
 router = APIRouter(tags=["task"])
 
 
-@router.get("/task/{id}",response_model= TaskDetail)
+@router.get("/task/{id}",response_model= TaskDetailDto)
 def read_task(id:int, db:Session = Depends(get_db)):
     task = get_task_by_id(db, taskid = id)
     if task is None:

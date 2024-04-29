@@ -16,6 +16,12 @@ app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
 
+app.servers = [
+    {
+        "url":"http://localhost:8000"
+    }
+] 
+
 origins = [
     "http://localhost:3000",
     "https://localhost:3000",

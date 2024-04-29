@@ -12,17 +12,17 @@ from .user_model import User
 class Project(Base):
     __tablename__ = 'project'
 
-    projectid = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     title = Column(String)
     description = Column(String)
     created_at = Column(DateTime, server_default=func.sysdate())
     updated_at = Column(DateTime)
-    created_by = Column(Integer, ForeignKey('user.userid'))
+    created_by = Column(Integer, ForeignKey('user.id'))
 
     owner = relationship("User",back_populates="projects")
 
     tasks = relationship('Task', backref="projects")
 
     total_tasks = column_property(
-        select(func.count()).where(Task.projectid == projectid).correlate_except(Task).scalar_subquery()
+        select(func.count()).where(Task.id == id).correlate_except(Task).scalar_subquery()
     )
