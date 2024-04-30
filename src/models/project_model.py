@@ -24,5 +24,5 @@ class Project(Base):
     tasks = relationship('Task', backref="projects")
 
     total_tasks = column_property(
-        select(func.count()).where(Task.id == id).correlate_except(Task).scalar_subquery()
+        select(func.count()).where(Task.project_id == id).correlate_except(Task).scalar_subquery()
     )
