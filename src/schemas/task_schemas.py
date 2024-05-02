@@ -7,20 +7,24 @@ from .annotation_schemas import *
 from .prediction_schemas import *
 
 class TaskBaseDto(BaseModel):
-    id: int
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    name: Optional[str]
+    instruction: Optional[str]
     project_id: int
 
     class Config:
         orm_mode = True
 
-class TaskListDto(TaskBaseDto):  
-    name: Optional[str]
-    instruction: Optional[str]
+class TaskWithIdDto(TaskBaseDto):
+    id: int
+
+
+class TaskCreateDto(TaskBaseDto):
+    data: Optional[Dict[str, Any]]= []
+
+
+class TaskListDto(TaskCreateDto):  
+    id: int
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
     annotations: list[AnnotationDto] = []
     predictions: list[PredictionDto] = []
-
-    
-class TaskDetailDto(TaskListDto):
-    data: Optional[Dict[str, Any]]= []

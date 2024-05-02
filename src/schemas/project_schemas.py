@@ -13,9 +13,10 @@ class ProjectBaseDto(BaseModel):
     class Config:
         orm_mode: True
 
-
-class ProjectDetailDto(ProjectBaseDto):
+class ProjectWithIdDto(ProjectBaseDto):
     id: int
+
+class ProjectDetailDto(ProjectWithIdDto):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     tasks: list[TaskBaseDto] = []  
@@ -24,7 +25,7 @@ class ProjectDetailDto(ProjectBaseDto):
     class Config:
         orm_mode: True
 
-class ProjectListDto(ProjectBaseDto):
+class ProjectListDto(ProjectWithIdDto):
     tasks: list[TaskListDto] = []
 
     

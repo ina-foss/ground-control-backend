@@ -25,7 +25,7 @@ def read_project(project_id:int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-@router.put("/project/{project_id}", response_model=ProjectDetailDto)
+@router.put("/project/{project_id}", response_model=ProjectWithIdDto)
 def update_project(
         project_id: int,
         project: ProjectBaseDto,
@@ -36,7 +36,7 @@ def update_project(
         raise HTTPException(status_code=404, detail="Project not found")
     return updated_project
 
-@router.delete("/project/{project_id}", response_model=ProjectDetailDto)
+@router.delete("/project/{project_id}", response_model=ProjectWithIdDto)
 def delete_project(
         project_id: int,
         db: Session = Depends(get_db)
