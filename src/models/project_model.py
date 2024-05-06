@@ -2,10 +2,10 @@ from src.database import Base
 
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship, column_property, backref
-from sqlalchemy.sql import select, func
+from sqlalchemy.sql import select, func, distinct
 
 from .tasks_model import Task
-
+from.annotation_model import Annotation
 from .user_model import User
 
 
@@ -21,8 +21,17 @@ class Project(Base):
 
     owner = relationship("User",back_populates="projects")
 
-    tasks = relationship('Task', backref="projects")
+    tasks = relationship('Task', backref="project")
 
     total_tasks = column_property(
         select(func.count()).where(Task.project_id == id).correlate_except(Task).scalar_subquery()
+    )
+
+    total_users_with_annotations = column_property(
+        select(func.count(distinct(User.id)))
+        .join(Annotation)
+        .join(Task)
+        .where(Task.project_id == id)
+        .correlate_except(Task)
+        .scalar_subquery()
     )

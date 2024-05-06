@@ -9,6 +9,7 @@ class ProjectBaseDto(BaseModel):
     title: Optional[str]
     description: Optional[str]
     created_by: int
+    total_users_with_annotations: int
 
     class Config:
         orm_mode: True
