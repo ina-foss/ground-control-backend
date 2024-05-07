@@ -1,15 +1,16 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from src.routers import projects,tasks,users
+from src.config import settings
+from src.routers import projects,tasks,users,resources
 
 app = FastAPI()
+
 
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
-
+app.include_router(resources.router)
 app.servers = [
     {
         "url":"http://localhost:8000"
@@ -25,45 +26,8 @@ origins = [
 ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"], # Allows all methods
-    allow_headers=["*"], # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-# models.Base.metadata.create_all(bind=engine)
-
-# @app.get("/")
-# def root():
-#     return {"message": "Hello World"}
-
-# @app.get("/users/", response_model=list[schemas.User],response_model_by_alias=False)
-# def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     users = crud.get_users(db, skip=skip, limit=limit)
-#     return users
-
-
-# @app.get("/projects/", response_model=list[schemas.Project])
-# def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     projects = crud.get_projects(db, skip=skip, limit=limit)
-#     return projects
-
-# @app.get("/project/{project_id}", response_model=schemas.ProjectList,response_model_by_alias=False)
-# def read_project(project_id:int, db: Session = Depends(get_db)):
-#     project = crud.get_project_by_id(db, project_id = project_id)
-#     if project is None:
-#         raise HTTPException(status_code=404, detail="Project not found")
-#     return project
-
-# @app.get("/task/{id}",response_model= schemas.TaskDetail)
-# def read_task(id:int, db:Session = Depends(get_db)):
-#     task = crud.get_task_by_id(db, task_id = id)
-#     if task is None:
-#         raise HTTPException(status_code=404, detail= "Task not found")
-#     return task
-
-# @app.post("/project/", response_model=schemas.ProjectBase)
-# def create_project(
-#     project: schemas.ProjectBase, db:Session = Depends(get_db)
-# ):
-#     return crud.create_project(db, project)

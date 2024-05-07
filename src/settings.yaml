@@ -1,0 +1,4 @@
+default:
+  player_expert:
+    base_url: "https://player-expert.p.sas.ina/notilusLdd/notilus/search/plugin"
+    verify_tls: false

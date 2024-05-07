@@ -32,3 +32,4 @@ data/
 *-pub.pem
 .vscode/
 .idea/
+src/.secrets.yaml
