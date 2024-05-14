@@ -9,7 +9,6 @@ class ProjectBaseDto(BaseModel):
     title: Optional[str]
     description: Optional[str]
     created_by: int
-    total_users_with_annotations: int
 
     class Config:
         orm_mode: True
@@ -20,7 +19,8 @@ class ProjectWithIdDto(ProjectBaseDto):
 class ProjectDetailDto(ProjectWithIdDto):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    tasks: list[TaskBaseDto] = []  
+    tasks: list[TaskBaseDto] = [] 
+    total_users_with_annotations: int
     total_tasks: int  
 
     class Config:
