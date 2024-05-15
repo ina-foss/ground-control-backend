@@ -39,14 +39,11 @@ def get_transcription(
 
     response = requests.get(url=base_url, params=params, headers=headers, verify=settings.player_expert.verify_tls)
 
-    video_id = f'flux:tv:{channel}:{start_date.replace(" ", "T")}:{end_date.replace(" ", "T")}'
-    # print(response.text)
-    data = json.loads(response.text)
-    data['id'] = video_id
-    # print(video_id)
+    video_id = f"flux:tv:{params['channel']}:{params['startDate'][:4]}{params['startDate'][5:7]}{params['startDate'][8:10]}T{params['startDate'][11:13]}{params['startDate'][14:16]}:{params['endDate'][11:13]}{params['endDate'][14:16]}"
 
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail="Failed to fetch transcription data")
-    # transcription_data = response.json()
+    data = json.loads(response.text)
+    data['id'] = video_id
 
     return segments_to_task.convert(data, video_id)
