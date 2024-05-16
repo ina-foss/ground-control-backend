@@ -21,7 +21,7 @@ def read_task(id:int, db:Session = Depends(get_db)):
 def create_task(task : TaskCreateDto, db: Session = Depends(get_db)):
     return create_task_crud(task,db)
 
-@router.put("/task/{id}",response_model= TaskListDto)
+@router.patch("/task/{id}",response_model= TaskListDto)
 def update_data_task(id: int , data : Dict[str, Any], db: Session = Depends(get_db)):
     task = update_data_task_crud(id,data,db)
     if task is None:
