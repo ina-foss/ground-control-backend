@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from sqlalchemy.orm import Session
 
 from src.models.tasks_model import *
@@ -12,3 +13,13 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     db.commit()
     db.refresh(db_task)
     return db_task
+
+def update_data_task_crud(id: int, data: Dict[str,Any],db : Session):
+    db_task = get_task_by_id(db, task_id = id)
+    if( db_task is not None):
+        db_task.data = data
+        db.commit()
+        db.refresh(db_task)
+    return db_task
+
+
