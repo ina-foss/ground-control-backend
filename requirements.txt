@@ -4,8 +4,8 @@ pydantic_core==2.16.3
 pydantic[email]
 SQLAlchemy==2.0.29
 uvicorn==0.29.0
-fastapi-keycloak==1.0.10
 dynaconf==3.2.4
 dynaconf[yaml]==3.2.4
 psycopg2
 requests==2.31.0
+fastapi-keycloak-middleware==0.4.1

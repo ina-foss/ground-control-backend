@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from src.database import get_db
 from sqlalchemy.orm import Session
-
+from fastapi_keycloak_middleware import require_permission
 
 from src.schemas.user_schemas import UserDto
 from src.services.user_service import get_users

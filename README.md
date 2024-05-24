@@ -23,3 +23,7 @@ git clone https://git.infra.sas.ina/ia/code/ground-control/backend.git
 cd ground-control/backend/.dev
 docker-compose up -d
 ```
+
+
+
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload

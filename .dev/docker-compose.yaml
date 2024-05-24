@@ -11,7 +11,8 @@ services:
       POSTGRES_DB: ground_control_db
     ports:
       - 5432:5432
-
+    healthcheck:
+      test: "exit 0"
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.3
     command: 'start-dev --import-realm'
@@ -39,12 +40,14 @@ services:
   backend:
     build:
       context: ../
+      dockerfile: .dev/Dockerfile
     volumes:
       - ../:/code
     ports:
       - 8000:8000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   frontend:
     build:
