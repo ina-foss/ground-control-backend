@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database import get_db
+from src.config import settings
 
 from src.schemas.project_schemas import *
 from src.services.project_service import *

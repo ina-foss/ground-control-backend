@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKe
 from sqlalchemy.orm import relationship, column_property, backref
 from sqlalchemy.sql import select, func, distinct
 
-from .tasks_model import Task
+from .task_model import Task
 from.annotation_model import Annotation
 from .user_model import User
 
@@ -15,7 +15,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String)
     description = Column(String)
-    created_at = Column(DateTime, server_default=func.sysdate())
+    created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     created_by = Column(Integer, ForeignKey('user.id'))
 

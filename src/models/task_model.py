@@ -2,10 +2,6 @@ from src.database import Base
 
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship, column_property, backref
-from sqlalchemy.sql import select, func
-
-from .annotation_model import Annotation
-from .prediction_model import Prediction
 
 class Task(Base):
     __tablename__ = 'task'
@@ -17,9 +13,6 @@ class Task(Base):
     updated_at = Column(DateTime)
     data = Column(JSON)
     project_id = Column(Integer, ForeignKey('project.id'))
-    # users = relationship("User", secondary=UserTask.__table__, back_populates="tasks")
-    # user_task= relationship("UserTask",backref="tasks")
 
-
-    annotations = relationship("Annotation", backref="Task" )
-    predictions = relationship("Prediction", backref="Task")
+    annotations = relationship("Annotation", backref="task")
+    # predictions = relationship("Prediction", backref="task")

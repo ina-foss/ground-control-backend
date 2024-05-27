@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKe
 from sqlalchemy.orm import relationship, column_property, backref
 from sqlalchemy.sql import select, func
 
+
 class Prediction(Base):
     __tablename__ = 'prediction'
 
@@ -12,7 +13,7 @@ class Prediction(Base):
     model_version = Column(String)
     result = Column(JSON)
     score = Column(Float)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     task_id = Column(Integer, ForeignKey('task.id'))
     project_id = Column(Integer, ForeignKey('project.id'))
