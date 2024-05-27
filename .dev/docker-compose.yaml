@@ -28,6 +28,14 @@ services:
       - 127.0.0.1:9080:9080
       - 127.0.0.1:9443:9443
 
+  web: 
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ../../front/.output/public:/usr/share/nginx/html
+    ports:
+      - 80:80
+
   backend:
     build:
       context: ../
