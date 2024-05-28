@@ -18,10 +18,10 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
 
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
-    url=settings.keycloak.url,
-    realm=settings.keycloak.realm,
-    client_id=settings.keycloak.client_id,
-    client_secret=settings.keycloak.client_secret,
+    url=settings.sso.url,
+    realm=settings.sso.realm,
+    client_id=settings.sso.client_id,
+    client_secret=settings.sso.client_secret,
     reject_on_missing_claim=True,
     verify=True,
     validate_token=True,

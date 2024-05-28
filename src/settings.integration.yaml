@@ -2,7 +2,7 @@ default:
   player_expert:
     base_url: "https://player-expert.p.sas.ina/notilusLdd/notilus/search/plugin"
     verify_tls: false
-  keycloak:
+  sso:
     url: "http://keycloak:9080/"
     realm: "ground-control"
     client_id: "backend"
