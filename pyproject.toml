@@ -6,7 +6,7 @@ dynamic = [
 ]
 description = "INA Ground Control"
 authors = [
-    {name = "Pablo RAOULT", email="pratouit-prestataire@ina.fr"},
+    {name = "Pablo RAOULT", email="praoult-prestataire@ina.fr"},
     {name = "Benjamin ELKAYS", email="belkays@ina.fr"},
     {name = "Molka JELASSI", email="mjelassi-prestataire@ina.fr"},
     {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"}
@@ -33,3 +33,6 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages]
 find = {namespaces = false}
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=html"

@@ -24,6 +24,15 @@ cd ground-control/backend/.dev
 docker-compose up -d
 ```
 
+### Bug Possible
+
+Pendant le developpement, il se peut que l'application Nuxt ne puisse plus se rafraîchir. Vous verrez alors dans le terminal du container ce genre d'erreur.
 
 
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+![bug nuxt](https://ina1.sharepoint.com/:i:/r/sites/2IA/Documents%20partages/IHMIA/Screenshot%202024-05-21%20154329.png?csf=1&web=1&e=NqgDuH)
+
+En attendant de trouver une solution, supprimer le container `dev-frontend-1` et le relancer suffit
+```bash
+docker rm dev-frontend-1
+docker compose up -d
+```

@@ -1,9 +1,10 @@
+from typing import Any, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database import get_db
 
 from src.schemas.task_schemas import TaskCreateDto, TaskBaseDto, TaskListDto
-from src.services.task_service import get_task_by_id, create_task_crud
+from src.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
 
 
 router = APIRouter(tags=["task"])
@@ -19,3 +20,10 @@ def read_task(id:int, db:Session = Depends(get_db)):
 @router.post("/task/", response_model= TaskCreateDto)
 def create_task(task : TaskCreateDto, db: Session = Depends(get_db)):
     return create_task_crud(task,db)
+
+@router.patch("/task/{id}",response_model= TaskListDto)
+def update_data_task(id: int , data : Dict[str, Any], db: Session = Depends(get_db)):
+    task = update_data_task_crud(id,data,db)
+    if task is None:
+        raise HTTPException(status_code=404, detail= "Task not found")
+    return task

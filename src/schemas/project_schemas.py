@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
-from .task_schemas import TaskBaseDto, TaskListDto
 
 class ProjectBaseDto(BaseModel):
     title: Optional[str]
@@ -19,7 +18,7 @@ class ProjectWithIdDto(ProjectBaseDto):
 class ProjectDetailDto(ProjectWithIdDto):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    tasks: list[TaskBaseDto] = [] 
+    tasks: list['TaskBaseDto'] = []
     total_users_with_annotations: int
     total_tasks: int  
 
@@ -27,6 +26,6 @@ class ProjectDetailDto(ProjectWithIdDto):
         orm_mode: True
 
 class ProjectListDto(ProjectWithIdDto):
-    tasks: list[TaskListDto] = []
+    tasks: list['TaskListDto'] = []
 
-    
+from .task_schemas import TaskBaseDto, TaskListDto

@@ -1,10 +1,12 @@
+import json
+
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.config import settings
-
-
+from src.utils import segments_to_task
+from datetime import datetime
 router = APIRouter(tags=["resources"])
 
 
@@ -37,8 +39,19 @@ def get_transcription(
 
     response = requests.get(url=base_url, params=params, headers=headers, verify=settings.player_expert.verify_tls)
 
+    start_datetime = datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
+    formatted_start_date = start_datetime.strftime('%Y%m%dT%H%M%S')
+
+    end_datetime = datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
+    time_diff_seconds = int((end_datetime - start_datetime).total_seconds())
+
+    video_id = f"flux:tv:{channel}:{formatted_start_date}:{time_diff_seconds}"
+
+    print(video_id)
+
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail="Failed to fetch transcription data")
-    transcription_data = response.json()
+    data = json.loads(response.text)
+    data['id'] = video_id
 
-    return transcription_data
+    return segments_to_task.convert(data, video_id)
