@@ -23,6 +23,7 @@ def update_project_crud(db: Session, project: ProjectBaseDto, project_id: int):
         db_project.title = project.title
         db_project.description = project.description
         db_project.updated_at = datetime.now()
+        db_project.created_by = project.created_by
         db.commit()
         db.refresh(db_project)
     return db_project
