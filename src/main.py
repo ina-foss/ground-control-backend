@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_middleware, AuthorizationMethod, \
     KeycloakMiddleware
+from src.config import settings
 
 from src.models.user_model import User
 from src.routers import projects, tasks, users, resources
@@ -17,10 +18,10 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
 
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
-    url="http://localhost:9080/",
-    realm="ground-control",
-    client_id="tesT4",
-    client_secret="W8UPgd6npYGCcacTzvoAo3r971CbdRzA",
+    url=settings.keycloak.url,
+    realm=settings.keycloak.realm,
+    client_id=settings.keycloak.client_id,
+    client_secret=settings.keycloak.client_secret,
     reject_on_missing_claim=True,
     verify=True,
     validate_token=True,
