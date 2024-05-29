@@ -13,7 +13,6 @@ PG_PASSWORD = os.getenv('PG_PASSWORD')
 PG_PORT = os.getenv('PG_PORT')
 
 DATABASE_URL = f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@db:{PG_PORT}/{PG_DATABASE}'
-
 engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
