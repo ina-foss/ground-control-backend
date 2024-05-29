@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv('.env.local')
 
 PG_SERVER = os.getenv('PG_SERVER')
 PG_DATABASE = os.getenv('PG_DATABASE')
