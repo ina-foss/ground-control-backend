@@ -1,11 +1,19 @@
+"""
+Defines Data Transfer Object (DTO) classes for annotation-related data structures.
+"""
+
 from __future__ import annotations
-from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
+from pydantic import BaseModel
 
-from .user_base_schemas import UserBaseDto
+from.user_base_schemas import UserBaseDto
+
 
 class AnnotationDto(BaseModel):
+    """
+    DTO representing an annotation object, including association with task and project.
+    """
     id: int
     user_id: int
     result: Optional[Dict[str, Any]]
@@ -18,4 +26,4 @@ class AnnotationDto(BaseModel):
     user: UserBaseDto
 
     class Config:
-        orm_mode: True
+        orm_mode = True

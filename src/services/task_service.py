@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from sqlalchemy.orm import Session
-from src.models.task_model import *
+from src.models.task_model import Task
 from src.schemas.task_schemas import TaskCreateDto
 
 

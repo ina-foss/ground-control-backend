@@ -1,31 +1,52 @@
+"""
+Defines Data Transfer Object (DTO) classes for project-related data structures.
+"""
+
 from __future__ import annotations
-from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from pydantic import BaseModel
 
 
 class ProjectBaseDto(BaseModel):
+    """
+    Base DTO for project objects.
+    """
     title: Optional[str]
     description: Optional[str]
     created_by: int
 
     class Config:
-        orm_mode: True
+        orm_mode = True
+
 
 class ProjectWithIdDto(ProjectBaseDto):
+    """
+    Extends ProjectBaseDto with an additional id field.
+    """
     id: int
 
+
 class ProjectDetailDto(ProjectWithIdDto):
+    """
+    Detailed DTO for project objects, including creation and update timestamps,
+    a list of tasks, and counts of users with annotations and total tasks.
+    """
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    tasks: list['TaskBaseDto'] = []
+    tasks: list[TaskBaseDto] = []
     total_users_with_annotations: int
-    total_tasks: int  
+    total_tasks: int
 
     class Config:
-        orm_mode: True
+        orm_mode = True
+
 
 class ProjectListDto(ProjectWithIdDto):
-    tasks: list['TaskListDto'] = []
+    """
+    DTO for listing projects, including a list of tasks.
+    """
+    tasks: list[TaskListDto] = []
+
 
 from .task_schemas import TaskBaseDto, TaskListDto

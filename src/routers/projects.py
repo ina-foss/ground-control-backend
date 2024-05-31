@@ -1,48 +1,77 @@
+"""
+This module contains the implementation of CRUD for managing projects within the application.
+It provides FastAPI route handlers for creating, reading, updating, and deleting projects.
+Projects are represented through DTOs (Data Transfer Objects) defined in `project_schemas.py`,
+ and business logic is implemented in `project_service.py`.
+
+Key Features:
+    - Pagination support for listing projects.
+    - Detailed project information retrieval by ID.
+    - Creation of new projects with validation.
+    - Update of existing projects with partial updates supported.
+    - Deletion of projects by ID.
+
+Dependencies:
+    - Database session management via `get_db` from `src.database`.
+    - Project-related schemas from `src.schemas.project_schemas`.
+    - Business logic for project operations in `src.services.project_service`.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database import get_db
-from src.config import settings
+from src.schemas.project_schemas import (ProjectBaseDto,
+                                         ProjectDetailDto,
+                                         ProjectListDto,
+                                         ProjectWithIdDto)
+from src.services.project_service import (get_projects,
+                                          create_project_crud,
+                                          get_project_by_id,
+                                          update_project_crud,
+                                          delete_project_crud)
 
-from src.schemas.project_schemas import *
-from src.services.project_service import *
 router = APIRouter(tags=["project"])
+NOT_FOUND_STR = "Project not found"
 
 
 @router.get("/projects/", response_model=list[ProjectDetailDto])
-def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
+        -> list[ProjectDetailDto]:
+    """Retrieve a list of projects with pagination support."""
     projects = get_projects(db, skip=skip, limit=limit)
     return projects
 
+
 @router.post("/project/", response_model=ProjectDetailDto)
-def create_project(
-        project: ProjectBaseDto, db:Session = Depends(get_db)
-):
+def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) \
+        -> ProjectDetailDto:
+    """Create a new project."""
     return create_project_crud(db, project)
 
+
 @router.get("/project/{project_id}", response_model=ProjectListDto,response_model_by_alias=False)
-def read_project(project_id:int, db: Session = Depends(get_db)):
-    project = get_project_by_id(db, project_id = project_id)
+def read_project(project_id: int, db: Session = Depends(get_db)) -> ProjectListDto:
+    """Get details of a single project by ID."""
+    project = get_project_by_id(db, project_id=project_id)
     if project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail=f"{NOT_FOUND_STR}")
     return project
 
+
 @router.put("/project/{project_id}", response_model=ProjectWithIdDto)
-def update_project(
-        project_id: int,
-        project: ProjectBaseDto,
-        db: Session = Depends(get_db)
-):
+def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depends(get_db)) \
+        -> ProjectWithIdDto:
+    """Update an existing project by ID."""
     updated_project = update_project_crud(db, project, project_id)
     if updated_project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail=f"{NOT_FOUND_STR}")
     return updated_project
 
+
 @router.delete("/project/{project_id}", response_model=ProjectWithIdDto)
-def delete_project(
-        project_id: int,
-        db: Session = Depends(get_db)
-):
+def delete_project(project_id: int, db: Session = Depends(get_db)) -> ProjectWithIdDto:
+    """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail=f"{NOT_FOUND_STR}")
     return deleted_project

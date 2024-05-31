@@ -1,10 +1,29 @@
+"""
+This module defines the Annotation model for the application.
+"""
+
+from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
+from sqlalchemy.orm import relationship
 from src.database import Base
 
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
-from sqlalchemy.orm import relationship, column_property, backref
-from sqlalchemy.sql import select, func
 
 class Annotation(Base):
+    """
+    Represents an annotation record in the database.
+
+    Attributes:
+        id (Integer): The unique identifier of the annotation.
+        user_id (Integer): The foreign key linking to the user who created the annotation.
+        result (JSON): The result of the annotation stored as JSON.
+        created_at (DateTime): The timestamp when the annotation was created.
+        updated_at (DateTime): The timestamp when the annotation was last updated.
+        validated_at (DateTime): The timestamp when the annotation was validated.
+        task_id (Integer): The foreign key linking to the task associated with the annotation.
+        project_id (Integer): The foreign key linking to the project associated with the annotation.
+        status (String): The current status of the annotation.
+        user (relationship): Relationship to the User model.
+    """
+
     __tablename__ = 'annotation'
 
     id = Column(Integer, primary_key=True)

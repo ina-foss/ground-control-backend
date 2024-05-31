@@ -1,11 +1,25 @@
-from src.database import Base
+"""
+This module defines the User model for the application.
+"""
 
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
-from sqlalchemy.orm import relationship, column_property, backref
-from sqlalchemy.sql import select, func
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
+from src.database import Base
 
 
 class User(Base):
+    """
+    Represents a user record in the database.
+
+    Attributes:
+        id (Integer): The unique identifier of the user.
+        email (String): The email address of the user.
+        role (String): The role assigned to the user.
+        created_at (DateTime): The timestamp when the user account was created.
+        projects (relationship): Relationship to the Project model representing
+         projects owned by the user.
+    """
+
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)
@@ -14,6 +28,3 @@ class User(Base):
     created_at = Column(DateTime)
 
     projects = relationship("Project", back_populates="owner")
-
-    # tasks = relationship("Task", secondary=UserTask.__table__, back_populates="users")
-    # user_task = relationship("UserTask",backref="users")

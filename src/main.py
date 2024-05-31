@@ -1,20 +1,29 @@
-import typing
+"""
+This module sets up the main FastAPI application, including routes, middleware, and configuration.
+"""
 
+import typing
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_middleware, AuthorizationMethod, \
-    KeycloakMiddleware
+from fastapi_keycloak_middleware import (KeycloakConfiguration,
+                                         setup_keycloak_middleware, AuthorizationMethod)
 from src.config import settings
-
 from src.models.user_model import User
 from src.routers import projects, tasks, users, resources
 
-
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
+    """
+    Maps user information received from Keycloak to a User model instance.
+
+    Args:
+        userinfo (Dict[str, Any]): The user information dictionary.
+
+    Returns:
+        User: An instance of the User model.
+    """
     # Do something with the userinfo
     print(userinfo)
     return User()
-
 
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
@@ -50,13 +59,19 @@ setup_keycloak_middleware(
         '/docs',
         '/openapi.json',
         '/redoc'
-
     ],
     #user_mapper=map_user,
     add_swagger_auth=True,
 )
+
 @app.get("/test")
-async def root():
+async def root() -> dict:
+    """
+    Root endpoint that returns a simple message.
+
+    Returns:
+        dict: A dictionary with a greeting message.
+    """
     return {"message": "Hello World"}
 
 app.include_router(users.router)
@@ -83,11 +98,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
-
 @app.get("/management/health")
-async def info():
+async def info() -> dict:
+    """
+    Health check endpoint that returns the status of the service.
+
+    Returns:
+        dict: A dictionary indicating the service status.
+    """
     return {
         "status": "up"
     }

@@ -33,3 +33,4 @@ data/
 .vscode/
 .idea/
 src/.secrets.yaml
+.pypirc
