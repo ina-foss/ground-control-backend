@@ -1,3 +1,4 @@
 tox
 PyJWT
 cryptography
+twine==5.1.0
