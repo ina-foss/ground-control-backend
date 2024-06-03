@@ -23,10 +23,12 @@ Configuration:
 import datetime
 import json
 import requests
+from latios.log import get_logger
 from fastapi import APIRouter, HTTPException, Query
 from src.config import settings
 from src.utils import segments_to_task
 
+logger = get_logger()
 router = APIRouter(tags=["resources"])
 
 @router.get("/transcription")
@@ -72,6 +74,7 @@ def get_transcription(
     print(video_id)
 
     if response.status_code!= 200:
+        logger.error(f"Failed to fetch transcription data for : {video_id}")
         raise HTTPException(status_code=response.status_code,
                             detail="Failed to fetch transcription data")
     data = json.loads(response.text)

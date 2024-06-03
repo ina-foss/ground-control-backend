@@ -19,6 +19,7 @@ Dependencies:
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from latios.log import get_logger
 from src.database import get_db
 from src.schemas.project_schemas import (ProjectBaseDto,
                                          ProjectDetailDto,
@@ -30,6 +31,7 @@ from src.services.project_service import (get_projects,
                                           update_project_crud,
                                           delete_project_crud)
 
+logger = get_logger()
 router = APIRouter(tags=["project"])
 NOT_FOUND_STR = "Project not found"
 
@@ -46,15 +48,20 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) \
         -> ProjectDetailDto:
     """Create a new project."""
-    return create_project_crud(db, project)
+    try:
+        return create_project_crud(db, project)
+    except Exception as e:
+        logger.error(f"Failed to create project: {e}")
+        raise HTTPException(status_code=400, detail="Failed to create project")
 
 
-@router.get("/project/{project_id}", response_model=ProjectListDto,response_model_by_alias=False)
+@router.get("/project/{project_id}", response_model=ProjectListDto, response_model_by_alias=False)
 def read_project(project_id: int, db: Session = Depends(get_db)) -> ProjectListDto:
     """Get details of a single project by ID."""
     project = get_project_by_id(db, project_id=project_id)
     if project is None:
-        raise HTTPException(status_code=404, detail=f"{NOT_FOUND_STR}")
+        logger.error(f"Failed to retrieve project with id: {project_id}")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return project
 
 
@@ -64,7 +71,8 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     """Update an existing project by ID."""
     updated_project = update_project_crud(db, project, project_id)
     if updated_project is None:
-        raise HTTPException(status_code=404, detail=f"{NOT_FOUND_STR}")
+        logger.error(f"Failed to update project with id: {project_id}")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return updated_project
 
 
@@ -73,5 +81,6 @@ def delete_project(project_id: int, db: Session = Depends(get_db)) -> ProjectWit
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:
-        raise HTTPException(status_code=404, detail=f"{NOT_FOUND_STR}")
+        logger.error(f"Failed to delete project with id: {project_id}")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return deleted_project

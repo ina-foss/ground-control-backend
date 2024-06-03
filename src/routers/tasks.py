@@ -1,19 +1,12 @@
-"""
-This module defines the API endpoints related to task management within the application.
-It includes routes for retrieving, creating, and updating tasks, leveraging SQLAlchemy
-ORM for database interactions.
-Tasks are represented through DTOs (Data Transfer Objects) defined in `task_schemas.py`,
- and business logic is implemented in `task_service.py`.
-"""
-
-from typing import Any, Dict
+from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from latios.log import get_logger
 from src.database import get_db
-
-from src.schemas.task_schemas import TaskCreateDto, TaskListDto
+from src.schemas.task_schemas import TaskListDto, TaskCreateDto
 from src.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
 
+logger = get_logger()
 router = APIRouter(tags=["task"])
 
 
@@ -32,6 +25,7 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
     """
     task = get_task_by_id(db, task_id=task_id)
     if task is None:
+        logger.error(f"Failed to retrieve task with id: {task_id}")
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
@@ -47,7 +41,11 @@ def create_task(task: TaskCreateDto, db: Session = Depends(get_db)):
     Returns:
         TaskCreateDto: The newly created task's details.
     """
-    return create_task_crud(task, db)
+    try:
+        return create_task_crud(task, db)
+    except Exception as e:
+        logger.error(f"Failed to create task: {e}")
+        raise HTTPException(status_code=400, detail="Failed to create task")
 
 
 @router.patch("/task/{task_id}", response_model=TaskListDto)
@@ -66,5 +64,6 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
     """
     task = update_data_task_crud(task_id, data, db)
     if task is None:
+        logger.error(f"Failed to update task with id: {task_id}")
         raise HTTPException(status_code=404, detail="Task not found")
     return task
