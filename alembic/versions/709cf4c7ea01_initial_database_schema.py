@@ -101,4 +101,11 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name='user_task_user_id_fkey'),
     sa.PrimaryKeyConstraint('user_id', name='user_task_pkey')
     )
+    op.execute(
+        """
+        INSERT INTO "user" (email, role) VALUES 
+        ('john@example.com', 'admin'),
+        ('jane@example.com', 'user');
+        """ 
+    )
     # ### end Alembic commands ###
