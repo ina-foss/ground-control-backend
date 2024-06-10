@@ -20,9 +20,6 @@ class AnnotationCreate(BaseModel):
     result: Optional[Dict[str, Any]]
     status: str
 
-    class Config:
-        orm_mode = True
-
 
 class AnnotationDto(AnnotationCreate):
     """
@@ -35,4 +32,7 @@ class AnnotationDto(AnnotationCreate):
     user: UserBaseDto = {}
 
     class Config:
+        """
+            Config for reading attributes from other class.
+        """
         orm_mode = True

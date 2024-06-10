@@ -1,10 +1,16 @@
+"""
+   This module configures the routing of all the calls related to
+   annotation object.
+   It maps each routes with the corresponding service and return the right DTO 
+   or the error status if something went wrong.
+"""
 from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from src.database import get_db
 from src.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
-from src.services.annotation_service import create_annotation_crud, get_annotation_by_task_id_crud
+from src.services.annotation_service import create_annotation_crud, get_annotations_by_task_id_crud
 
 logger = get_logger()
 router = APIRouter(tags=["annotation"])
@@ -37,5 +43,5 @@ def get_annotation_by_task_id(
     """
         Get a list of annotations that match the task_id attributes
     """
-    annotations = get_annotation_by_task_id_crud(db, task_id=task_id)
+    annotations = get_annotations_by_task_id_crud(db, task_id=task_id)
     return annotations

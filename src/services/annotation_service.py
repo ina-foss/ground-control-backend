@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
-
+from fastapi.encoders import jsonable_encoder
 
 from src.models.annotation_model import Annotation
 from src.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
@@ -11,17 +11,20 @@ def create_annotation_crud(db: Session, annotation: AnnotationCreate):
         Allow to create an annotation object an save it in the database.
 
         Parameters:
-        db (Session): Session object which contains connection information, db address etc...
+        db (Session): Session object which contains connection information,
         annotation (AnnotationCreate): Pydantic schemas which contains all information for creating database entry
     """
-    anno_db = Annotation(**annotation)
+
+    # Take all the attributes of AnnotationCreate schemas
+    # to create a sqlalchemy model
+    anno_db = Annotation(**jsonable_encoder(annotation))
     db.add(anno_db)
     db.commit()
     db.refresh(anno_db)
     return anno_db
 
 
-def get_annotation_by_task_id_crud(db: Session, task_id: int):
+def get_annotations_by_task_id_crud(db: Session, task_id: int):
     """
         Return all the anntotation object whose attributes "task_id" matches with the argurment
 
@@ -29,4 +32,4 @@ def get_annotation_by_task_id_crud(db: Session, task_id: int):
         db (Session): Session object which contains connection information, db address etc...
         task_id: Integer that identifies the task which may contains several annotations.
     """
-    return db.query(Annotation).filter(Annotation.task_id == task_id).first()
+    return db.query(Annotation).filter(Annotation.task_id == task_id).all()
