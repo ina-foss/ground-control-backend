@@ -1,12 +1,16 @@
+# Corrected import path
+from .task_model import Task
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
+from .user_model import User
+from .annotation_model import Annotation
 from enum import Enum as PyEnum
 
 from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.sql.expression import func, select
 from src.database import Base
-from.task_model import Task
-from.annotation_model import Annotation
-from.user_model import User
+<< << << < HEAD
+== == == =
+>>>>>> > 1c30030(Add documentation)
 
 
 class ProjectStatus(PyEnum):
@@ -18,6 +22,7 @@ class ProjectStatus(PyEnum):
 class AnnotationType(PyEnum):
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
+
 
 class Project(Base):
     """
@@ -65,9 +70,11 @@ class Project(Base):
     tasks = relationship('Task', backref="project")
 
     total_tasks = column_property(
-        select(func.count()).where(Task.project_id == id).correlate_except(Task).scalar_subquery()
+        select(func.count()).where(Task.project_id ==
+                                   id).correlate_except(Task).scalar_subquery()
     )
 
     total_users_with_annotations = column_property(
-        select(func.count(User.id.distinct())).join(Annotation).join(Task).where(Task.project_id == id).correlate_except(Task).scalar_subquery()
+        select(func.count(User.id.distinct())).join(Annotation).join(Task).where(
+            Task.project_id == id).correlate_except(Task).scalar_subquery()
     )

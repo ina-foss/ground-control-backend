@@ -7,7 +7,7 @@ from src.models.project_model import Project
 from src.schemas.project_schemas import ProjectBaseDto
 
 
-def get_projects(db: Session, skip: int=0, limit: int= 100):
+def get_projects(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Project).offset(skip).limit(limit).all()
 
 
@@ -16,7 +16,8 @@ def get_project_by_id(db: Session, project_id: int):
 
 
 def create_project_crud(db: Session, project: ProjectBaseDto):
-    db_project = Project(title=project.title, description= project.description, created_by= project.created_by)
+    db_project = Project(
+        title=project.title, description=project.description, created_by=project.created_by)
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
@@ -35,8 +36,8 @@ def update_project_crud(db: Session, project: ProjectBaseDto, project_id: int):
     return db_project
 
 
-def delete_project_crud( db: Session, project_id: int):
-    db_project = db.query(Project).filter(Project.id==project_id).first()
+def delete_project_crud(db: Session, project_id: int):
+    db_project = db.query(Project).filter(Project.id == project_id).first()
     if db_project is not None:
         db.delete(db_project)
         db.commit()
