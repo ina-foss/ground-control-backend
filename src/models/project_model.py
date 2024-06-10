@@ -6,9 +6,9 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.sql.expression import func, select, distinct
 from src.database import Base
-from.task_model import Task
-from.annotation_model import Annotation  # Corrected import path
-from.user_model import User
+from .task_model import Task
+from .annotation_model import Annotation  # Corrected import path
+from .user_model import User
 
 
 class Project(Base):
@@ -33,7 +33,6 @@ class Project(Base):
 
     __tablename__ = 'project'
 
-
     id = Column(Integer, primary_key=True)
     title = Column(String)
     description = Column(String)
@@ -41,12 +40,13 @@ class Project(Base):
     updated_at = Column(DateTime)
     created_by = Column(Integer, ForeignKey('user.id'))
 
-    owner = relationship("User",back_populates="projects")
+    owner = relationship("User", back_populates="projects")
 
     tasks = relationship('Task', backref="project")
 
     total_tasks = column_property(
-        select(func.count()).where(Task.project_id == id).correlate_except(Task).scalar_subquery()
+        select(func.count()).where(Task.project_id ==
+                                   id).correlate_except(Task).scalar_subquery()
     )
 
     total_users_with_annotations = column_property(
