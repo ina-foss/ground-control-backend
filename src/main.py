@@ -9,7 +9,8 @@ from fastapi_keycloak_middleware import (KeycloakConfiguration,
                                          setup_keycloak_middleware, AuthorizationMethod)
 from src.config import settings
 from src.models.user_model import User
-from src.routers import projects, tasks, users, resources
+from src.routers import projects, tasks, users, resources, annotations
+
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
@@ -60,9 +61,10 @@ setup_keycloak_middleware(
         '/openapi.json',
         '/redoc'
     ],
-    #user_mapper=map_user,
+    # user_mapper=map_user,
     add_swagger_auth=True,
 )
+
 
 @app.get("/test")
 async def root() -> dict:
@@ -77,6 +79,7 @@ async def root() -> dict:
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
+app.include_router(annotations.router)
 app.include_router(resources.router)
 app.servers = [
     {
@@ -97,6 +100,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/management/health")
 async def info() -> dict:
