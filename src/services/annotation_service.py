@@ -1,9 +1,15 @@
+"""
+Service related to annotation objects
+
+Functions:
+- create_annotation_crud:
+- get_annotations_by_task_id_crud
+"""
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
 from fastapi.encoders import jsonable_encoder
 
 from src.models.annotation_model import Annotation
-from src.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
+from src.schemas.annotation_schemas import AnnotationCreate
 
 
 def create_annotation_crud(db: Session, annotation: AnnotationCreate):
@@ -12,7 +18,7 @@ def create_annotation_crud(db: Session, annotation: AnnotationCreate):
 
         Parameters:
         db (Session): Session object which contains connection information,
-        annotation (AnnotationCreate): Pydantic schemas which contains all information for creating database entry
+        annotation (AnnotationCreate): Pydantic schemas which contains all information
     """
 
     # Take all the attributes of AnnotationCreate schemas
