@@ -23,6 +23,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+# from src.models.project_model import Project, ProjectStatus, AnnotationType
+# from src.models.task_model import Task
+# from src.models.user_model import User
+# from src.models.prediction_model import Prediction
+# from src.models.annotation_model import Annotation
 def get_db():
     """
     Get a new database session and close it after use.

@@ -16,7 +16,7 @@ class UserDto(UserBaseDto):
     projects: list[ProjectDetailDto] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserWithTasksDto(UserDto):

@@ -6,6 +6,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKe
 from sqlalchemy.sql.expression import func
 from src.database import Base
 
+
 class Prediction(Base):
     """
     Represents a prediction record in the database.

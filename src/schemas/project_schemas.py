@@ -14,10 +14,17 @@ class ProjectBaseDto(BaseModel):
     """
     title: Optional[str]
     description: Optional[str]
+    status: Optional[str]
+    annotation_type: Optional[str]
+    is_published: Optional[bool]
+    empty_annotations: Optional[bool]
+    allow_skip: Optional[bool]
+    control_weights: Optional[int]
+    pinned_at: Optional[datetime]
     created_by: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProjectWithIdDto(ProjectBaseDto):
@@ -39,7 +46,7 @@ class ProjectDetailDto(ProjectWithIdDto):
     total_tasks: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProjectListDto(ProjectWithIdDto):
