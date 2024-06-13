@@ -8,9 +8,6 @@ from enum import Enum as PyEnum
 from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.sql.expression import func, select
 from src.database import Base
-<< << << < HEAD
-== == == =
->>>>>> > 1c30030(Add documentation)
 
 
 class ProjectStatus(PyEnum):
