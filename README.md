@@ -24,6 +24,20 @@ cd ground-control/backend/.dev
 docker-compose up -d
 ```
 
+### Alembic
+
+Pour générer un script de révision alembic après avoir modifié les fichiers models de l'application, se positionner dans le docker ou le virtual env et éxécuter : 
+
+```bash
+alembic revision --autogenerate -m "Add model changes"
+```
+
+Pour mettre à jour la base avec la dernière révision, éxécuter : 
+
+```bash
+alembic upgrade head
+```
+
 ### Bug Possible
 
 Pendant le developpement, il se peut que l'application Nuxt ne puisse plus se rafraîchir. Vous verrez alors dans le terminal du container ce genre d'erreur.
