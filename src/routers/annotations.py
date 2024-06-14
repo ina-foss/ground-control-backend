@@ -1,16 +1,23 @@
 """
    This module configures the routing of all the calls related to
    annotation object.
-   It maps each routes with the corresponding service and return the right DTO 
+   It maps each routes with the corresponding service and return the right DTO
    or the error status if something went wrong.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger
+
 from src.database import get_db
+from src.models.annotation_model import Annotation
 from src.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
-from src.services.annotation_service import create_annotation_crud, get_annotations_by_task_id_crud, get_annotations_by_id_crud, udpate_annotation_result_crud
+from src.services.annotation_service import (
+    create_annotation_crud,
+    get_annotations_by_task_id_crud,
+    get_annotations_by_id_crud,
+    udpate_annotation_result_crud,
+)
 
 logger = get_logger()
 router = APIRouter(tags=["annotation"])
@@ -52,7 +59,7 @@ def get_annotations_by_id(
 
 @router.get("/annotations/{task_id}", response_model=AnnotationDto)
 def get_annotation_by_task_id(
-        task_id: int, db: Session = Depends(get_db)) -> list[AnnotationDto]:
+        task_id: int, db: Session = Depends(get_db)) -> list[Annotation]:
     """
         Get a list of annotations that match the task_id attributes
     """
@@ -66,7 +73,7 @@ def update_annotation_result(
     """
         Edit the result of an existing annotation
     """
-    annotation = udpate_annotation_result_crud(id, result, db)
+    annotation = udpate_annotation_result_crud(db, result, id)
     if annotation is None:
         logger.error(f"Failed to retrieve annotation with id: {id}")
         raise HTTPException(status_code=404, detail="Annotation not found")

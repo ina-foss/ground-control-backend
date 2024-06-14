@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger

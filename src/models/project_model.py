@@ -1,13 +1,14 @@
 # Corrected import path
-from .task_model import Task
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
+from sqlalchemy.orm import relationship, column_property
+from sqlalchemy.sql.expression import func, select
+
+from src.database import Base
+from .task_model import Task
 from .user_model import User
 from .annotation_model import Annotation
 from enum import Enum as PyEnum
 
-from sqlalchemy.orm import relationship, column_property
-from sqlalchemy.sql.expression import func, select
-from src.database import Base
 
 
 class ProjectStatus(PyEnum):
