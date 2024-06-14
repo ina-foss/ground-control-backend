@@ -56,7 +56,7 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int):
     return db.query(Annotation).filter(Annotation.task_id == task_id).all()
 
 
-def edit_annotation_result_crud(db: Session, result: Dict[str, Any], id: int) -> Annotation:
+def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], id: int) -> Annotation:
     """
         Edit the attribute "result" of the annotation object that matches the ID.
 

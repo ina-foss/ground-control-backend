@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from latios.log import get_logger
 from src.database import get_db
 from src.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
-from src.services.annotation_service import create_annotation_crud, get_annotations_by_task_id_crud, get_annotations_by_id_crud, edit_annotation_result_crud
+from src.services.annotation_service import create_annotation_crud, get_annotations_by_task_id_crud, get_annotations_by_id_crud, udpate_annotation_result_crud
 
 logger = get_logger()
 router = APIRouter(tags=["annotation"])
@@ -61,12 +61,12 @@ def get_annotation_by_task_id(
 
 
 @router.patch("/annotation/{id}", response_model=AnnotationDto)
-def edit_annotation_result(
+def update_annotation_result(
         id: int, result: Dict[str, Any], db: Session = Depends(get_db)) -> AnnotationDto:
     """
         Edit the result of an existing annotation
     """
-    annotation = edit_annotation_result_crud(id, result, db)
+    annotation = udpate_annotation_result_crud(id, result, db)
     if annotation is None:
         logger.error(f"Failed to retrieve annotation with id: {id}")
         raise HTTPException(status_code=404, detail="Annotation not found")

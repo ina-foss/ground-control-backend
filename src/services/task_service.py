@@ -1,5 +1,8 @@
 from typing import Any, Dict
+
 from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
+
 from src.models.task_model import Task
 from src.schemas.task_schemas import TaskCreateDto
 
@@ -9,8 +12,7 @@ def get_task_by_id(db: Session, task_id: int):
 
 
 def create_task_crud(task: TaskCreateDto, db: Session):
-    db_task = Task(name=task.name, project_id=task.project_id,
-                   data=task.data, instruction=task.instruction)
+    db_task = Task(**jsonable_encoder(task))
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -19,7 +21,7 @@ def create_task_crud(task: TaskCreateDto, db: Session):
 
 def update_data_task_crud(id: int, data: Dict[str, Any], db: Session):
     db_task = get_task_by_id(db, task_id=id)
-    if (db_task is not None):
+    if db_task is not None:
         db_task.data = data
         db.commit()
         db.refresh(db_task)
