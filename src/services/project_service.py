@@ -16,8 +16,7 @@ def get_project_by_id(db: Session, project_id: int):
 
 
 def create_project_crud(db: Session, project: ProjectBaseDto):
-    db_project = Project(
-        title=project.title, description=project.description, created_by=project.created_by)
+    db_project = Project(**project.dict())
     db.add(db_project)
     db.commit()
     db.refresh(db_project)
@@ -27,10 +26,8 @@ def create_project_crud(db: Session, project: ProjectBaseDto):
 def update_project_crud(db: Session, project: ProjectBaseDto, project_id: int):
     db_project = db.query(Project).filter(Project.id == project_id).first()
     if db_project is not None:
-        db_project.title = project.title
-        db_project.description = project.description
-        db_project.updated_at = datetime.now()
-        db_project.created_by = project.created_by
+        for key, value in project.dict().items():
+            setattr(db_project, key, value)
         db.commit()
         db.refresh(db_project)
     return db_project

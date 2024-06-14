@@ -14,7 +14,7 @@ class Annotation(Base):
 
     Attributes:
         id (Integer): The unique identifier of the annotation.
-        user_id (Integer): The foreign key linking to the user who created the annotation.
+        user_email (String): The email address of the author of the annotation.
         result (JSON): The result of the annotation stored as JSON.
         created_at (DateTime): The timestamp when the annotation was created.
         updated_at (DateTime): The timestamp when the annotation was last updated.
@@ -28,7 +28,7 @@ class Annotation(Base):
     __tablename__ = 'annotation'
 
     id = Column(Integer, primary_key=True)
-    user_email = Column(Integer, ForeignKey('user.email'))
+    user_email = Column(String, ForeignKey('user.email'))
     result = Column(JSON)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)

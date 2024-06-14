@@ -14,7 +14,7 @@ class AnnotationCreate(BaseModel):
     """
        DTO to create an annotation object
     """
-    user_id: int
+    user_email: str
     task_id: int
     project_id: int
     result: Optional[Dict[str, Any]]
@@ -25,7 +25,6 @@ class AnnotationDto(AnnotationCreate):
     """
     DTO representing an annotation object, including association with task and project.
     """
-    id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     validated_at: Optional[datetime]

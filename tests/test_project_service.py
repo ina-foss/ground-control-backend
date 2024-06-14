@@ -3,8 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from src.database import Base
-from src.services.project_service import *
+from src.services.project_service import create_project_crud, get_projects, get_project_by_id, update_project_crud, delete_project_crud
 from src.schemas.project_schemas import ProjectBaseDto
+from src.models.project_model import ProjectStatus, AnnotationType
 
 
 @pytest.fixture(scope="session")
@@ -34,6 +35,20 @@ def db(db_engine):
     connection.close()
 
 
+project_data = {
+    "title": "Test Project 1",
+    "description": "Test description 2",
+    "status": "draft",
+    "annotation_type": "segmentation",
+    "is_published": True,
+    "allow_skip": True,
+    "control_weights": 10,
+    "empty_annotations": True,
+    "pinned_at": "2022-12-27 08:26:49.219717",
+    "created_by": "john@example.com",
+}
+
+
 def test_get_projects(db: Session):
     """
         Test to retrieve all the project in the database
@@ -41,12 +56,26 @@ def test_get_projects(db: Session):
     project_data_1 = {
         "title": "Test Project 1",
         "description": "Test description 2",
-        "created_by": 1,
+        "status": "draft",
+        "annotation_type": "segmentation",
+        "is_published": True,
+        "allow_skip": True,
+        "control_weights": 10,
+        "empty_annotations": True,
+        "pinned_at": "2022-12-27 08:26:49.219717",
+        "created_by": "john@example.com",
     }
     project_data_2 = {
-        "title": "Test Project 2 ",
+        "title": "Test Project 2",
         "description": "Test description 2",
-        "created_by": 2,
+        "status": "draft",
+        "annotation_type": "segmentation",
+        "is_published": True,
+        "allow_skip": True,
+        "control_weights": 10,
+        "empty_annotations": True,
+        "pinned_at": "2022-12-27 08:26:49.219717",
+        "created_by": "jane@example.com",
     }
 
     created_project_1 = create_project_crud(
@@ -71,11 +100,6 @@ def test_get_project_by_id(db: Session):
     """
         Test to get a singualr project given its id.
     """
-    project_data = {
-        "title": "Test Project",
-        "description": "Test description",
-        "created_by": 1,
-    }
     created_project = create_project_crud(db, ProjectBaseDto(**project_data))
 
     retrieved_project = get_project_by_id(db, created_project.id)
@@ -91,11 +115,6 @@ def test_create_project_crud(db: Session):
     """
         Test the creation of a project
     """
-    project_data = {
-        "title": "Test Project",
-        "description": "Test description",
-        "created_by": 1,
-    }
     created_project = create_project_crud(db, ProjectBaseDto(**project_data))
 
     assert created_project is not None
@@ -109,17 +128,19 @@ def test_update_project_crud(db: Session):
     """
         Test update a project attributes (title, description and author)
     """
-    project_data = {
-        "title": "Test Project",
-        "description": "Test description",
-        "created_by": 1,
-    }
     created_project = create_project_crud(db, ProjectBaseDto(**project_data))
 
     updated_task_data = {
-        "title": "New Project",
-        "description": "New Description",
-        "created_by": 2,
+        "title": "Test Project 2",
+        "description": "Test description 2",
+        "status": "draft",
+        "annotation_type": "segmentation",
+        "is_published": True,
+        "allow_skip": True,
+        "control_weights": 10,
+        "empty_annotations": True,
+        "pinned_at": "2022-12-27 08:26:49.219717",
+        "created_by": "jane@example.com",
     }
     update_project_crud(db, ProjectBaseDto(
         **updated_task_data), created_project.id)
@@ -136,11 +157,6 @@ def test_delete_project_crud(db: Session):
     """
         Test the deletion of a project given its id
     """
-    project_data = {
-        "title": "Test Project",
-        "description": "Test description",
-        "created_by": 1,
-    }
     created_project = create_project_crud(db, ProjectBaseDto(**project_data))
 
     delete_project_crud(db, created_project.id)

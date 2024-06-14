@@ -35,23 +35,23 @@ def db_session(db_engine):
 
 
 annotation_data = {
-    "user_id": 1,
+    "user_email": "user.email@ina.fr",
     "task_id": 1,
     "project_id": 1,
     "result": {
         "key": "value"
     },
-    "status": "waiting"
+    "status": "DRAFT"
 }
 
 annotation_data_2 = {
-    "user_id": 2,
+    "user_email": "user2.email@ina.fr",
     "task_id": 1,
     "project_id": 1,
     "result": {
         "key": "value"
     },
-    "status": "waiting"
+    "status": "DRAFT"
 }
 
 
@@ -64,7 +64,7 @@ def test_create_annotation_crud(db_session: Session):
 
     assert created_annotation is not None
     assert created_annotation.id is not None
-    assert created_annotation.user_id == annotation_data["user_id"]
+    assert created_annotation.user_email == annotation_data["user_email"]
     assert created_annotation.task_id == annotation_data["task_id"]
     assert created_annotation.project_id == annotation_data["project_id"]
     assert created_annotation.result == annotation_data["result"]
@@ -89,13 +89,13 @@ def test_get_annotations_by_task_id_crud(db_session: Session):
 
     assert retrieved_annotations is not None
     assert retrieved_annotations[1].id == created_annotation_1.id
-    assert retrieved_annotations[1].user_id == annotation_data["user_id"]
+    assert retrieved_annotations[1].user_email == annotation_data["user_email"]
     assert retrieved_annotations[1].task_id == annotation_data["task_id"]
     assert retrieved_annotations[1].project_id == annotation_data["project_id"]
     assert retrieved_annotations[1].result == annotation_data["result"]
     assert retrieved_annotations[1].status == annotation_data["status"]
     assert retrieved_annotations[2].id == created_annotation_2.id
-    assert retrieved_annotations[2].user_id == annotation_data_2["user_id"]
+    assert retrieved_annotations[2].user_email == annotation_data_2["user_email"]
     assert retrieved_annotations[2].task_id == annotation_data_2["task_id"]
     assert retrieved_annotations[2].project_id == annotation_data_2["project_id"]
     assert retrieved_annotations[2].result == annotation_data_2["result"]

@@ -61,7 +61,7 @@ class Project(Base):
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
-    created_by = Column(Integer, ForeignKey('user.id'))
+    created_by = Column(String, ForeignKey('user.email'))
 
     owner = relationship("User", back_populates="projects")
     tasks = relationship('Task', backref="project")
@@ -72,6 +72,6 @@ class Project(Base):
     )
 
     total_users_with_annotations = column_property(
-        select(func.count(User.id.distinct())).join(Annotation).join(Task).where(
+        select(func.count(User.email.distinct())).join(Annotation).join(Task).where(
             Task.project_id == id).correlate_except(Task).scalar_subquery()
     )
