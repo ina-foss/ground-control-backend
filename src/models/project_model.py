@@ -1,22 +1,50 @@
-# Corrected import path
-from .task_model import Task
+"""
+Define the SqlAlchemy models and enums for the project management application.
+
+This module includes the definition of the Project model and related enums.
+The Project model represents a project record in the database and includes various attributes
+such as title, description, status, annotation type, and relationships with other models like
+User and Task. The module also defines the ProjectStatus and AnnotationType enums to represent
+the status of a project and types of annotations, respectively.
+
+Classes:
+    ProjectStatus (PyEnum): Enum representing the different statuses a project can have.
+    AnnotationType (PyEnum): Enum representing the different types of annotations.
+    Project (Base): SqlAlchemy model representing a project record in the database.
+"""
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
+from sqlalchemy.orm import relationship, column_property
+from sqlalchemy.sql.expression import func, select
+
+from src.database import Base
+from .task_model import Task
 from .user_model import User
 from .annotation_model import Annotation
 from enum import Enum as PyEnum
 
-from sqlalchemy.orm import relationship, column_property
-from sqlalchemy.sql.expression import func, select
-from src.database import Base
-
 
 class ProjectStatus(PyEnum):
+    """
+    Enum representing the different statuses a project can have.
+
+    Attributes:
+        DRAFT (str): The project is in draft status.
+        PENDING (str): The project is pending and awaiting further actions.
+        ENDED (str): The project has ended.
+    """
     DRAFT = "draft"
     PENDING = "pending"
     ENDED = "ended"
 
 
 class AnnotationType(PyEnum):
+    """
+    Enum representing the different types of annotations.
+
+    Attributes:
+        SEGMENTATION (str): The annotation type for segmentation tasks.
+        TRANSCRIPTION (str): The annotation type for transcription tasks.
+    """
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
 
