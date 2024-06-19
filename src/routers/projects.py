@@ -77,7 +77,7 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     return updated_project
 
 
-@router.delete("/project/{project_id}", status_code=status.HTTP_200_OK, response_model=ProjectWithIdDto)
+@router.delete("/project/{project_id}", status_code=status.HTTP_200_OK,response_model=ProjectWithIdDto)
 def delete_project(project_id: int, db: Session = Depends(get_db)):
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
