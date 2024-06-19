@@ -92,7 +92,7 @@ class Project(Base):
     created_by = Column(String, ForeignKey('user.email'))
 
     owner = relationship("User", back_populates="projects")
-    tasks = relationship('Task', backref="project")
+    tasks = relationship('Task', backref="project", cascade="all, delete-orphan")
 
     total_tasks = column_property(
         select(func.count()).where(Task.project_id ==

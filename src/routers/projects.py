@@ -17,7 +17,7 @@ Dependencies:
     - Business logic for project operations in `src.services.project_service`.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from src.database import get_db
@@ -77,8 +77,8 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     return updated_project
 
 
-@router.delete("/project/{project_id}", response_model=ProjectWithIdDto)
-def delete_project(project_id: int, db: Session = Depends(get_db)) -> ProjectWithIdDto:
+@router.delete("/project/{project_id}", status_code=status.HTTP_200_OK, response_model=ProjectWithIdDto)
+def delete_project(project_id: int, db: Session = Depends(get_db)):
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:

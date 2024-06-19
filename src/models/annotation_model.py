@@ -28,7 +28,7 @@ class Annotation(Base):
     __tablename__ = 'annotation'
 
     id = Column(Integer, primary_key=True)
-    user_email = Column(String, ForeignKey('user.email'))
+    user_email = Column(String, ForeignKey("user.email"), nullable=False)
     result = Column(JSON)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)

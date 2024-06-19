@@ -12,8 +12,9 @@ from .user_base_schemas import UserBaseDto
 
 class AnnotationCreate(BaseModel):
     """
-       DTO to create an annotation object
+    DTO to create an annotation object
     """
+
     user_email: str
     task_id: int
     project_id: int
@@ -25,10 +26,11 @@ class AnnotationDto(AnnotationCreate):
     """
     DTO representing an annotation object, including association with task and project.
     """
+
+    id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     validated_at: Optional[datetime]
-    user: UserBaseDto = {}
 
     class Config:
         from_attributes = True
