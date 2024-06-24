@@ -17,10 +17,11 @@ Dependencies:
     - Business logic for project operations in `src.services.project_service`.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from src.database import get_db
+from src.models.project_model import Project
 from src.schemas.project_schemas import (ProjectBaseDto,
                                          ProjectDetailDto,
                                          ProjectListDto,
@@ -38,7 +39,7 @@ NOT_FOUND_STR = "Project not found"
 
 @router.get("/projects/", response_model=list[ProjectDetailDto])
 def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
-        -> list[ProjectDetailDto]:
+        -> list[Project]:
     """Retrieve a list of projects with pagination support."""
     projects = get_projects(db, skip=skip, limit=limit)
     return projects
@@ -56,7 +57,7 @@ def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) \
 
 
 @router.get("/project/{project_id}", response_model=ProjectListDto, response_model_by_alias=False)
-def read_project(project_id: int, db: Session = Depends(get_db)) -> ProjectListDto:
+def read_project(project_id: int, db: Session = Depends(get_db)) -> Project:
     """Get details of a single project by ID."""
     project = get_project_by_id(db, project_id=project_id)
     if project is None:
@@ -67,7 +68,7 @@ def read_project(project_id: int, db: Session = Depends(get_db)) -> ProjectListD
 
 @router.put("/project/{project_id}", response_model=ProjectWithIdDto)
 def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depends(get_db)) \
-        -> ProjectWithIdDto:
+        -> Project:
     """Update an existing project by ID."""
     updated_project = update_project_crud(db, project, project_id)
     if updated_project is None:
@@ -76,8 +77,8 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     return updated_project
 
 
-@router.delete("/project/{project_id}", response_model=ProjectWithIdDto)
-def delete_project(project_id: int, db: Session = Depends(get_db)) -> ProjectWithIdDto:
+@router.delete("/project/{project_id}", status_code=status.HTTP_200_OK,response_model=ProjectWithIdDto)
+def delete_project(project_id: int, db: Session = Depends(get_db)):
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:

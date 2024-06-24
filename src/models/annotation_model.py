@@ -4,6 +4,7 @@ This module defines the Annotation model for the application.
 
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.expression import func
 from src.database import Base
 
 
@@ -13,7 +14,7 @@ class Annotation(Base):
 
     Attributes:
         id (Integer): The unique identifier of the annotation.
-        user_id (Integer): The foreign key linking to the user who created the annotation.
+        user_email (String): The email address of the author of the annotation.
         result (JSON): The result of the annotation stored as JSON.
         created_at (DateTime): The timestamp when the annotation was created.
         updated_at (DateTime): The timestamp when the annotation was last updated.
@@ -27,9 +28,9 @@ class Annotation(Base):
     __tablename__ = 'annotation'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_email = Column(String, ForeignKey("user.email"), nullable=False)
     result = Column(JSON)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     validated_at = Column(DateTime)
     task_id = Column(Integer, ForeignKey('task.id'))

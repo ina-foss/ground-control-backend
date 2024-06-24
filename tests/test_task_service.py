@@ -2,13 +2,14 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-from src.database import Base, SessionLocal
-from src.models.project_model import Project
+from src.database import Base
 from src.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
 from src.schemas.task_schemas import TaskCreateDto
 
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing
+
+
 @pytest.fixture(scope="session")
 def db_engine():
     engine = create_engine("sqlite:///:memory:")
@@ -16,6 +17,7 @@ def db_engine():
     yield engine
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
+
 
 @pytest.fixture(scope="session")
 def db_session(db_engine):
@@ -28,12 +30,13 @@ def db_session(db_engine):
     transaction.rollback()
     connection.close()
 
+
 task_data = {
     "name": "Test Task",
     "instruction": "Test instruction",
     "data": {"key": "value"},
     "project_id": 1
-    }
+}
 
 
 def test_get_task_by_id(db_session: Session):
@@ -67,7 +70,8 @@ def test_update_data_task_crud(db_session: Session):
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
     updated_data = {"new_key": "new_value"}
-    updated_task = update_data_task_crud(created_task.id, updated_data, db_session)
+    update_data_task_crud(
+        created_task.id, updated_data, db_session)
 
     retrieved_updated_task = get_task_by_id(db_session, created_task.id)
 

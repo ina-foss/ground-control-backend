@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
+from src.models.project_model import ProjectStatus, AnnotationType
 
 
 class ProjectBaseDto(BaseModel):
@@ -14,14 +15,14 @@ class ProjectBaseDto(BaseModel):
     """
     title: Optional[str]
     description: Optional[str]
-    status: Optional[str]
-    annotation_type: Optional[str]
+    status: Optional[ProjectStatus]
+    annotation_type: Optional[AnnotationType]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
     control_weights: Optional[int]
     pinned_at: Optional[datetime]
-    created_by: int
+    created_by: str
 
     class Config:
         from_attributes = True
@@ -54,6 +55,5 @@ class ProjectListDto(ProjectWithIdDto):
     DTO for listing projects, including a list of tasks.
     """
     tasks: list[TaskListDto] = []
-
 
 from .task_schemas import TaskBaseDto, TaskListDto

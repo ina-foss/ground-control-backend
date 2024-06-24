@@ -5,11 +5,15 @@ This module sets up the main FastAPI application, including routes, middleware, 
 import typing
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_keycloak_middleware import (KeycloakConfiguration,
-                                         setup_keycloak_middleware, AuthorizationMethod)
+from fastapi_keycloak_middleware import (
+    KeycloakConfiguration,
+    setup_keycloak_middleware,
+    AuthorizationMethod,
+)
 from src.config import settings
 from src.models.user_model import User
-from src.routers import projects, tasks, users, resources
+from src.routers import projects, tasks, users, resources, annotations
+
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
@@ -25,6 +29,7 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     print(userinfo)
     return User()
 
+
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
     url=settings.sso.url,
@@ -35,7 +40,7 @@ keycloak_config = KeycloakConfiguration(
     verify=True,
     validate_token=True,
     authorization_method=AuthorizationMethod.CLAIM,
-    authorization_claim='roles',
+    authorization_claim="roles",
     use_introspection_endpoint=False,
     swagger_client_id="web_app",
     swagger_auth_scopes=["openid"],  # Optional
@@ -45,7 +50,7 @@ keycloak_config = KeycloakConfiguration(
         "verify_signature": True,
         "verify_aud": False,
         "verify_exp": True,
-    }
+    },
 )
 
 app = FastAPI()
@@ -54,15 +59,11 @@ app = FastAPI()
 setup_keycloak_middleware(
     app,
     keycloak_configuration=keycloak_config,
-    exclude_patterns=[
-        '/management/*',
-        '/docs',
-        '/openapi.json',
-        '/redoc'
-    ],
-    #user_mapper=map_user,
+    exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
+    # user_mapper=map_user,
     add_swagger_auth=True,
 )
+
 
 @app.get("/test")
 async def root() -> dict:
@@ -74,21 +75,19 @@ async def root() -> dict:
     """
     return {"message": "Hello World"}
 
+
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
+app.include_router(annotations.router)
 app.include_router(resources.router)
-app.servers = [
-    {
-        "url": "http://localhost:8000"
-    }
-]
+app.servers = [{"url": "http://localhost:8000"}]
 
 origins = [
     "http://localhost:3000",
     "https://localhost:3000",
     "http://frontend:3000",
-    "https://frontend:3000"
+    "https://frontend:3000",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -98,6 +97,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/management/health")
 async def info() -> dict:
     """
@@ -106,6 +106,4 @@ async def info() -> dict:
     Returns:
         dict: A dictionary indicating the service status.
     """
-    return {
-        "status": "up"
-    }
+    return {"status": "up"}

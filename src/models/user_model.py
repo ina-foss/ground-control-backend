@@ -22,8 +22,7 @@ class User(Base):
 
     __tablename__ = 'user'
 
-    id = Column(Integer, primary_key=True)
-    email = Column(String)
+    email = Column(String, primary_key=True, unique=True, nullable=False)
     role = Column(String)
     created_at = Column(DateTime)
 

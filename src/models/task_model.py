@@ -31,6 +31,6 @@ class Task(Base):
     updated_at = Column(DateTime)
     data = Column(JSON)
     project_id = Column(Integer, ForeignKey('project.id'))
-
-    annotations = relationship("Annotation", backref="task")
+    # TODO: update the alembic model to include cascade field in relations
+    annotations = relationship("Annotation", backref="task", cascade="all, delete-orphan")
     # predictions = relationship("Prediction", backref="task")
