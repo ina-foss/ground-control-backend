@@ -6,7 +6,7 @@ dynamic = [
 ]
 description = "INA Ground Control"
 authors = [
-    {name = "Pablo RAOULT", email="praoult-prestataire@ina.fr"},
+    {name = "Pablo RATOUIT", email="pratouit-prestataire@ina.fr"},
     {name = "Benjamin ELKAYS", email="belkays@ina.fr"},
     {name = "Molka JELASSI", email="mjelassi-prestataire@ina.fr"},
     {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"}
