@@ -47,6 +47,11 @@ services:
     build:
       context: ../
       dockerfile: .dev/Dockerfile
+    environment:
+      http_proxy: ''
+      https_proxy: ''
+      HTTP_PROXY: ''
+      HTTPS_PROXY: ''
     volumes:
       - ../:/code
     ports:

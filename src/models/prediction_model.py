@@ -13,8 +13,8 @@ class Prediction(Base):
 
     Attributes:
         id (Integer): The unique identifier of the prediction.
-        model_name (String): The name of the model used for the prediction.
-        model_version (String): The version of the model used for the prediction.
+        name (String): The name of the model used for the prediction.
+        version (String): The version of the model used for the prediction.
         result (JSON): The result of the prediction stored as JSON.
         score (Float): The confidence score of the prediction.
         created_at (DateTime): The timestamp when the prediction was created.
@@ -26,8 +26,8 @@ class Prediction(Base):
     __tablename__ = 'prediction'
 
     id = Column(Integer, primary_key=True)
-    model_name = Column(String)
-    model_version = Column(String)
+    name = Column(String)
+    version = Column(String)
     result = Column(JSON)
     score = Column(Float)
     created_at = Column(DateTime, default=func.now())  # Corrected usage
