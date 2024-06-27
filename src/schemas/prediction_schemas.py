@@ -13,8 +13,8 @@ class PredictionDto(BaseModel):
     DTO representing a prediction object, including  association with a task and project.
     """
     id: int
-    model_name: Optional[str]
-    model_version: Optional[str]
+    name: Optional[str]
+    version: Optional[str]
     result: Optional[Dict[str, Any]]
     score: Optional[float]
     created_at: Optional[datetime]

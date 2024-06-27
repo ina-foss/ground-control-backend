@@ -1,7 +1,7 @@
 """
 This module sets up the main FastAPI application, including routes, middleware, and configuration.
 """
-
+import uvicorn
 import typing
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +29,7 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     print(userinfo)
     return User()
 
-
+print('d',settings.sso)
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
     url=settings.sso.url,
@@ -60,7 +60,6 @@ setup_keycloak_middleware(
     app,
     keycloak_configuration=keycloak_config,
     exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
-    # user_mapper=map_user,
     add_swagger_auth=True,
 )
 
@@ -81,7 +80,7 @@ app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(annotations.router)
 app.include_router(resources.router)
-app.servers = [{"url": "http://localhost:8000"}]
+#app.servers = [{"url": "http://localhost:8000"}]
 
 origins = [
     "http://localhost:3000",
@@ -107,3 +106,6 @@ async def info() -> dict:
         dict: A dictionary indicating the service status.
     """
     return {"status": "up"}
+
+if __name__ == '__main__':
+  uvicorn.run("src.main:app", host="0.0.0.0", port=8000,log_level="debug", reload=True )
