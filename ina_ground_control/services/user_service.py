@@ -1,7 +1,7 @@
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from src.models.user_model import User
-from src.schemas.user_base_schemas import UserBaseDto
+from ina_ground_control.models.user_model import User
+from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):

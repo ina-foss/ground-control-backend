@@ -32,5 +32,5 @@ data/
 *-pub.pem
 .vscode/
 .idea/
-src/.secrets.yaml
+ina_ground_control/.secrets.yaml
 .pypirc

@@ -2,10 +2,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-from src.database import Base
-from src.services.project_service import create_project_crud, get_projects, get_project_by_id, update_project_crud, delete_project_crud
-from src.schemas.project_schemas import ProjectBaseDto
-from src.models.project_model import ProjectStatus, AnnotationType
+from ina_ground_control.database import Base
+from ina_ground_control.services.project_service import create_project_crud, get_projects, get_project_by_id, update_project_crud, delete_project_crud
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.models.project_model import ProjectStatus, AnnotationType
 
 
 @pytest.fixture(scope="session")

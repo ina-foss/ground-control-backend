@@ -1,5 +1,5 @@
 [project]
-name = "ground_control_backend"
+name = "ina_ground_control"
 dynamic = [
     "version",
     "dependencies"
@@ -35,4 +35,4 @@ dependencies = {file = ["requirements.txt"]}
 find = {namespaces = false}
 
 [tool.pytest.ini_options]
-addopts = "--cov=src --cov-report=html"
+addopts = "--cov=ina_ground_control --cov-report=html"

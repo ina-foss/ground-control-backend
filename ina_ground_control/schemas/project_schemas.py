@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from src.models.project_model import ProjectStatus, AnnotationType
+from ina_ground_control.models.project_model import ProjectStatus, AnnotationType
 
 
 class ProjectBaseDto(BaseModel):

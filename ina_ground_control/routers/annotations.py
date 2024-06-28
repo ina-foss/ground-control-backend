@@ -9,10 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 
-from src.database import get_db
-from src.models.annotation_model import Annotation
-from src.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
-from src.services.annotation_service import (
+from ina_ground_control.database import get_db
+from ina_ground_control.models.annotation_model import Annotation
+from ina_ground_control.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
+from ina_ground_control.services.annotation_service import (
     create_annotation_crud,
     get_annotations_by_task_id_crud,
     get_annotations_by_id_crud,

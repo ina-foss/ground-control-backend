@@ -16,7 +16,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, E
 from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.sql.expression import func, select
 
-from src.database import Base
+from ina_ground_control.database import Base
 from .task_model import Task
 from .user_model import User
 from .annotation_model import Annotation

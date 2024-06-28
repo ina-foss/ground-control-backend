@@ -10,9 +10,9 @@ from fastapi_keycloak_middleware import (
     setup_keycloak_middleware,
     AuthorizationMethod,
 )
-from src.config import settings
-from src.models.user_model import User
-from src.routers import projects, tasks, users, resources, annotations
+from ina_ground_control.config import settings
+from ina_ground_control.models.user_model import User
+from ina_ground_control.routers import projects, tasks, users, resources, annotations
 
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:

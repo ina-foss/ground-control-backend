@@ -3,9 +3,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-from src.database import Base
-from src.schemas.user_base_schemas import UserBaseDto
-from src.services.user_service import create_user_crud, get_user_by_email_crud
+from ina_ground_control.database import Base
+from ina_ground_control.schemas.user_base_schemas import UserBaseDto
+from ina_ground_control.services.user_service import create_user_crud, get_user_by_email_crud
 
 
 @pytest.fixture(scope="session")

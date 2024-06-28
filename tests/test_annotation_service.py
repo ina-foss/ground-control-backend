@@ -2,9 +2,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-from src.database import Base
-from src.services.annotation_service import get_annotations_by_task_id_crud, create_annotation_crud
-from src.schemas.annotation_schemas import AnnotationCreate
+from ina_ground_control.database import Base
+from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud, create_annotation_crud
+from ina_ground_control.schemas.annotation_schemas import AnnotationCreate
 
 
 @pytest.fixture(scope="session")

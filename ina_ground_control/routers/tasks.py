@@ -1,14 +1,35 @@
+"""
+This module defines the API endpoints related to task management within
+the application.
+Includes routes for creating, retrieving, and updating tasks.
+Utilizes database sessions for CRUD operations and handles exceptions
+appropriately.
+
+Endpoints:
+    /task/{task_id}: Retrieves a task by its ID.
+    /task/: Creates a new task.
+    /task/{task_id}: Updates an existing task by its ID.
+
+Dependencies:
+    - External services: None.
+    - Internal utilities: Database session, task service for CRUD operations.
+
+Configuration:
+    - Database session configuration and task schemas are defined in the
+    `src` module.
+"""
+
+from typing import Dict, Any, List
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger
-from src.database import get_db
-from src.schemas.task_schemas import TaskListDto, TaskCreateDto
-from src.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
+from ina_ground_control.database import get_db
+from ina_ground_control.schemas.task_schemas import TaskListDto, TaskCreateDto
+from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
 
 logger = get_logger()
 router = APIRouter(tags=["task"])
-
 
 @router.get("/task/{task_id}", response_model=TaskListDto)
 def read_task(task_id: int, db: Session = Depends(get_db)):
@@ -25,10 +46,9 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
     """
     task = get_task_by_id(db, task_id=task_id)
     if task is None:
-        logger.error(f"Failed to retrieve task with id: {task_id}")
+        logger.error("Failed to retrieve task with id: %d", task_id)
         raise HTTPException(status_code=404, detail="Task not found")
     return task
-
 
 @router.post("/task/", response_model=TaskCreateDto)
 def create_task(task: TaskCreateDto, db: Session = Depends(get_db)):
@@ -44,9 +64,8 @@ def create_task(task: TaskCreateDto, db: Session = Depends(get_db)):
     try:
         return create_task_crud(task, db)
     except Exception as e:
-        logger.error(f"Failed to create task: {e}")
-        raise HTTPException(status_code=400, detail="Failed to create task")
-
+        logger.error("Failed to create task: %s", e)
+        raise HTTPException(status_code=400, detail="Failed to create task") from e
 
 @router.patch("/task/{task_id}", response_model=TaskListDto)
 def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(get_db)):
@@ -64,6 +83,6 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
     """
     task = update_data_task_crud(task_id, data, db)
     if task is None:
-        logger.error(f"Failed to update task with id: {task_id}")
+        logger.error("Failed to update task with id: %d", task_id)
         raise HTTPException(status_code=404, detail="Task not found")
     return task

@@ -22,12 +22,12 @@ project_root = os.path.join(current_dir, '..', '..')
 sys.path.append(project_root)
 
 # Now, import the Base from your database.py file
-from src.database import Base
-from src.models.project_model import Project, ProjectStatus, AnnotationType
-from src.models.task_model import Task
-from src.models.user_model import User
-from src.models.prediction_model import Prediction
-from src.models.annotation_model import Annotation
+from ina_ground_control.database import Base
+from ina_ground_control.models.project_model import Project, ProjectStatus, AnnotationType
+from ina_ground_control.models.task_model import Task
+from ina_ground_control.models.user_model import User
+from ina_ground_control.models.prediction_model import Prediction
+from ina_ground_control.models.annotation_model import Annotation
 
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata

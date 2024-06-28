@@ -4,7 +4,7 @@ This module defines the Task model for the application.
 
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
-from src.database import Base
+from ina_ground_control.database import Base
 
 class Task(Base):
     """
@@ -22,7 +22,7 @@ class Task(Base):
          for the task.
     """
 
-    __tablename__ = 'task'
+    __tablename__ = "task"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -30,7 +30,7 @@ class Task(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     data = Column(JSON)
-    project_id = Column(Integer, ForeignKey('project.id'))
+    project_id = Column(Integer, ForeignKey("project.id"))
     # TODO: update the alembic model to include cascade field in relations
     annotations = relationship("Annotation", backref="task", cascade="all, delete-orphan")
     # predictions = relationship("Prediction", backref="task")

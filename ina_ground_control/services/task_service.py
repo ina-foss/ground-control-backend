@@ -3,8 +3,8 @@ from typing import Any, Dict
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 
-from src.models.task_model import Task
-from src.schemas.task_schemas import TaskCreateDto
+from ina_ground_control.models.task_model import Task
+from ina_ground_control.schemas.task_schemas import TaskCreateDto
 
 
 def get_task_by_id(db: Session, task_id: int):

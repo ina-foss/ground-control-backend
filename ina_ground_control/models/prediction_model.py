@@ -4,7 +4,7 @@ This module defines the Prediction model for the application.
 
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.sql.expression import func
-from src.database import Base
+from ina_ground_control.database import Base
 
 
 class Prediction(Base):

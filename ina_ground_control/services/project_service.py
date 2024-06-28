@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from src.models.project_model import Project
-from src.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.models.project_model import Project
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 
 
 def get_projects(db: Session, skip: int = 0, limit: int = 100):

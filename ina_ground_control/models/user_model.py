@@ -4,7 +4,7 @@ This module defines the User model for the application.
 
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
-from src.database import Base
+from ina_ground_control.database import Base
 
 
 class User(Base):
@@ -20,7 +20,7 @@ class User(Base):
          projects owned by the user.
     """
 
-    __tablename__ = 'user'
+    __tablename__ = "user"
 
     email = Column(String, primary_key=True, unique=True, nullable=False)
     role = Column(String)

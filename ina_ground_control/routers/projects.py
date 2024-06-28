@@ -20,17 +20,17 @@ Dependencies:
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from latios.log import get_logger
-from src.database import get_db
-from src.models.project_model import Project
-from src.schemas.project_schemas import (ProjectBaseDto,
-                                         ProjectDetailDto,
-                                         ProjectListDto,
-                                         ProjectWithIdDto)
-from src.services.project_service import (get_projects,
-                                          create_project_crud,
-                                          get_project_by_id,
-                                          update_project_crud,
-                                          delete_project_crud)
+from ina_ground_control.database import get_db
+from ina_ground_control.models.project_model import Project
+from ina_ground_control.schemas.project_schemas import (ProjectBaseDto,
+                                                        ProjectDetailDto,
+                                                        ProjectListDto,
+                                                        ProjectWithIdDto)
+from ina_ground_control.services.project_service import (get_projects,
+                                                         create_project_crud,
+                                                         get_project_by_id,
+                                                         update_project_crud,
+                                                         delete_project_crud)
 
 logger = get_logger()
 router = APIRouter(tags=["project"])
@@ -46,22 +46,20 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 
 
 @router.post("/project/", response_model=ProjectDetailDto)
-def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) \
-        -> ProjectDetailDto:
+def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) -> ProjectDetailDto:
     """Create a new project."""
     try:
         return create_project_crud(db, project)
     except Exception as e:
-        logger.error(f"Failed to create project: {e}")
-        raise HTTPException(status_code=400, detail="Failed to create project")
-
+        logger.error("Failed to create project: %s", e)
+        raise HTTPException(status_code=400, detail="Failed to create project") from e
 
 @router.get("/project/{project_id}", response_model=ProjectListDto, response_model_by_alias=False)
 def read_project(project_id: int, db: Session = Depends(get_db)) -> Project:
     """Get details of a single project by ID."""
     project = get_project_by_id(db, project_id=project_id)
     if project is None:
-        logger.error(f"Failed to retrieve project with id: {project_id}")
+        logger.error("Failed to retrieve project with id: %d", project_id)
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return project
 
@@ -72,7 +70,7 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     """Update an existing project by ID."""
     updated_project = update_project_crud(db, project, project_id)
     if updated_project is None:
-        logger.error(f"Failed to update project with id: {project_id}")
+        logger.error("Failed to update project with id: %d", project_id)
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return updated_project
 
@@ -82,6 +80,6 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:
-        logger.error(f"Failed to delete project with id: {project_id}")
+        logger.error("Failed to delete project with id: %d", project_id)
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return deleted_project

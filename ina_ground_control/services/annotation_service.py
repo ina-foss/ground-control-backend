@@ -9,8 +9,8 @@ from typing import Any, Dict
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 
-from src.models.annotation_model import Annotation
-from src.schemas.annotation_schemas import AnnotationCreate
+from ina_ground_control.models.annotation_model import Annotation
+from ina_ground_control.schemas.annotation_schemas import AnnotationCreate
 
 
 def create_annotation_crud(db: Session, annotation: AnnotationCreate):

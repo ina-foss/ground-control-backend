@@ -11,5 +11,5 @@ def convert(segments):
     Args:
         segments (list): The segment data to be converted.
     """
-    with open("tasks.json", 'w', encoding='utf-8') as file:
-        json.dump({'data': segments, 'predictions': []}, file)
+    with open("tasks.json", "w", encoding="utf-8") as file:
+        json.dump({"data": segments, "predictions": []}, file)

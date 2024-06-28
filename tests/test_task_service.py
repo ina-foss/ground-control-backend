@@ -2,9 +2,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-from src.database import Base
-from src.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
-from src.schemas.task_schemas import TaskCreateDto
+from ina_ground_control.database import Base
+from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
+from ina_ground_control.schemas.task_schemas import TaskCreateDto
 
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing

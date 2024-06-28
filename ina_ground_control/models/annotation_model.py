@@ -5,7 +5,7 @@ This module defines the Annotation model for the application.
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
-from src.database import Base
+from ina_ground_control.database import Base
 
 
 class Annotation(Base):
@@ -25,7 +25,7 @@ class Annotation(Base):
         user (relationship): Relationship to the User model.
     """
 
-    __tablename__ = 'annotation'
+    __tablename__ = "annotation"
 
     id = Column(Integer, primary_key=True)
     user_email = Column(String, ForeignKey("user.email"), nullable=False)
@@ -33,8 +33,8 @@ class Annotation(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     validated_at = Column(DateTime)
-    task_id = Column(Integer, ForeignKey('task.id'))
-    project_id = Column(Integer, ForeignKey('project.id'))
+    task_id = Column(Integer, ForeignKey("task.id"))
+    project_id = Column(Integer, ForeignKey("project.id"))
     status = Column(String)
 
     user = relationship("User", backref="annotations")
