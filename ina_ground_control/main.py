@@ -108,4 +108,4 @@ async def info() -> dict:
     return {"status": "up"}
 
 if __name__ == '__main__':
-  uvicorn.run("src.main:app", host="0.0.0.0", port=8000,log_level="debug", reload=True )
+  uvicorn.run("ina_ground_control.main:app", host="0.0.0.0", port=8000,log_level="debug", reload=True )

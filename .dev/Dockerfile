@@ -13,6 +13,6 @@ COPY .. .
 COPY ./alembic /code/alembic
 
 
-CMD ["sh", "-c", "alembic upgrade head && python3 -m src.main"]
+CMD ["sh", "-c", "alembic upgrade head && python3 -m ina_ground_control.main"]
 
 
