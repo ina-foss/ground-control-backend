@@ -3,3 +3,5 @@ PyJWT
 cryptography
 twine==5.1.0
 build
+sphinx==7.3.7
+myst-parser==3.0.1

@@ -38,6 +38,15 @@ Pour mettre à jour la base avec la dernière révision, éxécuter :
 alembic upgrade head
 ```
 
+### Documentation
+
+La documentation utilise ![Sphinx](https://pypi.org/project/Sphinx/) et  ![myst](https://pypi.org/project/myst-parser/)
+Pour générer une nouvelle version de la doc, se placer dans le répertoire /docs et éxécuter : 
+
+```bash
+sphinx-build -E -b html . ./_build/
+```
+
 ### Bug Possible
 
 Pendant le developpement, il se peut que l'application Nuxt ne puisse plus se rafraîchir. Vous verrez alors dans le terminal du container ce genre d'erreur.
