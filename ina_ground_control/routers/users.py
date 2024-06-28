@@ -9,7 +9,6 @@ from pydantic import EmailStr
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from ina_ground_control.database import get_db
-from ina_ground_control.routers.projects import NOT_FOUND_STR
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 from ina_ground_control.schemas.user_schemas import UserDto
 from ina_ground_control.services.user_service import (
@@ -51,11 +50,10 @@ def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
     try:
         return create_user_crud(db, user)
     except Exception as e:
-        logger.error(f"Failed to create user: {e}")
-        raise HTTPException(status_code=400, detail="Failed to create user")
+        logger.error("Failed to create user: %s", e)
+        raise HTTPException(status_code=400, detail="Failed to create user") from e
 
 
-# FIX: ERROR 500 when the function return the user object
 @router.get("/user/")
 def get_user_by_email(email: EmailStr, db: Session = Depends(get_db)):
     try:
@@ -63,5 +61,5 @@ def get_user_by_email(email: EmailStr, db: Session = Depends(get_db)):
         if user is not None:
             return status.HTTP_200_OK
     except Exception as e:
-        logger.error(f"Failed to retrieve user: {e}")
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR_USER)
+        logger.error("Failed to retrieve user: %s", e)
+        raise HTTPException(status_code=404, detail=NOT_FOUND_STR_USER) from e

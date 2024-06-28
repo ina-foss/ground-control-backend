@@ -1,3 +1,9 @@
+"""
+This module provides CRUD operations for tasks.
+
+It includes functions to retrieve a task by ID, create a new task, and update an existing task.
+"""
+
 from typing import Any, Dict
 
 from sqlalchemy.orm import Session
@@ -39,19 +45,19 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     return db_task
 
 
-def update_data_task_crud(id: int, data: Dict[str, Any], db: Session):
+def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
     """
     Update the data of an existing task in the database.
 
     Attributes:
-        id (int): The unique identifier of the task to update.
+        task_id (int): The unique identifier of the task to update.
         data (Dict[str, Any]): A dictionary containing the new data for the task.
         db (Session): The database session used for querying.
 
     Returns:
         Task: The updated Task object if the task exists, otherwise None.
     """
-    db_task = get_task_by_id(db, task_id=id)
+    db_task = get_task_by_id(db, task_id=task_id)
     if db_task is not None:
         db_task.data = data
         db.commit()

@@ -29,7 +29,6 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     print(userinfo)
     return User()
 
-print('d',settings.sso)
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
     url=settings.sso.url,
@@ -107,5 +106,5 @@ async def info() -> dict:
     """
     return {"status": "up"}
 
-if __name__ == '__main__':
-  uvicorn.run("ina_ground_control.main:app", host="0.0.0.0", port=8000,log_level="debug", reload=True )
+if __name__ == "__main__":
+    uvicorn.run("ina_ground_control.main:app", host="0.0.0.0", port=8000,log_level="debug", reload=True )

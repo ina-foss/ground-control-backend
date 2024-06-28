@@ -75,7 +75,7 @@ class Project(Base):
         number of distinct users with annotations in the project.
     """
 
-    __tablename__ = 'project'
+    __tablename__ = "project"
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
@@ -89,10 +89,10 @@ class Project(Base):
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
-    created_by = Column(String, ForeignKey('user.email'))
+    created_by = Column(String, ForeignKey("user.email"))
 
     owner = relationship("User", back_populates="projects")
-    tasks = relationship('Task', backref="project", cascade="all, delete-orphan")
+    tasks = relationship("Task", backref="project", cascade="all, delete-orphan")
 
     total_tasks = column_property(
         select(func.count()).where(Task.project_id ==

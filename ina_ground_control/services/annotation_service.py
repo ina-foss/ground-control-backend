@@ -1,10 +1,13 @@
 """
-Service related to annotation objects
+Service related to annotation objects.
 
 Functions:
-- create_annotation_crud:
+- create_annotation_crud
 - get_annotations_by_task_id_crud
+- get_annotations_by_id_crud
+- udpate_annotation_result_crud
 """
+
 from typing import Any, Dict
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
@@ -15,13 +18,15 @@ from ina_ground_control.schemas.annotation_schemas import AnnotationCreate
 
 def create_annotation_crud(db: Session, annotation: AnnotationCreate):
     """
-        Allow to create an annotation object an save it in the database.
+    Allow to create an annotation object and save it in the database.
 
-        Parameters:
-        db (Session): Session object which contains connection information,
-        annotation (AnnotationCreate): Pydantic schemas which contains all information
+    Parameters:
+    db (Session): Session object which contains connection information.
+    annotation (AnnotationCreate): Pydantic schema which contains all information.
+
+    Returns:
+    Annotation: The newly created Annotation object.
     """
-
     # Take all the attributes of AnnotationCreate schemas
     # to create a sqlalchemy model
     anno_db = Annotation(**jsonable_encoder(annotation))
@@ -31,42 +36,48 @@ def create_annotation_crud(db: Session, annotation: AnnotationCreate):
     return anno_db
 
 
-def get_annotations_by_id_crud(db: Session, id: int):
+def get_annotations_by_id_crud(db: Session, annotation_id: int):
     """
-        Retrieve the annotation corresponding to the id in the parameter
+    Retrieve the annotation corresponding to the annotation_id parameter.
 
-        Attributes:
-        db (Session): Session object which contains connection information,
-        id (int): Integer that corresponds to the annotation ID
+    Parameters:
+    db (Session): Session object which contains connection information.
+    annotation_id (int): Integer that corresponds to the annotation ID.
 
-        Returns:
-        Annotation model that matches the id or None
+    Returns:
+    Annotation: The Annotation model that matches the id or None.
     """
-    return db.query(Annotation).filter(Annotation.id == id).first()
+    return db.query(Annotation).filter(Annotation.id == annotation_id).first()
 
 
 def get_annotations_by_task_id_crud(db: Session, task_id: int):
     """
-        Return all the anntotation object whose attributes "task_id" matches with the argurment
+    Return all the annotation objects whose attribute "task_id" matches the argument.
 
-        Attributes:
-        db (Session): Session object which contains connection information, db address etc...
-        task_id: Integer that identifies the task which may contains several annotations.
+    Parameters:
+    db (Session): Session object which contains connection information.
+    task_id (int): Integer that identifies the task which may contain several annotations.
+
+    Returns:
+    List[Annotation]: A list of Annotation objects that match the task_id.
     """
     return db.query(Annotation).filter(Annotation.task_id == task_id).all()
 
 
-def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], id: int) -> Annotation:
+def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
     """
-        Edit the attribute "result" of the annotation object that matches the ID.
+    Edit the attribute "result" of the annotation object that matches the ID.
 
-        Attributes:
-        - db (Session): Session object which contains connection information,
-        - result (Dict[str, Any]): Json objec containing the original task data + the segmentation information
-        - id (int): Integer that corresponds to the annotation ID
+    Parameters:
+    db (Session): Session object which contains connection information.
+    result (Dict[str, Any]): JSON object containing the original task data + the segmentation information.
+    annotation_id (int): Integer that corresponds to the annotation ID.
+
+    Returns:
+    Annotation: The updated Annotation object.
     """
-    db_annotation = get_annotations_by_id_crud(db, id)
-    if (db_annotation is not None):
+    db_annotation = get_annotations_by_id_crud(db, annotation_id)
+    if db_annotation is not None:
         db_annotation.result = result
         db.commit()
         db.refresh(db_annotation)

@@ -51,6 +51,8 @@ confidence=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 disable=R,
+        not-callable,
+        wrong-import-position,
         abstract-method,
         apply-builtin,
         arguments-differ,

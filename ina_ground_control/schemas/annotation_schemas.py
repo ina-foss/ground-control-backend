@@ -7,8 +7,6 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel
 
-from .user_base_schemas import UserBaseDto
-
 
 class AnnotationCreate(BaseModel):
     """

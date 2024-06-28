@@ -80,4 +80,4 @@ def get_transcription(
     data = json.loads(response.text)
     data["id"] = video_id
 
-    return segments_to_task.convert(data, video_id)
+    return segments_to_task.convert(data)

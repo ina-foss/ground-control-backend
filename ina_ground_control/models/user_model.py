@@ -2,7 +2,7 @@
 This module defines the User model for the application.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 from ina_ground_control.database import Base
 

@@ -1,9 +1,9 @@
 """
-   This module configures the routing of all the calls related to
-   annotation object.
-   It maps each routes with the corresponding service and return the right DTO
-   or the error status if something went wrong.
+This module configures the routing of all the calls related to
+annotation objects. It maps each route with the corresponding service and returns the right DTO
+or the error status if something went wrong.
 """
+
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -28,31 +28,31 @@ def create_annotation(
         annotation: AnnotationCreate,
         db: Session = Depends(get_db)) -> AnnotationDto:
     """
-        Create a new annotation.
+    Create a new annotation.
 
-        Args:
-        annotation (AnnotationCreate): The annotation data
+    Args:
+    annotation (AnnotationCreate): The annotation data
 
-        Returns:
-        AnnotationDTO : The newly created annotation
+    Returns:
+    AnnotationDTO: The newly created annotation
     """
     try:
         return create_annotation_crud(db, annotation)
     except Exception as e:
-        logger.error(f"Failed to created annotation: {e}")
+        logger.error("Failed to create annotation: %s", e)
         raise HTTPException(
-            status_code=400, detail="Failed to create annotation")
+            status_code=400, detail="Failed to create annotation") from e
 
 
 @router.get("/annotation/{id}", response_model=AnnotationDto)
 def get_annotations_by_id(
-        id: int, db: Session = Depends(get_db)) -> AnnotationDto:
+        annotation_id: int, db: Session = Depends(get_db)) -> AnnotationDto:
     """
-        Retrieve a single annotation
+    Retrieve a single annotation
     """
-    annotation: AnnotationDto = get_annotations_by_id_crud(db, id)
+    annotation: AnnotationDto = get_annotations_by_id_crud(db, annotation_id)
     if annotation is None:
-        logger.error(f"Failed to retrieve annotation with id: {id}")
+        logger.error("Failed to retrieve annotation with id: %s", annotation_id)
         raise HTTPException(status_code=404, detail="Annotation not found")
     return annotation
 
@@ -61,7 +61,7 @@ def get_annotations_by_id(
 def get_annotation_by_task_id(
         task_id: int, db: Session = Depends(get_db)) -> list[Annotation]:
     """
-        Get a list of annotations that match the task_id attributes
+    Get a list of annotations that match the task_id attributes
     """
     annotations = get_annotations_by_task_id_crud(db, task_id=task_id)
     return annotations
@@ -69,12 +69,12 @@ def get_annotation_by_task_id(
 
 @router.patch("/annotation/{id}", response_model=AnnotationDto)
 def update_annotation_result(
-        id: int, result: Dict[str, Any], db: Session = Depends(get_db)) -> AnnotationDto:
+        annotation_id: int, result: Dict[str, Any], db: Session = Depends(get_db)) -> AnnotationDto:
     """
-        Edit the result of an existing annotation
+    Edit the result of an existing annotation
     """
-    annotation = udpate_annotation_result_crud(db, result, id)
+    annotation = udpate_annotation_result_crud(db, result, annotation_id)
     if annotation is None:
-        logger.error(f"Failed to retrieve annotation with id: {id}")
+        logger.error("Failed to retrieve annotation with id: %s", annotation_id)
         raise HTTPException(status_code=404, detail="Annotation not found")
     return annotation

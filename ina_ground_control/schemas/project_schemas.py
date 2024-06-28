@@ -56,4 +56,5 @@ class ProjectListDto(ProjectWithIdDto):
     """
     tasks: list[TaskListDto] = []
 
+
 from .task_schemas import TaskBaseDto, TaskListDto
