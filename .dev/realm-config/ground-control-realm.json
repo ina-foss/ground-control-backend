@@ -2223,7 +2223,7 @@
       "emailVerified": true,
       "firstName": "Admin",
       "lastName": "Administrator",
-      "email": "admin@localhost",
+      "email": "admin@localhost.com",
       "credentials": [
         {
           "id": "b860462b-9b02-48ba-9523-d3a8926a917b",

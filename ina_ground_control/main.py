@@ -1,6 +1,8 @@
 """
 This module sets up the main FastAPI application, including routes, middleware, and configuration.
 """
+import os
+from dotenv import load_dotenv
 import uvicorn
 import typing
 from fastapi import FastAPI
@@ -106,5 +108,9 @@ async def info() -> dict:
     """
     return {"status": "up"}
 
+
+load_dotenv('.env.local')
+PG_HOST = os.getenv('PG_HOST')
+PG_LOG_LEVEL = os.getenv('PG_LOG_LEVEL')
 if __name__ == "__main__":
-    uvicorn.run("ina_ground_control.main:app", host="0.0.0.0", port=8000,log_level="debug", reload=True )
+    uvicorn.run("ina_ground_control.main:app", host=PG_HOST, port=8000,log_level=PG_LOG_LEVEL, reload=True )
