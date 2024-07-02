@@ -15,8 +15,9 @@ PG_DATABASE = os.getenv('PG_DATABASE')
 PG_USERNAME = os.getenv('PG_USERNAME')
 PG_PASSWORD = os.getenv('PG_PASSWORD')
 PG_PORT = os.getenv('PG_PORT')
+DATABASE_HOSTNAME = os.getenv('DATABASE_HOSTNAME')
 
-DATABASE_URL = f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@db:{PG_PORT}/{PG_DATABASE}'
+DATABASE_URL = f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}'
 engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
