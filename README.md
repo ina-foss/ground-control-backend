@@ -62,7 +62,7 @@ docker compose up -d
 
 ### Variables d'environnement :
 
-Les variables d'environnement sont définies dans le fichier `.env.local` et sont utilisées dans la definition de l'url de connexion à la base de données (DATABASE_URL)
+Les variables d'environnement sont définies dans le fichier ![.env.local](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/.env.local) et sont utilisées dans la definition de l'url de connexion à la base de données (DATABASE_URL)
 
 | NOM               | EXEMPLE           | DESCRIPTION                                                         |
 |-------------------|-------------------|---------------------------------------------------------------------|
