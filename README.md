@@ -75,7 +75,7 @@ Les variables d'environnement sont définies dans le fichier [.env.local](https:
 
 ### Configuration SSO
 
-Le fichier ``[settings.yaml](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/ina_ground_control/settings.yaml) permet de gerer les parametres de configuration (pour l'environnement de dev et du prod).
+Le fichier [settings.yaml](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/ina_ground_control/settings.yaml) permet de gerer les parametres de configuration (pour l'environnement de dev et du prod).
 Il permet de stocker des paramètres de configuration de manière structurée et lisible.
 
 | VARIABLE             | EXEMPLE                             | UTILITE                                                                          |
