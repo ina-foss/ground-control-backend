@@ -13,13 +13,10 @@ Classes:
     Project (Base): SqlAlchemy model representing a project record in the database.
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
-from sqlalchemy.orm import relationship, column_property
-from sqlalchemy.sql.expression import func, select
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql.expression import func
 
 from ina_ground_control.database import Base
-from .task_model import Task
-from .user_model import User
-from .annotation_model import Annotation
 from enum import Enum as PyEnum
 
 
@@ -47,7 +44,6 @@ class AnnotationType(PyEnum):
     """
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
-
 
 class Project(Base):
     """
@@ -90,11 +86,12 @@ class Project(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     created_by = Column(String, ForeignKey("user.email"))
-
+    tags = relationship("Tag", backref="project", cascade="all")
+    medias = relationship("Media", backref="project", cascade="all")
     owner = relationship("User", back_populates="projects")
-    tasks = relationship("Task", backref="project", cascade="all, delete-orphan")
+    steps = relationship("Step", backref="project", cascade="all, delete-orphan")
 
-    total_tasks = column_property(
+    """total_tasks = column_property(
         select(func.count()).where(Task.project_id ==
                                    id).correlate_except(Task).scalar_subquery()
     )
@@ -102,4 +99,4 @@ class Project(Base):
     total_users_with_annotations = column_property(
         select(func.count(User.email.distinct())).join(Annotation).join(Task).where(
             Task.project_id == id).correlate_except(Task).scalar_subquery()
-    )
+    )"""

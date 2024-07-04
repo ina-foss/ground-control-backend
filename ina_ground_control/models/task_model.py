@@ -1,10 +1,20 @@
 """
 This module defines the Task model for the application.
 """
-
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
-from sqlalchemy.orm import relationship
 from ina_ground_control.database import Base
+from enum import Enum as PyEnum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy.orm import relationship
+
+
+class TaskDataType(PyEnum):
+    LDD = "ldd"
+    AMALIA = "amalia"
+
+class TaskStatus(PyEnum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    ENDED = "ended"
 
 class Task(Base):
     """
@@ -25,12 +35,18 @@ class Task(Base):
     __tablename__ = "task"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, nullable=False)
     instruction = Column(String)
+    data = Column(String)
+    data_type= Column(Enum(TaskDataType))#, nullable=False
+    status = Column(Enum(TaskStatus))
+    lead_time = Column(Integer)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
-    data = Column(JSON)
-    project_id = Column(Integer, ForeignKey("project.id"))
+
+    step_id = Column(Integer, ForeignKey("step.id"))
+
+    media_id = Column(Integer, ForeignKey("media.id"))
     # TODO: update the alembic model to include cascade field in relations
     annotations = relationship("Annotation", backref="task", cascade="all, delete-orphan")
-    # predictions = relationship("Prediction", backref="task")
+    task_comments = relationship("TaskComment", backref="task", cascade="all, delete-orphan")

@@ -26,8 +26,12 @@ from ina_ground_control.database import Base
 from ina_ground_control.models.project_model import Project, ProjectStatus, AnnotationType
 from ina_ground_control.models.task_model import Task
 from ina_ground_control.models.user_model import User
-from ina_ground_control.models.prediction_model import Prediction
 from ina_ground_control.models.annotation_model import Annotation
+from ina_ground_control.models.media_model import Media
+from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.tag_model import Tag
+from ina_ground_control.models.taskComment_model import TaskComment
+
 
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata

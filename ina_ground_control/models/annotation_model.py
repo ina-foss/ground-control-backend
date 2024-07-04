@@ -2,11 +2,14 @@
 This module defines the Annotation model for the application.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Enum
 from sqlalchemy.sql.expression import func
 from ina_ground_control.database import Base
-
+from enum import Enum as PyEnum
+class AnnotationStatus(PyEnum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    ENDED = "ended"
 
 class Annotation(Base):
     """
@@ -29,12 +32,10 @@ class Annotation(Base):
 
     id = Column(Integer, primary_key=True)
     user_email = Column(String, ForeignKey("user.email"), nullable=False)
-    result = Column(JSON)
+    result = Column(String)
+    annotation_status = Column(Enum(AnnotationStatus))
+    version = Column(Integer)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     validated_at = Column(DateTime)
     task_id = Column(Integer, ForeignKey("task.id"))
-    project_id = Column(Integer, ForeignKey("project.id"))
-    status = Column(String)
-
-    user = relationship("User", backref="annotations")

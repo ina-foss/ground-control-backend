@@ -2,7 +2,7 @@
 This module defines the User model for the application.
 """
 
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, Integer
 from sqlalchemy.orm import relationship
 from ina_ground_control.database import Base
 
@@ -25,5 +25,6 @@ class User(Base):
     email = Column(String, primary_key=True, unique=True, nullable=False)
     role = Column(String)
     created_at = Column(DateTime)
-
+    updated_at = Column(DateTime)
     projects = relationship("Project", back_populates="owner")
+    annotations = relationship("Annotation", backref="user", cascade="all, delete-orphan")
