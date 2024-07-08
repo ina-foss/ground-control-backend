@@ -18,7 +18,7 @@ class StepCreate(BaseModel):
 
     title: str
     description: Optional[str]
-    status: ProjectStatus
+    stepStatus: ProjectStatus
     annotation: AnnotationType
     projects: Optional[list[ProjectBaseDto]]
     tasks: Optional[list[TaskBaseDto]]

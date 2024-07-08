@@ -15,7 +15,7 @@ class ProjectBaseDto(BaseModel):
     """
     title: Optional[str]
     description: Optional[str]
-    status: Optional[ProjectStatus]
+    projectStatus: Optional[ProjectStatus]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
