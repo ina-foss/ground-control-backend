@@ -23,7 +23,7 @@ sys.path.append(project_root)
 
 # Now, import the Base from your database.py file
 from ina_ground_control.database import Base
-from ina_ground_control.models.project_model import Project, ProjectStatus, AnnotationType
+from ina_ground_control.models.project_model import Project, ProjectStatus
 from ina_ground_control.models.task_model import Task
 from ina_ground_control.models.user_model import User
 from ina_ground_control.models.annotation_model import Annotation

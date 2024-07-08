@@ -6,8 +6,8 @@ from __future__ import annotations
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from ina_ground_control.models.project_model import ProjectStatus, AnnotationType
-
+from ina_ground_control.models.project_model import ProjectStatus
+from .user_base_schemas import UserBaseDto
 
 class ProjectBaseDto(BaseModel):
     """
@@ -16,13 +16,13 @@ class ProjectBaseDto(BaseModel):
     title: Optional[str]
     description: Optional[str]
     status: Optional[ProjectStatus]
-    annotation_type: Optional[AnnotationType]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
     control_weights: Optional[int]
     pinned_at: Optional[datetime]
     created_by: str
+    owner: Optional[list[UserBaseDto]]
 
     class Config:
         from_attributes = True

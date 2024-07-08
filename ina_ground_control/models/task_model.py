@@ -8,10 +8,25 @@ from sqlalchemy.orm import relationship
 
 
 class TaskDataType(PyEnum):
+    """
+        Enum representing the different datatypes of tasks.
+
+        Attributes:
+            LDD (str): The annotation type for ldd tasks.
+            AMALIA (str): The annotation type for amalia tasks.
+        """
     LDD = "ldd"
     AMALIA = "amalia"
 
 class TaskStatus(PyEnum):
+    """
+        Enum representing the different statuses a task can have.
+
+        Attributes:
+            DRAFT (str): The task is in draft status.
+            PENDING (str): The task is pending and awaiting further actions.
+            ENDED (str): The task has ended.
+        """
     DRAFT = "draft"
     PENDING = "pending"
     ENDED = "ended"

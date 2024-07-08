@@ -3,19 +3,17 @@ Define the SqlAlchemy models and enums for the project management application.
 
 This module includes the definition of the Project model and related enums.
 The Project model represents a project record in the database and includes various attributes
-such as title, description, status, annotation type, and relationships with other models like
-User and Task. The module also defines the ProjectStatus and AnnotationType enums to represent
-the status of a project and types of annotations, respectively.
+such as title, description, status, and relationships with other models like
+User and Task. The module also defines the ProjectStatus enum to represent
+the status of a project.
 
 Classes:
     ProjectStatus (PyEnum): Enum representing the different statuses a project can have.
-    AnnotationType (PyEnum): Enum representing the different types of annotations.
     Project (Base): SqlAlchemy model representing a project record in the database.
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
-
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
 
@@ -34,17 +32,6 @@ class ProjectStatus(PyEnum):
     ENDED = "ended"
 
 
-class AnnotationType(PyEnum):
-    """
-    Enum representing the different types of annotations.
-
-    Attributes:
-        SEGMENTATION (str): The annotation type for segmentation tasks.
-        TRANSCRIPTION (str): The annotation type for transcription tasks.
-    """
-    SEGMENTATION = "segmentation"
-    TRANSCRIPTION = "transcription"
-
 class Project(Base):
     """
     Represents a project record in the database.
@@ -54,7 +41,6 @@ class Project(Base):
         title (String): The title of the project.
         description (String): The description of the project.
         status (enumerate): The status of the project.
-        annotation_type (enumerate): The type of annotation.
         is_published (Boolean): Indicates if the project is published.
         empty_annotations (Boolean): Indicates if the project has empty annotations.
         allow_skip (Boolean): Indicates if skipping is allowed.
@@ -77,7 +63,6 @@ class Project(Base):
     title = Column(String, nullable=False)
     description = Column(String)
     status = Column(Enum(ProjectStatus), nullable=False)
-    annotation_type = Column(Enum(AnnotationType), nullable=False)
     is_published = Column(Boolean)
     empty_annotations = Column(Boolean)
     allow_skip = Column(Boolean)
