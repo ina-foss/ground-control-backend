@@ -1,11 +1,22 @@
 """
-This module defines the Annotation model for the application.
+Define the SqlAlchemy models and enums for the project management application.
+
+This module includes the definition of the Annotation model and related enums.
+The Annotation model represents an annotation record in the database and includes various attributes
+such as result and relationships with other models like
+User and Task. The module also defines the AnnotationStatus enum to represent
+the status of an annotation.
+
+Classes:
+    AnnotationStatus (PyEnum): Enum representing the different statuses an annotation can have.
+    Annotation (Base): SqlAlchemy model representing an annotation record in the database.
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Enum
 from sqlalchemy.sql.expression import func
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
+
 class AnnotationStatus(PyEnum):
     """
         Enum representing the different statuses an annotation can have.
@@ -24,16 +35,16 @@ class Annotation(Base):
     Represents an annotation record in the database.
 
     Attributes:
-        id (Integer): The unique identifier of the annotation.
+        id (Integer): The unique identifier of the annotation (Primary Key).
         user_email (String): The email address of the author of the annotation.
-        result (JSON): The result of the annotation stored as JSON.
+        result (String): The result of the annotation.
+        annotation_status (enumerate): The status of the annotation.
+        version (Integer): The version of the annotation.
         created_at (DateTime): The timestamp when the annotation was created.
         updated_at (DateTime): The timestamp when the annotation was last updated.
         validated_at (DateTime): The timestamp when the annotation was validated.
         task_id (Integer): The foreign key linking to the task associated with the annotation.
-        project_id (Integer): The foreign key linking to the project associated with the annotation.
-        status (String): The current status of the annotation.
-        user (relationship): Relationship to the User model.
+
     """
 
     __tablename__ = "annotation"

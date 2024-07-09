@@ -37,7 +37,7 @@ class Project(Base):
     Represents a project record in the database.
 
     Attributes:
-        id (Integer): The unique identifier of the project.
+        id (Integer): The unique identifier of the project (Primary Key).
         title (String): The title of the project.
         description (String): The description of the project.
         status (enumerate): The status of the project.
@@ -48,9 +48,11 @@ class Project(Base):
         pinned_at (DateTime): The timestamp when the project was pinned.
         created_at (DateTime): The timestamp when the project was created.
         updated_at (DateTime): The timestamp when the project was last updated.
-        created_by (Integer): The foreign key linking to the user who created the project.
+        created_by (Integer): The foreign key (email) linking to the user who created the project.
+        tags (relationship): Relationship to the Tag model representing tags within the project.
+        medias  (relationship): Relationship to the Media  model representing medias within the project.
         owner (relationship): Relationship to the User model representing the project owner.
-        tasks (relationship): Relationship to the Task model representing tasks within the project.
+        steps (relationship): Relationship to the Step model representing steps within the project.
         total_tasks (column_property): A computed property counting the total number of tasks
         in the project.
         total_users_with_annotations (column_property): A computed property counting the total
