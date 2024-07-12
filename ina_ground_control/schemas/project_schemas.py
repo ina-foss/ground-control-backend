@@ -9,20 +9,21 @@ from pydantic import BaseModel
 from ina_ground_control.models.project_model import ProjectStatus
 from .user_base_schemas import UserBaseDto
 
+
 class ProjectBaseDto(BaseModel):
     """
     Base DTO for project objects.
     """
+
     title: Optional[str]
     description: Optional[str]
-    projectStatus: Optional[ProjectStatus]
+    status: Optional[ProjectStatus]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
     control_weights: Optional[int]
     pinned_at: Optional[datetime]
     created_by: str
-    owner: Optional[list[UserBaseDto]]
 
     class Config:
         from_attributes = True
@@ -32,6 +33,7 @@ class ProjectWithIdDto(ProjectBaseDto):
     """
     Extends ProjectBaseDto with an additional id field.
     """
+
     id: int
 
 
@@ -40,11 +42,12 @@ class ProjectDetailDto(ProjectWithIdDto):
     Detailed DTO for project objects, including creation and update timestamps,
     a list of tasks, and counts of users with annotations and total tasks.
     """
+
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     tasks: list[TaskBaseDto] = []
-    total_users_with_annotations: int
-    total_tasks: int
+    # total_users_with_annotations: int
+    # total_tasks: int
 
     class Config:
         from_attributes = True
@@ -54,6 +57,7 @@ class ProjectListDto(ProjectWithIdDto):
     """
     DTO for listing projects, including a list of tasks.
     """
+
     tasks: list[TaskListDto] = []
 
 

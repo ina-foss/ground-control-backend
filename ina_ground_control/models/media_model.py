@@ -27,6 +27,5 @@ class Media(Base):
 
     id = Column(Integer, primary_key=True)
     url = Column(String,nullable=False)
-    projects = relationship("Project", backref="media", cascade="all")
-    tasks = relationship("Tasks", backref="media", cascade="all")
+    tasks = relationship("Task", backref="media", cascade="all")
 

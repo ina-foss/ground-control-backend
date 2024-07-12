@@ -20,20 +20,6 @@ from ina_ground_control.database import Base
 from enum import Enum as PyEnum
 
 
-class ProjectStatus(PyEnum):
-    """
-    Enum representing the different statuses a step of project can have.
-
-    Attributes:
-        DRAFT (str): The step is in draft status.
-        PENDING (str): The step is pending and awaiting further actions.
-        ENDED (str): The step has ended.
-    """
-    DRAFT = "draft"
-    PENDING = "pending"
-    ENDED = "ended"
-
-
 class AnnotationType(PyEnum):
     """
     Enum representing the different types of annotations.
@@ -67,7 +53,6 @@ class Step(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     description = Column(String)
-    status = Column(Enum(ProjectStatus), nullable=False)
     annotation_type = Column(Enum(AnnotationType), nullable=False)
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
