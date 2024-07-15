@@ -41,7 +41,7 @@ def get_project_by_id(db: Session, project_id: int):
     Returns:
     Project: The Project object if found, otherwise None.
     """
-    return db.query(Project).options(joinedload(Project.tasks)).filter(Project.id == project_id).first()
+    return db.query(Project).filter(Project.id == project_id).first()
 
 
 def create_project_crud(db: Session, project: ProjectBaseDto):
