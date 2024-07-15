@@ -41,24 +41,31 @@ class ProjectDetailDto(ProjectWithIdDto):
     """
     Detailed DTO for project objects, including creation and update timestamps,
     a list of tasks, and counts of users with annotations and total tasks.
+
+    Used in `/dashboard` view
     """
 
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    tasks: list[TaskBaseDto] = []
+    steps: list[StepDto]
+    medias: list[MediaCreate]
     # total_users_with_annotations: int
     # total_tasks: int
-
-    class Config:
-        from_attributes = True
 
 
 class ProjectListDto(ProjectWithIdDto):
     """
     DTO for listing projects, including a list of tasks.
+
+    Used in `/{project_id}` view
     """
 
-    tasks: list[TaskListDto] = []
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    steps: list[StepDetailDto]
+    medias: list[MediaCreate]
 
 
-from .task_schemas import TaskBaseDto, TaskListDto
+from ina_ground_control.schemas.media_schemas import MediaCreate
+from .task_schemas import TaskListDto
+from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto

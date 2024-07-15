@@ -8,7 +8,7 @@ from datetime import datetime
 
 from .project_schemas import ProjectBaseDto
 from .task_schemas import TaskBaseDto
-from ina_ground_control.models.step_model import AnnotationType, ProjectStatus
+from ina_ground_control.models.step_model import AnnotationType, StepStatus
 
 
 class StepCreate(BaseModel):
@@ -18,12 +18,10 @@ class StepCreate(BaseModel):
 
     title: str
     description: Optional[str]
-    stepStatus: ProjectStatus
-    annotation: AnnotationType
-    projects: Optional[list[ProjectBaseDto]]
-    tasks: Optional[list[TaskBaseDto]]
+    annotation_type: AnnotationType
     pinned_at: Optional[datetime]
-    project_id = int
+    status: StepStatus
+    project_id : int
 
 
 class StepDto(StepCreate):
@@ -40,3 +38,13 @@ class StepDto(StepCreate):
         """
             Config for reading attributes from other class.
         """
+
+class StepDetailDto(StepDto):
+    """
+    DTO representing the step object with its related tasks objects.
+
+    Used in `/{project_id}` view
+    """
+ 
+    project: ProjectBaseDto
+    tasks: Optional[list[TaskBaseDto]]
