@@ -13,6 +13,15 @@ services:
       - 5432:5432
     healthcheck:
       test: "exit 0"
+  pg_admin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.command
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 6543:80
+    depends_on:
+      - db
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.3
     command: 'start-dev --import-realm'
