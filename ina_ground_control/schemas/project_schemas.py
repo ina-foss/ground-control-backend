@@ -6,17 +6,18 @@ from __future__ import annotations
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from ina_ground_control.models.project_model import ProjectStatus, AnnotationType
+from ina_ground_control.models.project_model import ProjectStatus
+from .user_base_schemas import UserBaseDto
 
 
 class ProjectBaseDto(BaseModel):
     """
     Base DTO for project objects.
     """
+
     title: Optional[str]
     description: Optional[str]
     status: Optional[ProjectStatus]
-    annotation_type: Optional[AnnotationType]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
@@ -32,6 +33,7 @@ class ProjectWithIdDto(ProjectBaseDto):
     """
     Extends ProjectBaseDto with an additional id field.
     """
+
     id: int
 
 
@@ -39,22 +41,31 @@ class ProjectDetailDto(ProjectWithIdDto):
     """
     Detailed DTO for project objects, including creation and update timestamps,
     a list of tasks, and counts of users with annotations and total tasks.
+
+    Used in `/dashboard` view
     """
+
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    tasks: list[TaskBaseDto] = []
-    total_users_with_annotations: int
-    total_tasks: int
-
-    class Config:
-        from_attributes = True
+    steps: list[StepDto]
+    medias: list[MediaCreate]
+    # total_users_with_annotations: int
+    # total_tasks: int
 
 
 class ProjectListDto(ProjectWithIdDto):
     """
     DTO for listing projects, including a list of tasks.
+
+    Used in `/{project_id}` view
     """
-    tasks: list[TaskListDto] = []
+
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    steps: list[StepDetailDto]
+    medias: list[MediaCreate]
 
 
-from .task_schemas import TaskBaseDto, TaskListDto
+from ina_ground_control.schemas.media_schemas import MediaCreate
+from .task_schemas import TaskListDto
+from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto

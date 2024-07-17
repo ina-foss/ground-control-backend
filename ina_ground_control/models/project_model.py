@@ -3,23 +3,24 @@ Define the SqlAlchemy models and enums for the project management application.
 
 This module includes the definition of the Project model and related enums.
 The Project model represents a project record in the database and includes various attributes
-such as title, description, status, annotation type, and relationships with other models like
-User and Task. The module also defines the ProjectStatus and AnnotationType enums to represent
-the status of a project and types of annotations, respectively.
+such as title, description, status, and relationships with other models like
+User and Task. The module also defines the ProjectStatus enum to represent
+the status of a project.
 
 Classes:
     ProjectStatus (PyEnum): Enum representing the different statuses a project can have.
-    AnnotationType (PyEnum): Enum representing the different types of annotations.
     Project (Base): SqlAlchemy model representing a project record in the database.
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
-from sqlalchemy.orm import relationship, column_property
-from sqlalchemy.sql.expression import func, select
-
+from sqlalchemy.orm import backref, relationship
+from sqlalchemy.sql.expression import func
 from ina_ground_control.database import Base
-from .task_model import Task
-from .user_model import User
-from .annotation_model import Annotation
+from ina_ground_control.models.media_projet_association import Media_Project
+from ina_ground_control.models.tag_project_association import Tag_Project
+from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.tag_model import Tag
+from ina_ground_control.models.taskComment_model import TaskComment
+from ina_ground_control.models.media_model import Media
 from enum import Enum as PyEnum
 
 
@@ -37,28 +38,15 @@ class ProjectStatus(PyEnum):
     ENDED = "ended"
 
 
-class AnnotationType(PyEnum):
-    """
-    Enum representing the different types of annotations.
-
-    Attributes:
-        SEGMENTATION (str): The annotation type for segmentation tasks.
-        TRANSCRIPTION (str): The annotation type for transcription tasks.
-    """
-    SEGMENTATION = "segmentation"
-    TRANSCRIPTION = "transcription"
-
-
 class Project(Base):
     """
     Represents a project record in the database.
 
     Attributes:
-        id (Integer): The unique identifier of the project.
+        id (Integer): The unique identifier of the project (Primary Key).
         title (String): The title of the project.
         description (String): The description of the project.
         status (enumerate): The status of the project.
-        annotation_type (enumerate): The type of annotation.
         is_published (Boolean): Indicates if the project is published.
         empty_annotations (Boolean): Indicates if the project has empty annotations.
         allow_skip (Boolean): Indicates if skipping is allowed.
@@ -66,9 +54,11 @@ class Project(Base):
         pinned_at (DateTime): The timestamp when the project was pinned.
         created_at (DateTime): The timestamp when the project was created.
         updated_at (DateTime): The timestamp when the project was last updated.
-        created_by (Integer): The foreign key linking to the user who created the project.
+        created_by (Integer): The foreign key (email) linking to the user who created the project.
+        tags (relationship): Relationship to the Tag model representing tags within the project.
+        medias  (relationship): Relationship to the Media  model representing medias within the project.
         owner (relationship): Relationship to the User model representing the project owner.
-        tasks (relationship): Relationship to the Task model representing tasks within the project.
+        steps (relationship): Relationship to the Step model representing steps within the project.
         total_tasks (column_property): A computed property counting the total number of tasks
         in the project.
         total_users_with_annotations (column_property): A computed property counting the total
@@ -81,7 +71,6 @@ class Project(Base):
     title = Column(String, nullable=False)
     description = Column(String)
     status = Column(Enum(ProjectStatus), nullable=False)
-    annotation_type = Column(Enum(AnnotationType), nullable=False)
     is_published = Column(Boolean)
     empty_annotations = Column(Boolean)
     allow_skip = Column(Boolean)
@@ -89,12 +78,15 @@ class Project(Base):
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
+
     created_by = Column(String, ForeignKey("user.email"))
 
+    medias = relationship("Media", secondary=Media_Project.__table__, backref="projects", cascade="all")
+    tags = relationship("Tag", secondary=Tag_Project.__table__, backref="project", cascade="all")
     owner = relationship("User", back_populates="projects")
-    tasks = relationship("Task", backref="project", cascade="all, delete-orphan")
+    steps = relationship("Step", backref="project", cascade="all, delete-orphan")
 
-    total_tasks = column_property(
+    """total_tasks = column_property(
         select(func.count()).where(Task.project_id ==
                                    id).correlate_except(Task).scalar_subquery()
     )
@@ -102,4 +94,4 @@ class Project(Base):
     total_users_with_annotations = column_property(
         select(func.count(User.email.distinct())).join(Annotation).join(Task).where(
             Task.project_id == id).correlate_except(Task).scalar_subquery()
-    )
+    )"""

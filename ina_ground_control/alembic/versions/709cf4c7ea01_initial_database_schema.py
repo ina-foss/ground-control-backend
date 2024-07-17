@@ -24,7 +24,6 @@ def downgrade() -> None:
     op.drop_table('project')
     op.drop_table('annotation')
     op.drop_table('task')
-    op.drop_table('prediction')
     op.drop_table('user')
     # ### end Alembic commands ###
 
@@ -50,20 +49,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name='project_pkey'),
     postgresql_ignore_search_path=False
     )
-    # op.create_table('prediction',
-    # sa.Column('id', sa.INTEGER(), autoincrement=True, nullable=False),
-    # sa.Column('model_name', sa.TEXT(), autoincrement=False, nullable=True),
-    # sa.Column('model_version', sa.TEXT(), autoincrement=False, nullable=True),
-    # sa.Column('result', postgresql.JSON(astext_type=sa.Text()), autoincrement=False, nullable=True),
-    # sa.Column('score', sa.DOUBLE_PRECISION(precision=53), autoincrement=False, nullable=True),
-    # sa.Column('created_at', postgresql.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), autoincrement=False, nullable=True),
-    # sa.Column('updated_at', postgresql.TIMESTAMP(), autoincrement=False, nullable=True),
-    # sa.Column('task_id', sa.INTEGER(), autoincrement=False, nullable=True),
-    # sa.Column('project_id', sa.INTEGER(), autoincrement=False, nullable=True),
-    # sa.ForeignKeyConstraint(['project_id'], ['project.id'], name='prediction_project_id_fkey'),
-    # sa.ForeignKeyConstraint(['task_id'], ['task.id'], name='prediction_task_id_fkey'),
-    # sa.PrimaryKeyConstraint('id', name='prediction_pkey')
-    # )
     op.create_table('task',
     sa.Column('id', sa.INTEGER(), server_default=sa.text("nextval('task_id_seq'::regclass)"), autoincrement=True, nullable=False),
     sa.Column('name', sa.TEXT(), autoincrement=False, nullable=True),
@@ -101,11 +86,4 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name='user_task_user_id_fkey'),
     sa.PrimaryKeyConstraint('user_id', name='user_task_pkey')
     )
-    op.execute(
-        """
-        INSERT INTO "user" (email, role) VALUES 
-        ('john@example.com', 'admin'),
-        ('jane@example.com', 'user');
-        """ 
-    )
-    # ### end Alembic commands ###
+    ### end Alembic commands ###

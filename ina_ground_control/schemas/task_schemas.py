@@ -7,17 +7,22 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel
 from .annotation_schemas import AnnotationDto
-from .prediction_schemas import PredictionDto
-
+from ina_ground_control.models.task_model import TaskStatus,TaskDataType
 
 class TaskBaseDto(BaseModel):
     """
     Base DTO for task objects.
     """
 
-    name: Optional[str] = ""
+    name: str
     instruction: Optional[str] = ""
     project_id: int
+    data: Optional[str]
+    data_type: TaskDataType
+    status: TaskStatus
+    lead_time: Optional[int]
+    step_id: int
+    media_id: int
 
     class Config:
         from_attributes = True
@@ -52,4 +57,4 @@ class TaskListDto(TaskCreateDto):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     annotations: list[AnnotationDto] = []
-    predictions: list[PredictionDto] = []
+    taskComments:list[TaskCreateDto] = []
