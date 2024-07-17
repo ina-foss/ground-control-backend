@@ -3,8 +3,7 @@ Defines Data Transfer Object (DTO) classes for media-related data structures.
 """
 from __future__ import annotations
 from pydantic import BaseModel
-from .project_schemas import ProjectWithIdDto
-# from .task_schemas import TaskBaseDto
+from .task_schemas import TaskBaseDto
 from typing import Optional
 
 
@@ -21,8 +20,7 @@ class MediaDto(MediaCreate):
     """
 
     id: int
-    projects: Optional[list[ProjectWithIdDto]]
-    # tasks: Optional[list[TaskBaseDto]]
+    tasks: Optional[list[TaskBaseDto]]
 
     class Config:
         from_attributes = True

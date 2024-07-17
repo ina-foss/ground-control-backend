@@ -5,10 +5,7 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 """
 
 from typing import Any, Dict
-
 from sqlalchemy.orm import Session
-from fastapi.encoders import jsonable_encoder
-
 from ina_ground_control.models.task_model import Task
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
 
@@ -38,7 +35,7 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     Returns:
         Task: The newly created Task object.
     """
-    db_task = Task(**jsonable_encoder(task))
+    db_task = Task(**task.model_dump())
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
