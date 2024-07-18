@@ -10,8 +10,6 @@ Functions:
 
 from typing import Any, Dict
 from sqlalchemy.orm import Session
-from fastapi.encoders import jsonable_encoder
-
 from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.schemas.annotation_schemas import AnnotationCreate
 
@@ -29,7 +27,7 @@ def create_annotation_crud(db: Session, annotation: AnnotationCreate):
     """
     # Take all the attributes of AnnotationCreate schemas
     # to create a sqlalchemy model
-    anno_db = Annotation(**jsonable_encoder(annotation))
+    anno_db= Annotation(**annotation.model_dump())
     db.add(anno_db)
     db.commit()
     db.refresh(anno_db)

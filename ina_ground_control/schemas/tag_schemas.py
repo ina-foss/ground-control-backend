@@ -2,9 +2,7 @@
 Defines Data Transfer Object (DTO) classes for tag-related data structures.
 """
 
-from typing import Optional
 from pydantic import BaseModel
-from .project_schemas import ProjectBaseDto
 
 
 class TagCreate(BaseModel):
@@ -13,7 +11,7 @@ class TagCreate(BaseModel):
     """
     key: str
     value: str
-    projects: Optional[list[ProjectBaseDto]]
+
 
 
 class TagDto(TagCreate):
@@ -21,7 +19,8 @@ class TagDto(TagCreate):
     DTO representing a tag object, including association with projectls.
     """
 
-    key: str
+
+    project_id : int
     class Config:
         from_attributes = True
         """
