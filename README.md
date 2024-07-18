@@ -59,3 +59,28 @@ En attendant de trouver une solution, supprimer le container `dev-frontend-1` et
 docker rm dev-frontend-1
 docker compose up -d
 ```
+
+### Variables d'environnement :
+
+Les variables d'environnement sont définies dans le fichier [.env.local](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/.env.local) et sont utilisées dans la definition de l'url de connexion à la base de données (DATABASE_URL)
+
+| NOM               | EXEMPLE           | DESCRIPTION                                                         |
+|-------------------|-------------------|---------------------------------------------------------------------|
+| PG_SERVER         | postgresql        | serveur de base de donnée utilisé                                   | 
+| PG_DATABASE       | ground_control_db | nom de la base de données                                           | 
+| PG_USERNAME       | user              | nom d'utilisateur comme login pour se connecté à la base de données | 
+| PG_PASSWORD       | postgres          | le mot de passe associé au login                                    |
+| PG_PORT           | 5432              | numero de port de la base de données                                | 
+| DATABASE_HOSTNAME | @db               | nom du domaine                                                      |
+
+### Configuration SSO
+
+Le fichier [settings.yaml](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/ina_ground_control/settings.yaml) permet de gerer les parametres de configuration (pour l'environnement de dev et du prod).
+Il permet de stocker des paramètres de configuration de manière structurée et lisible.
+
+| VARIABLE             | EXEMPLE                             | UTILITE                                                                          |
+|----------------------|-------------------------------------|----------------------------------------------------------------------------------|
+| url                  | "http://keycloak:9080/"             | L'URL de base pour le service SSO qui est Keycloak                               | 
+| realm                | "ground-control"                    | le nom du lot defini dans keycloak qui gére le groupe d' utilisateurs            | 
+| client_id            | "backend"                           | L'identifiant du client qui va se connecter à Keycloak (à definir dans keycloak) | 
+| client_secret        | "S95Ja09NGqzB4UvXoUgbcM39IdTz8826"  | la clé secrete generer automatiquement avec keycloak                             |

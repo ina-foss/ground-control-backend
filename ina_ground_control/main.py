@@ -14,7 +14,7 @@ from fastapi_keycloak_middleware import (
 )
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
-from ina_ground_control.routers import projects, tasks, users, resources, annotations
+from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,taskComments
 
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
@@ -81,6 +81,10 @@ app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(annotations.router)
 app.include_router(resources.router)
+app.include_router(medias.router)
+app.include_router(steps.router)
+app.include_router(tags.router)
+app.include_router(taskComments.router)
 #app.servers = [{"url": "http://localhost:8000"}]
 
 origins = [

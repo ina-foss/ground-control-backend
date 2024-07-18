@@ -1,0 +1,109 @@
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
+from ina_ground_control.database import Base
+from ina_ground_control.services.media_service import create_media_crud,get_media_by_id,update_data_media_crud,delete_media_crud,get_medias
+from ina_ground_control.schemas.media_schemas import MediaCreate
+
+
+@pytest.fixture(scope="session")
+def db_engine():
+    """
+        Mock the databalse using sqlite
+    """
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    yield engine
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def db_session(db_engine):
+    """
+        Create the connection session to interract with sqlite
+    """
+    connection = db_engine.connect()
+    transaction = connection.begin()
+    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session = Session()
+    yield session
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+
+def test_get_medias(db_session: Session):
+    media_data_1 = {
+        "url": "url test"
+    }
+
+    media_data_2 = {
+        "url": "url test2"
+
+    }
+    created_media_1 = create_media_crud(MediaCreate(**media_data_1), db_session)
+    created_media_2 = create_media_crud(MediaCreate(**media_data_2), db_session)
+
+    retrieved_medias = get_medias(db_session)
+
+    assert retrieved_medias is not None
+    assert retrieved_medias[0].id == created_media_1.id
+    assert retrieved_medias[0].url == media_data_1["url"]
+    assert retrieved_medias[1].id == created_media_2.id
+    assert retrieved_medias[1].url == media_data_2["url"]
+
+def test_create_media_crud(db_session: Session):
+    """
+        Testing media creation service
+    """
+    media_data = {
+        "url": "url test"
+    }
+    created_media = create_media_crud(MediaCreate(**media_data),db_session)
+    assert created_media is not None
+    assert created_media.id is not None
+    assert created_media.url == media_data["url"]
+
+
+def test_get_media_by_id(db_session: Session):
+    media_data = {
+        "url": "url test"
+    }
+    created_media = create_media_crud(MediaCreate(**media_data), db_session)
+
+    retrieved_media = get_media_by_id(db_session, created_media.id)
+
+    assert retrieved_media is not None
+    assert retrieved_media.id == created_media.id
+    assert retrieved_media.url == media_data["url"]
+
+
+def test_update_data_media_crud(db_session: Session):
+    media_data = {
+        "url": "url test"
+    }
+    created_media = create_media_crud(MediaCreate(**media_data), db_session)
+
+    updated_url ="new url"
+    update_data_media_crud(created_media.id, updated_url, db_session)
+    retrieved_updated_media = get_media_by_id(db_session, created_media.id)
+
+    assert retrieved_updated_media is not None
+    assert retrieved_updated_media.url == updated_url
+
+
+def test_delete_media_crud(db_session: Session):
+    media_data = {
+        "url": "url test"
+    }
+    created_media = create_media_crud(MediaCreate(**media_data), db_session)
+
+    delete_media_crud(db_session, created_media.id)
+
+    retrieved_media = get_media_by_id(db_session, created_media.id)
+
+    assert created_media is not None
+    assert retrieved_media is None
+
