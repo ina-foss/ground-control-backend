@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 from .project_schemas import ProjectBaseDto
-from .task_schemas import TaskBaseDto
+from .task_schemas import TaskBaseDto, TaskWithIdDto
 from ina_ground_control.models.step_model import AnnotationType, StepStatus
 
 
@@ -47,4 +47,4 @@ class StepDetailDto(StepDto):
     """
  
     project: ProjectBaseDto
-    tasks: Optional[list[TaskBaseDto]]
+    tasks: Optional[list[TaskWithIdDto]]
