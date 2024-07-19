@@ -42,7 +42,7 @@ def create_step_crud(step: StepCreate, db: Session):
 
 def update_data_step_crud(step_id: int, step: StepCreate, db: Session ):
     """
-    Update the data of an existing media in the database.
+    Update the data of an existing step in the database.
 
     Attributes:
         step_id (int): The unique identifier of the step to update.
@@ -52,13 +52,13 @@ def update_data_step_crud(step_id: int, step: StepCreate, db: Session ):
     Returns:
         Step: The updated Step object if the step exists, otherwise None.
     """
-    db_media = get_step_by_id(db, step_id=step_id)
-    if db_media is not None:
+    db_step = get_step_by_id(db, step_id=step_id)
+    if db_step is not None:
         for key, value in step.model_dump().items():
-            setattr(db_media, key, value)
+            setattr(db_step, key, value)
         db.commit()
-        db.refresh(db_media)
-    return db_media
+        db.refresh(db_step)
+    return db_step
 
 def delete_step_crud(db: Session, step_id: int):
     """

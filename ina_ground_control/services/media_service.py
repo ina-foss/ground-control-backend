@@ -7,7 +7,7 @@ It includes functions to retrieve a media by ID, create a new media, and update 
 
 from sqlalchemy.orm import Session
 from ina_ground_control.models.media_model import Media
-from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.schemas.media_schemas import MediaCreate, MediaDto
 
 
 def get_media_by_id(db: Session, media_id: int):
@@ -40,13 +40,13 @@ def create_media_crud(media: MediaCreate, db: Session):
     db.refresh(db_media)
     return db_media
 
-def update_data_media_crud(media_id: int, data: str, db: Session):
+def update_media_crud(media_id: int,  media: MediaCreate, db: Session):
     """
     Update the data of an existing media in the database.
 
     Attributes:
         media_id (int): The unique identifier of the media to update.
-        data (str): A new url for the media.
+        data (MediaCreate): A new data for the media.
         db (Session): The database session used for querying.
 
     Returns:
@@ -54,7 +54,8 @@ def update_data_media_crud(media_id: int, data: str, db: Session):
     """
     db_media = get_media_by_id(db, media_id=media_id)
     if db_media is not None:
-        db_media.url = data
+        for key, value in media.model_dump().items():
+            setattr(db_media, key, value)
         db.commit()
         db.refresh(db_media)
     return db_media

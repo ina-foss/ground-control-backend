@@ -105,6 +105,10 @@ def test_get_step_by_id(db_session: Session):
     assert retrieved_step.status.value == step_data["status"]
     assert retrieved_step.project_id == step_data["project_id"]
 
+def test_get_step_by_inexistant_id(db_session: Session):
+
+    inexistant_step = get_step_by_id(db_session, 999)
+    assert inexistant_step is None
 
 def test_update_step_crud(db_session: Session):
     """
