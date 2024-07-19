@@ -34,7 +34,7 @@ def db_session(db_engine):
 task_data = {
     "name": "Test Task",
     "instruction": "Test instruction",
-    "data": "value",
+    "data": {"key":"value"},
     "data_type" : "ldd",
     "status" : "draft",
     "lead_time" : 1,
@@ -83,7 +83,8 @@ def test_update_data_task_crud(db_session: Session):
 
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
-    updated_data ="new_value"
+    updated_data ={"key":"value updated"}
+
     update_data_task_crud(
         created_task.id, updated_data, db_session)
 
