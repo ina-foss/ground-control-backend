@@ -51,7 +51,7 @@ class Annotation(Base):
 
     id = Column(Integer, primary_key=True)
     user_email = Column(String, ForeignKey("user.email"), nullable=False)
-    result = Column(String)
+    result = Column(JSON)
     annotation_status = Column(Enum(AnnotationStatus))
     version = Column(Integer)
     created_at = Column(DateTime, default=func.now())
