@@ -16,7 +16,6 @@ from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,taskComments
 
-
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
     Maps user information received from Keycloak to a User model instance.
@@ -56,13 +55,16 @@ keycloak_config = KeycloakConfiguration(
 
 app = FastAPI()
 
+NO_AUTH=os.getenv('NO_AUTH')=="True"
+
 # Add middleware with basic config
-setup_keycloak_middleware(
-    app,
-    keycloak_configuration=keycloak_config,
-    exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
-    add_swagger_auth=True,
-)
+if not NO_AUTH:
+    setup_keycloak_middleware(
+        app,
+        keycloak_configuration=keycloak_config,
+        exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
+        add_swagger_auth=True,
+    )
 
 
 @app.get("/test")
