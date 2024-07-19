@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 from .task_schemas import TaskBaseDto
 from typing import Optional
-
+from ina_ground_control.models.media_model import MediaType
 
 class MediaCreate(BaseModel):
     """
@@ -13,6 +13,7 @@ class MediaCreate(BaseModel):
     """
 
     url: str
+    type: MediaType
 
 class MediaDto(MediaCreate):
     """
