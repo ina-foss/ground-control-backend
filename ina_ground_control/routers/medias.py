@@ -53,7 +53,7 @@ def read_media(media_id: int, db: Session = Depends(get_db)):
     return media
 
 #add new media
-@router.post("/media/", response_model=MediaCreate)
+@router.post("/media/", response_model=MediaDto)
 def create_media(media: MediaCreate, db: Session = Depends(get_db)):
     """
     Create a new media.
