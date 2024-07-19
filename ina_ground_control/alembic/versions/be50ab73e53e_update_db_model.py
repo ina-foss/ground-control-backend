@@ -56,10 +56,10 @@ def upgrade() -> None:
     )
     op.add_column('annotation', sa.Column('annotation_status', postgresql.ENUM('DRAFT', 'PENDING', 'ENDED', name='annotationstatus', create_type=False), nullable=True))
     op.add_column('annotation', sa.Column('version', sa.Integer(), nullable=True))
-    op.alter_column('annotation', 'result',
-               existing_type=postgresql.JSON(astext_type=sa.Text()),
-               type_=sa.String(),
-               existing_nullable=True)
+    # op.alter_column('annotation', 'result',
+    #            existing_type=postgresql.JSON(astext_type=sa.Text()),
+    #            type_=sa.String(),
+    #            existing_nullable=True)
     op.drop_constraint('annotation_project_id_fkey', 'annotation', type_='foreignkey')
     op.drop_column('annotation', 'status')
     op.drop_column('annotation', 'project_id')
@@ -71,10 +71,10 @@ def upgrade() -> None:
     op.alter_column('task', 'name',
                existing_type=sa.VARCHAR(),
                nullable=False)
-    op.alter_column('task', 'data',
-               existing_type=postgresql.JSON(astext_type=sa.Text()),
-               type_=sa.String(),
-               existing_nullable=True)
+    # op.alter_column('task', 'data',
+    #            existing_type=postgresql.JSON(astext_type=sa.Text()),
+    #            type_=sa.String(),
+    #            existing_nullable=True)
     op.drop_constraint('task_project_id_fkey', 'task', type_='foreignkey')
     op.create_foreign_key(None, 'task', 'step', ['step_id'], ['id'])
     op.create_foreign_key(None, 'task', 'media', ['media_id'], ['id'])
