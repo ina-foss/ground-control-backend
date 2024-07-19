@@ -27,7 +27,7 @@ from latios.log import get_logger
 from ina_ground_control.database import get_db
 from ina_ground_control.models.media_model import Media
 from ina_ground_control.schemas.media_schemas import MediaDto , MediaCreate
-from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_data_media_crud,delete_media_crud,get_medias
+from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_media_crud,delete_media_crud,get_medias
 
 logger = get_logger()
 router = APIRouter(tags=["media"])
@@ -72,20 +72,20 @@ def create_media(media: MediaCreate, db: Session = Depends(get_db)):
 
 #update media by id
 @router.patch("/media/{media_id}", response_model=MediaDto)
-def update_data_media(media_id: int, data: str, db: Session = Depends(get_db)):
+def update_data_media(media_id: int, media: MediaCreate, db: Session = Depends(get_db)):
     """
     Update an existing media by its unique identifier.
 
     Args:
         media_id (int): The unique identifier of the media to update.
-        data (str): The updated media data (url).
+        data (MediaDto): The updated media data.
 s
     Returns:
         MediaDto: The updated media's details.
     Raises:
         HTTPException: If the media is not found.
     """
-    media = update_data_media_crud(media_id, data, db)
+    media = update_media_crud(media_id, media, db)
     if media is None:
         logger.error("Failed to update media with id: %d", media_id)
         raise HTTPException(status_code=404, detail="Media not found")
