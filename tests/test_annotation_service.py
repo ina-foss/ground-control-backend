@@ -38,7 +38,7 @@ def db_session(db_engine):
 annotation_data = {
     "user_email": "user.email@ina.fr",
     "task_id": 1,
-    "result":  "value",
+    "result": {"key":"value"},
     "annotation_status": "draft",
     "version": 1
 }
@@ -46,7 +46,7 @@ annotation_data = {
 annotation_data_2 = {
     "user_email": "user2.email@ina.fr",
     "task_id": 1,
-    "result": "value",
+    "result": {"key":"value"},
     "annotation_status": "draft",
     "version": 1
 
