@@ -2,7 +2,7 @@
 Defines Data Transfer Object (DTO) classes for task-related data structures.
 """
 
-from typing import Optional
+from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
 from .annotation_schemas import AnnotationDto
@@ -16,7 +16,7 @@ class TaskBaseDto(BaseModel):
 
     name: str
     instruction: Optional[str] = ""
-    data: Optional[str]
+    data: Optional[Dict[str, Any]]
     data_type: TaskDataType
     status: TaskStatus
     lead_time: Optional[int]

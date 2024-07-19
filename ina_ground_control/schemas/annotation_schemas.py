@@ -3,7 +3,7 @@ Defines Data Transfer Object (DTO) classes for annotation-related data structure
 """
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
 from ina_ground_control.models.annotation_model import AnnotationStatus
@@ -16,9 +16,9 @@ class AnnotationCreate(BaseModel):
 
     user_email: str
     task_id: int
-    result: str #Optional[Dict[str, Any]]
-    annotation_status : AnnotationStatus
-    version : int
+    result: Optional[Dict[str, Any]]
+    annotation_status: AnnotationStatus
+    version: int
 
 
 class AnnotationDto(AnnotationCreate):
