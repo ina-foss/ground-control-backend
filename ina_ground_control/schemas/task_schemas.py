@@ -5,7 +5,7 @@ Defines Data Transfer Object (DTO) classes for task-related data structures.
 from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
-from .annotation_schemas import AnnotationDto
+from .annotation_schemas import AnnotationDto, AnnotationBase
 from .taskComment_schemas import TaskCommentDto
 from ina_ground_control.models.task_model import TaskStatus,TaskDataType
 
@@ -31,8 +31,8 @@ class TaskWithIdDto(TaskBaseDto):
     """
     Extends TaskBaseDto with an additional id field.
     """
-
     id: int
+    annotations : list[AnnotationBase]
 
 
 class TaskCreateDto(TaskBaseDto):
