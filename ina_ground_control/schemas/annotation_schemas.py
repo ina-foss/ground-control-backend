@@ -9,17 +9,20 @@ from pydantic import BaseModel
 from ina_ground_control.models.annotation_model import AnnotationStatus
 
 
-class AnnotationCreate(BaseModel):
+class AnnotationBase(BaseModel):
     """
-    DTO to create an annotation object
+    DTO containing all basic informations about Task except result
     """
-
     user_email: str
     task_id: int
-    result: Optional[Dict[str, Any]]
     annotation_status: AnnotationStatus
     version: int
 
+class AnnotationCreate(AnnotationBase):
+    """
+    DTO to create an annotation object
+    """
+    result: Optional[Dict[str, Any]]
 
 class AnnotationDto(AnnotationCreate):
     """
