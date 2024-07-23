@@ -6,8 +6,8 @@ from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
 
-from .project_schemas import ProjectBaseDto
-from .task_schemas import TaskBaseDto, TaskWithIdDto
+from .project_schemas import ProjectBaseDto, ProjectWithIdDto
+from .task_schemas import  TaskWithIdDto
 from ina_ground_control.models.step_model import AnnotationType, StepStatus
 
 
@@ -48,3 +48,6 @@ class StepDetailDto(StepDto):
  
     project: ProjectBaseDto
     tasks: Optional[list[TaskWithIdDto]]
+
+class StepProjectDto(BaseModel):
+    project: ProjectWithIdDto

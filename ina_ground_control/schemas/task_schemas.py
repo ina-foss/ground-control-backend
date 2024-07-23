@@ -2,6 +2,7 @@
 Defines Data Transfer Object (DTO) classes for task-related data structures.
 """
 
+from __future__ import annotations
 from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
@@ -54,3 +55,10 @@ class TaskListDto(TaskCreateDto):
     updated_at: Optional[datetime]
     annotations: list[AnnotationDto] = []
     taskComments:list[TaskCommentDto] = []
+    step: Optional[StepProjectDto]
+
+    class Config:
+        orm_mode: True
+
+
+from .step_schemas import StepProjectDto
