@@ -28,10 +28,8 @@ class AnnotationType(PyEnum):
         SEGMENTATION (str): The annotation type for segmentation tasks.
         TRANSCRIPTION (str): The annotation type for transcription tasks.
     """
-
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
-
 
 class StepStatus(PyEnum):
     """
@@ -46,6 +44,7 @@ class StepStatus(PyEnum):
     DRAFT = "draft"
     PENDING = "pending"
     ENDED = "ended"
+
 
 
 class Step(Base):
@@ -64,16 +63,19 @@ class Step(Base):
         project_id (Integer): The foreign key linking to the concerned project.
         tasks (relationship): Relationship to the Task model representing tasks within the step.
     """
-
     __tablename__ = "step"
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     description = Column(String)
     annotation_type = Column(Enum(AnnotationType), nullable=False)
-    status = Column(Enum(StepStatus), nullable=False)
+    status = Column(Enum(StepStatus),nullable=False)
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     project_id = Column(Integer, ForeignKey("project.id"))
     tasks = relationship("Task", backref="step", cascade="all, delete-orphan")
+
+
+
+
