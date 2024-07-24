@@ -16,7 +16,7 @@ Classes:
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 
 
 class TaskDataType(PyEnum):
@@ -75,7 +75,6 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     instruction = Column(String)
-    # FIX: data should be a dict, not a string
     data = Column(JSON)
     data_type = Column(Enum(TaskDataType))  # , nullable=False
     status = Column(Enum(TaskStatus))
@@ -84,7 +83,10 @@ class Task(Base):
     updated_at = Column(DateTime)
     step_id = Column(Integer, ForeignKey("step.id"))
     media_id = Column(Integer, ForeignKey("media.id"))
-    # TODO: update the alembic model to include cascade field in relations
+
+    # project = relationship(
+    #     "Project", secondary='step', primaryjoin="Task.step_id==Step.id", secondaryjoin="Step.project_id == Project.id", viewonly=True
+    # )
     annotations = relationship(
         "Annotation", backref="task", cascade="all, delete-orphan"
     )
