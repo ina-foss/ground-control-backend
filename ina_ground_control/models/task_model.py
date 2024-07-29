@@ -55,7 +55,6 @@ class Task(Base):
         id (Integer): The unique identifier of the task (Primary Key).
         name (String): The name of the task.
         instruction (String): Instructions for completing the task.
-        data (String): Additional data associated with the task.
         data_type (enumerate): The data type of the task.
         status (enumerate): The status of the task.
         lead_time (Integer) : lead time of the task.
@@ -75,7 +74,6 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     instruction = Column(String)
-    data = Column(JSON)
     data_type = Column(Enum(TaskDataType))  # , nullable=False
     status = Column(Enum(TaskStatus))
     lead_time = Column(Integer)
