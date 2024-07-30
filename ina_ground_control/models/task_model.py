@@ -18,6 +18,8 @@ from enum import Enum as PyEnum
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON
 from sqlalchemy.orm import backref, relationship
 
+from ina_ground_control.models.annotation_task_association import Annotation_Task
+
 
 class TaskDataType(PyEnum):
     """
@@ -86,7 +88,8 @@ class Task(Base):
     #     "Project", secondary='step', primaryjoin="Task.step_id==Step.id", secondaryjoin="Step.project_id == Project.id", viewonly=True
     # )
     annotations = relationship(
-        "Annotation", backref="task", cascade="all, delete-orphan"
+        "Annotation",secondary=Annotation_Task.__table__, backref="task", cascade='all, delete', 
+        # single_parent=True
     )
     task_comments = relationship(
         "TaskComment", backref="task", cascade="all, delete-orphan"

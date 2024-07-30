@@ -17,7 +17,6 @@ class TaskBaseDto(BaseModel):
 
     name: str
     instruction: Optional[str] = ""
-    data: Optional[Dict[str, Any]]
     data_type: TaskDataType
     status: TaskStatus
     lead_time: Optional[int]

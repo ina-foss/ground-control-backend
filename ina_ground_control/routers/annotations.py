@@ -11,7 +11,7 @@ from latios.log import get_logger
 
 from ina_ground_control.database import get_db
 from ina_ground_control.models.annotation_model import Annotation
-from ina_ground_control.schemas.annotation_schemas import AnnotationDto, AnnotationCreate
+from ina_ground_control.schemas.annotation_schemas import AnnotationDto, AnnotationFullCreate
 from ina_ground_control.services.annotation_service import (
     create_annotation_crud,
     get_annotations_by_task_id_crud,
@@ -25,7 +25,7 @@ router = APIRouter(tags=["annotation"])
 
 @router.post("/annotation/", response_model=AnnotationDto)
 def create_annotation(
-        annotation: AnnotationCreate,
+        annotation: AnnotationFullCreate,
         db: Session = Depends(get_db)) -> AnnotationDto:
     """
     Create a new annotation.
