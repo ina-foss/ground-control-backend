@@ -15,8 +15,9 @@ Classes:
 
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON, and_
+from sqlalchemy.orm import backref, relationship, foreign, remote
+from sqlalchemy.sql import and_
 
 from ina_ground_control.models.annotation_task_association import Annotation_Task
 
@@ -88,9 +89,18 @@ class Task(Base):
     #     "Project", secondary='step', primaryjoin="Task.step_id==Step.id", secondaryjoin="Step.project_id == Project.id", viewonly=True
     # )
     annotations = relationship(
-        "Annotation",secondary=Annotation_Task.__table__, backref="task", cascade='all, delete', 
-        # single_parent=True
+        "Annotation",
+        secondary=Annotation_Task.__table__,
+        primaryjoin=and_(
+            Annotation_Task.direction == 'OUT',
+            Annotation_Task.task_id == id
+        ),
+        secondaryjoin="Annotation.id == Annotation_Task.annotation_id",
+        backref="task",
+        cascade='all, delete',
+        viewonly=True
     )
+
     task_comments = relationship(
         "TaskComment", backref="task", cascade="all, delete-orphan"
     )
