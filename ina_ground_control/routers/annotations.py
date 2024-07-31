@@ -5,12 +5,13 @@ or the error status if something went wrong.
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 
 from ina_ground_control.database import get_db
 from ina_ground_control.models.annotation_model import Annotation
+from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationDto, AnnotationFullCreate
 from ina_ground_control.services.annotation_service import (
     create_annotation_crud,
@@ -57,13 +58,15 @@ def get_annotations_by_id(
     return annotation
 
 
-@router.get("/annotations/{task_id}", response_model=AnnotationDto)
+@router.get("/annotations/{task_id}", response_model=list[AnnotationDto])
 def get_annotation_by_task_id(
-        task_id: int, db: Session = Depends(get_db)) -> list[Annotation]:
+        task_id: int,
+        direction: InOutEnum = Query(None, description="Direction of the annotation ('in' or 'out')"),
+        db: Session = Depends(get_db)) -> list[Annotation]:
     """
     Get a list of annotations that match the task_id attributes
     """
-    annotations = get_annotations_by_task_id_crud(db, task_id=task_id)
+    annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction= direction)
     return annotations
 
 

@@ -15,7 +15,6 @@ from ina_ground_control.models.annotation_task_association import Annotation_Tas
 from ina_ground_control.models.annotation_task_association import Annotation_Task, InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationCreate,AnnotationFullCreate
 
-# TODO: Modify this service to create both annotation and assocition with task. Create dedicated DTO
 def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     """
     Allow to create an annotation object and save it in the database.
@@ -56,7 +55,7 @@ def get_annotations_by_id_crud(db: Session, annotation_id: int):
 
 
 
-def get_annotations_by_task_id_crud(db: Session, task_id: int):
+def get_annotations_by_task_id_crud(db: Session, task_id: int, direction: InOutEnum):
     """
     Return all the annotation objects whose attribute "task_id" matches the argument.
 
@@ -67,7 +66,11 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int):
     Returns:
     List[Annotation]: A list of Annotation objects that match the task_id.
     """
-    return db.query(Annotation).filter(Annotation.task_id == task_id).all()
+    return db.query(Annotation).join(Annotation_Task).filter(
+        Annotation.id == Annotation_Task.annotation_id,
+        Annotation_Task.task_id == task_id,
+        Annotation_Task.direction == direction
+    ).all()
 
 
 def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
