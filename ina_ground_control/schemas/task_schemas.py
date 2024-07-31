@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
-from .annotation_schemas import AnnotationDto, AnnotationBase
+from .annotation_schemas import AnnotationDto, AnnotationBase, AnnotationWithIdDto
 from .taskComment_schemas import TaskCommentDto
 from ina_ground_control.models.task_model import TaskStatus,TaskDataType
 
@@ -32,7 +32,7 @@ class TaskWithIdDto(TaskBaseDto):
     Extends TaskBaseDto with an additional id field.
     """
     id: int
-    annotations : list[AnnotationBase]
+    annotations : list[AnnotationWithIdDto]
 
 
 class TaskCreateDto(TaskBaseDto):

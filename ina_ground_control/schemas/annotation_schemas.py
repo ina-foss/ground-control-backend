@@ -18,12 +18,14 @@ class AnnotationBase(BaseModel):
     annotation_status: AnnotationStatus
     version: int
 
+class AnnotationWithIdDto(AnnotationBase):
+    id: int
+
 class AnnotationCreate(AnnotationBase):
     """
     DTO to create an annotation object
     """
     result: Optional[Dict[str, Any]]
-    task_id: int
 
 
 class AnnotationFullCreate(BaseModel):
