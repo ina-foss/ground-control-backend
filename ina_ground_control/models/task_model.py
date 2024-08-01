@@ -97,8 +97,8 @@ class Task(Base):
         ),
         secondaryjoin="Annotation.id == Annotation_Task.annotation_id",
         backref="task",
-        cascade='all, delete',
-        viewonly=True
+        cascade='all, delete-orphan',
+        single_parent= True
     )
 
     task_comments = relationship(
