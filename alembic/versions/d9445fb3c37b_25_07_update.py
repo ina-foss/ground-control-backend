@@ -26,8 +26,8 @@ def upgrade() -> None:
     sa.Column('annotation_id', sa.Integer(), nullable=False),
     sa.Column('task_id', sa.Integer(), nullable=False),
     sa.Column('direction', postgresql.ENUM('IN', 'OUT', name='inoutenum', create_type=False), nullable=False),
-    sa.ForeignKeyConstraint(['annotation_id'], ['annotation.id'], ),
-    sa.ForeignKeyConstraint(['task_id'], ['task.id'], ),
+    sa.ForeignKeyConstraint(['annotation_id'], ['annotation.id'], ondelete="CASCADE" ),
+    sa.ForeignKeyConstraint(['task_id'], ['task.id'], ondelete="CASCADE" ),
     sa.PrimaryKeyConstraint('annotation_id', 'task_id')
     )
     op.add_column('project', sa.Column('distribution_mode', postgresql.ENUM('STATIC', 'DYNAMIC', name='distributionmode', create_type=False), nullable=True))

@@ -26,8 +26,8 @@ class Annotation_Task(Base):
     """
     __tablename__ = "annotation_task"
 
-    annotation_id = Column(Integer, ForeignKey("annotation.id"), primary_key=True )
-    task_id = Column(Integer, ForeignKey("task.id"), primary_key=True )
-    direction = Column(Enum(InOutEnum), nullable= False)
+    annotation_id = Column(Integer, ForeignKey("annotation.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    task_id = Column(Integer, ForeignKey("task.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    direction = Column(Enum(InOutEnum), nullable=False)
 
 
