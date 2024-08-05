@@ -18,7 +18,12 @@ PG_PORT = os.getenv('PG_PORT')
 DATABASE_HOSTNAME = os.getenv('DATABASE_HOSTNAME')
 
 DATABASE_URL = f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}'
-engine = create_engine(DATABASE_URL)
+try: 
+    engine = create_engine(DATABASE_URL)
+except ValueError:
+    print("ERROR:   Can't establish connection wih database: Invalid database connection string")
+    print(f'INFO:   PG_SERVER: {PG_SERVER}, PG_DATABASE: {PG_DATABASE}, PG_USERNAME: {PG_USERNAME}, PG_PORT: {PG_PORT}, DATABASE_HOSTNAME: {DATABASE_HOSTNAME}')
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
