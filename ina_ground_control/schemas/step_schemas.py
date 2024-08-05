@@ -50,4 +50,5 @@ class StepDetailDto(StepDto):
     tasks: Optional[list[TaskWithIdDto]]
 
 class StepProjectDto(BaseModel):
+    annotation_type: AnnotationType
     project: ProjectWithIdDto
