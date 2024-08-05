@@ -10,6 +10,8 @@ import sys
 # access to the values within the.ini file in use.
 config = context.config
 
+
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -39,6 +41,8 @@ PG_USERNAME = os.getenv('PG_USERNAME')
 PG_PASSWORD = os.getenv('PG_PASSWORD')
 PG_PORT = os.getenv('PG_PORT')
 DATABASE_HOSTNAME = os.getenv('DATABASE_HOSTNAME')
+
+config.set_main_option('sqlalchemy.url', f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}')
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata
 
@@ -49,8 +53,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    # url = config.get_main_option("sqlalchemy.url")
-    url = f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}'
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
