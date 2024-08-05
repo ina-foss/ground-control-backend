@@ -28,7 +28,17 @@ from ina_ground_control.models.task_model import Task
 from ina_ground_control.models.user_model import User
 from ina_ground_control.models.prediction_model import Prediction
 from ina_ground_control.models.annotation_model import Annotation
+import os
+from dotenv import load_dotenv
 
+load_dotenv('.env.local')
+
+PG_SERVER = os.getenv('PG_SERVER')
+PG_DATABASE = os.getenv('PG_DATABASE')
+PG_USERNAME = os.getenv('PG_USERNAME')
+PG_PASSWORD = os.getenv('PG_PASSWORD')
+PG_PORT = os.getenv('PG_PORT')
+DATABASE_HOSTNAME = os.getenv('DATABASE_HOSTNAME')
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata
 
@@ -39,7 +49,8 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    # url = config.get_main_option("sqlalchemy.url")
+    url = f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}'
     context.configure(
         url=url,
         target_metadata=target_metadata,
