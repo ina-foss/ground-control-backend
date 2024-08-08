@@ -110,7 +110,7 @@ async def info() -> dict:
 
 
 load_dotenv('.env.local')
-PG_HOST = os.getenv('PG_HOST')
-PG_LOG_LEVEL = os.getenv('PG_LOG_LEVEL')
+APP_HOST = os.getenv('APP_HOST')
+APP_LOG_LEVEL = os.getenv('APP_LOG_LEVEL')
 if __name__ == "__main__":
-    uvicorn.run("ina_ground_control.main:app", host=PG_HOST, port=8000,log_level=PG_LOG_LEVEL, reload=True )
+    uvicorn.run("ina_ground_control.main:app", host=APP_HOST, port=8000,log_level=APP_LOG_LEVEL, reload=True )
