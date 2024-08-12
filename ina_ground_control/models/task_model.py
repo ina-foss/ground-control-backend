@@ -15,8 +15,11 @@ Classes:
 
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON, and_
+from sqlalchemy.orm import backref, relationship, foreign, remote
+from sqlalchemy.sql import and_
+
+from ina_ground_control.models.annotation_task_association import Annotation_Task
 
 
 class TaskDataType(PyEnum):
@@ -55,7 +58,6 @@ class Task(Base):
         id (Integer): The unique identifier of the task (Primary Key).
         name (String): The name of the task.
         instruction (String): Instructions for completing the task.
-        data (String): Additional data associated with the task.
         data_type (enumerate): The data type of the task.
         status (enumerate): The status of the task.
         lead_time (Integer) : lead time of the task.
@@ -75,7 +77,6 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     instruction = Column(String)
-    data = Column(JSON)
     data_type = Column(Enum(TaskDataType))  # , nullable=False
     status = Column(Enum(TaskStatus))
     lead_time = Column(Integer)
@@ -88,8 +89,18 @@ class Task(Base):
     #     "Project", secondary='step', primaryjoin="Task.step_id==Step.id", secondaryjoin="Step.project_id == Project.id", viewonly=True
     # )
     annotations = relationship(
-        "Annotation", backref="task", cascade="all, delete-orphan"
+        "Annotation",
+        secondary=Annotation_Task.__table__,
+        primaryjoin=and_(
+            Annotation_Task.direction == 'OUT',
+            Annotation_Task.task_id == id
+        ),
+        secondaryjoin="Annotation.id == Annotation_Task.annotation_id",
+        backref="task",
+        cascade='all, delete-orphan',
+        single_parent= True
     )
+
     task_comments = relationship(
         "TaskComment", backref="task", cascade="all, delete-orphan"
     )

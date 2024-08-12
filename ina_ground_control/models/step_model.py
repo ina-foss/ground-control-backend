@@ -55,8 +55,9 @@ class Step(Base):
         id (Integer): The unique identifier of the step (Primary Key).
         title (String): The title of the step.
         description (String): The description of the step.
-        status (enumerate): The status of the step.
         annotation_type (enumerate): The annotation type of the step.
+        status (enumerate): The status of the step.
+        order (Integer): Position of the step within the project, used to sort them.
         pinned_at (DateTime): The timestamp when the step was pinned.
         created_at (DateTime): The timestamp when the step was created.
         updated_at (DateTime): The timestamp when the step was last updated.
@@ -70,6 +71,7 @@ class Step(Base):
     description = Column(String)
     annotation_type = Column(Enum(AnnotationType), nullable=False)
     status = Column(Enum(StepStatus),nullable=False)
+    order = Column(Integer)
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)

@@ -7,6 +7,7 @@ from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
 from ina_ground_control.models.annotation_model import AnnotationStatus
+from ina_ground_control.schemas.annotation_task_association import AnnotationTaskCreate
 
 
 class AnnotationBase(BaseModel):
@@ -14,15 +15,22 @@ class AnnotationBase(BaseModel):
     DTO containing all basic informations about Task except result
     """
     user_email: str
-    task_id: int
     annotation_status: AnnotationStatus
     version: int
+
+class AnnotationWithIdDto(AnnotationBase):
+    id: int
 
 class AnnotationCreate(AnnotationBase):
     """
     DTO to create an annotation object
     """
     result: Optional[Dict[str, Any]]
+
+
+class AnnotationFullCreate(BaseModel):
+    annotation: AnnotationCreate
+    association: AnnotationTaskCreate
 
 class AnnotationDto(AnnotationCreate):
     """

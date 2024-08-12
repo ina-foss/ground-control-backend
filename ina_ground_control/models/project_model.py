@@ -23,6 +23,17 @@ from ina_ground_control.models.taskComment_model import TaskComment
 from ina_ground_control.models.media_model import Media
 from enum import Enum as PyEnum
 
+class DistributionMode(PyEnum):
+    """
+    Enum describing the different way of distributing task among users
+
+    Attributes
+    ----------
+        STATIC (str):
+        DYNAMIC (str):
+    """
+    STATIC = "static"
+    DYNAMIC = "dynamic"
 
 class ProjectStatus(PyEnum):
     """
@@ -71,6 +82,7 @@ class Project(Base):
     title = Column(String, nullable=False)
     description = Column(String)
     status = Column(Enum(ProjectStatus), nullable=False)
+    distribution_mode = Column(Enum(DistributionMode))
     is_published = Column(Boolean)
     empty_annotations = Column(Boolean)
     allow_skip = Column(Boolean)
