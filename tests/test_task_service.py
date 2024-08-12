@@ -34,9 +34,15 @@ def db_session(db_engine):
 task_data = {
     "name": "Test Task",
     "instruction": "Test instruction",
-    "data": {"key": "value"},
-    "project_id": 1
+    "data": {"key":"value"},
+    "data_type" : "ldd",
+    "status" : "draft",
+    "lead_time" : 1,
+    "step_id" : 1,
+    "media_id" : 1,
 }
+
+
 
 
 def test_get_task_by_id(db_session: Session):
@@ -50,7 +56,12 @@ def test_get_task_by_id(db_session: Session):
     assert retrieved_task.name == task_data["name"]
     assert retrieved_task.instruction == task_data["instruction"]
     assert retrieved_task.data == task_data["data"]
-    assert retrieved_task.project_id == task_data["project_id"]
+    assert retrieved_task.data_type.value == task_data["data_type"]
+    assert retrieved_task.status.value == task_data["status"]
+    assert retrieved_task.lead_time == task_data["lead_time"]
+    assert retrieved_task.step_id == task_data["step_id"]
+    assert retrieved_task.media_id == task_data["media_id"]
+
 
 
 def test_create_task_crud(db_session: Session):
@@ -62,14 +73,18 @@ def test_create_task_crud(db_session: Session):
     assert created_task.name == task_data["name"]
     assert created_task.instruction == task_data["instruction"]
     assert created_task.data == task_data["data"]
-    assert created_task.project_id == task_data["project_id"]
-
+    assert created_task.data_type.value == task_data["data_type"]
+    assert created_task.status.value == task_data["status"]
+    assert created_task.lead_time == task_data["lead_time"]
+    assert created_task.step_id == task_data["step_id"]
+    assert created_task.media_id == task_data["media_id"]
 
 def test_update_data_task_crud(db_session: Session):
 
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
-    updated_data = {"new_key": "new_value"}
+    updated_data ={"key":"value updated"}
+
     update_data_task_crud(
         created_task.id, updated_data, db_session)
 

@@ -3,22 +3,34 @@ Defines Data Transfer Object (DTO) classes for annotation-related data structure
 """
 
 from __future__ import annotations
-from typing import Optional, Dict, Any
+from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
+from ina_ground_control.models.annotation_model import AnnotationStatus
+from ina_ground_control.schemas.annotation_task_association import AnnotationTaskCreate
 
 
-class AnnotationCreate(BaseModel):
+class AnnotationBase(BaseModel):
+    """
+    DTO containing all basic informations about Task except result
+    """
+    user_email: str
+    annotation_status: AnnotationStatus
+    version: int
+
+class AnnotationWithIdDto(AnnotationBase):
+    id: int
+
+class AnnotationCreate(AnnotationBase):
     """
     DTO to create an annotation object
     """
-
-    user_email: str
-    task_id: int
-    project_id: int
     result: Optional[Dict[str, Any]]
-    status: str
 
+
+class AnnotationFullCreate(BaseModel):
+    annotation: AnnotationCreate
+    association: AnnotationTaskCreate
 
 class AnnotationDto(AnnotationCreate):
     """

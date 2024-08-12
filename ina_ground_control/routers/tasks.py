@@ -24,7 +24,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from ina_ground_control.database import get_db
-from ina_ground_control.schemas.task_schemas import TaskListDto, TaskCreateDto
+from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
 
 logger = get_logger()
@@ -49,16 +49,16 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-@router.post("/task/", response_model=TaskCreateDto)
-def create_task(task: TaskCreateDto, db: Session = Depends(get_db)):
+@router.post("/task/", response_model=TaskWithIdDto)
+def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
     """
     Create a new task.
 
     Args:
-        task (TaskCreateDto): The task data to be created.
+        task (TaskBaseDto): The task data to be created.
 
     Returns:
-        TaskCreateDto: The newly created task's details.
+        TaskBaseDto: The newly created task's details.
     """
     try:
         return create_task_crud(task, db)

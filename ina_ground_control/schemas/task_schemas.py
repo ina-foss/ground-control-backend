@@ -2,22 +2,26 @@
 Defines Data Transfer Object (DTO) classes for task-related data structures.
 """
 
-from .project_schemas import ProjectBaseDto
-from typing import Optional, Dict, Any
+from __future__ import annotations
+from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import BaseModel
-from .annotation_schemas import AnnotationDto
-from .prediction_schemas import PredictionDto
-
+from .annotation_schemas import AnnotationDto, AnnotationBase, AnnotationWithIdDto
+from .taskComment_schemas import TaskCommentDto
+from ina_ground_control.models.task_model import TaskStatus,TaskDataType
 
 class TaskBaseDto(BaseModel):
     """
     Base DTO for task objects.
     """
 
-    name: Optional[str] = ""
+    name: str
     instruction: Optional[str] = ""
-    project_id: int
+    data_type: TaskDataType
+    status: TaskStatus
+    lead_time: Optional[int]
+    step_id: int
+    media_id: int
 
     class Config:
         from_attributes = True
@@ -27,8 +31,8 @@ class TaskWithIdDto(TaskBaseDto):
     """
     Extends TaskBaseDto with an additional id field.
     """
-
     id: int
+    annotations : list[AnnotationWithIdDto]
 
 
 class TaskCreateDto(TaskBaseDto):
@@ -38,8 +42,6 @@ class TaskCreateDto(TaskBaseDto):
      data field for additional task-specific data.
     """
 
-    data: Optional[Dict[str, Any]] = []
-
 
 class TaskListDto(TaskCreateDto):
     """
@@ -48,8 +50,14 @@ class TaskListDto(TaskCreateDto):
     """
 
     id: int
-    project: Optional["ProjectBaseDto"] = []
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     annotations: list[AnnotationDto] = []
-    predictions: list[PredictionDto] = []
+    taskComments:list[TaskCommentDto] = []
+    step: Optional[StepProjectDto]
+
+    class Config:
+        orm_mode: True
+
+
+from .step_schemas import StepProjectDto

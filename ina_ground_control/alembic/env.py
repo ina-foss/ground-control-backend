@@ -4,6 +4,7 @@ from sqlalchemy import pool
 from alembic import context
 import alembic_postgresql_enum
 import os
+from dotenv import load_dotenv
 import sys
 
 # this is the Alembic Config object, which provides
@@ -23,15 +24,19 @@ current_dir = os.path.dirname(__file__)
 project_root = os.path.join(current_dir, '..', '..')
 sys.path.append(project_root)
 
+
 # Now, import the Base from your database.py file
 from ina_ground_control.database import Base
-from ina_ground_control.models.project_model import Project, ProjectStatus, AnnotationType
+from ina_ground_control.models.project_model import Project, ProjectStatus
 from ina_ground_control.models.task_model import Task
 from ina_ground_control.models.user_model import User
-from ina_ground_control.models.prediction_model import Prediction
 from ina_ground_control.models.annotation_model import Annotation
-import os
-from dotenv import load_dotenv
+from ina_ground_control.models.media_model import Media
+from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.tag_model import Tag
+from ina_ground_control.models.taskComment_model import TaskComment
+from ina_ground_control.models.annotation_task_association import Annotation_Task 
+
 
 load_dotenv('.env.local')
 
