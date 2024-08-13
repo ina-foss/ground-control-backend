@@ -4,7 +4,7 @@ This module sets up the SQLAlchemy engine and session factory for our applicatio
 
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -42,6 +42,7 @@ def get_db():
         Session: A SQLAlchemy session object.
     """
     db = SessionLocal()
+    db.execute(text('SET TRANSACTION READ WRITE'))
     try:
         yield db
     finally:
