@@ -22,10 +22,15 @@ Configuration:
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from latios.log import get_logger
 from ina_ground_control.database import get_db
+from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
+from ina_ground_control.services.media_service import create_media_crud
+from ina_ground_control.services.annotation_service import create_annotation_crud
 
 logger = get_logger()
 router = APIRouter(tags=["task"])
@@ -65,6 +70,48 @@ def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error("Failed to create task: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create task") from e
+
+@router.post("/step/{step_id}", response_model=TaskWithIdDto)
+def task_inject(
+    annotation: AnnotationFullCreate, 
+    task: TaskBaseDto,  
+    media: MediaCreate,
+    step_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Use to create a media, a task and an annotation in one request
+
+    List of parameters overwritten by the request
+    which can be equal to 0:
+    - `task.media_id`
+    - `annotation.association.task_id`
+    - `annotation.association.annotation_id`
+
+    """
+    try:
+        # Create Media
+        created_media = create_media_crud(media, db)
+
+        # Use the media id for the Task
+        task.media_id = created_media.id
+        task.step_id = step_id
+        created_task = create_task_crud(task, db)
+
+        # Use the task id for the Annotation
+        annotation.association.task_id = created_task.id
+        created_annotation = create_annotation_crud(db, annotation)
+
+        return created_task
+
+    except IntegrityError as e:
+        logger.error("Database integrity error: %s", e)
+        raise HTTPException(status_code=400, detail="Database integrity error")
+
+    except Exception as e:
+        logger.error("An unexpected error occurred: %s", e)
+        raise HTTPException(status_code=400, detail="An unexpected error occurred")
+
 
 @router.patch("/task/{task_id}", response_model=TaskListDto)
 def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(get_db)):
