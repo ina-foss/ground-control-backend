@@ -71,11 +71,12 @@ def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
         logger.error("Failed to create task: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create task") from e
 
-@router.post("/task-injector/", response_model=TaskWithIdDto)
+@router.post("/step/{step_id}", response_model=TaskWithIdDto)
 def task_inject(
     annotation: AnnotationFullCreate, 
     task: TaskBaseDto,  
-    media: MediaCreate, 
+    media: MediaCreate,
+    step_id: int,
     db: Session = Depends(get_db)
 ):
     """
@@ -87,11 +88,6 @@ def task_inject(
     - `annotation.association.task_id`
     - `annotation.association.annotation_id`
 
-    List of parameters that are required :
-    - `task.step_id`
-    - `annotation.annotation.user_email`
-
-
     """
     try:
         # Create Media
@@ -99,6 +95,7 @@ def task_inject(
 
         # Use the media id for the Task
         task.media_id = created_media.id
+        task.step_id = step_id
         created_task = create_task_crud(task, db)
 
         # Use the task id for the Annotation
