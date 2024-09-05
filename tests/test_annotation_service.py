@@ -3,8 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
+from ina_ground_control.models.annotation_task_association import Annotation_Task, InOutEnum
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud, create_annotation_crud
-from ina_ground_control.schemas.annotation_schemas import AnnotationCreate
+from ina_ground_control.schemas.annotation_schemas import AnnotationCreate, AnnotationFullCreate
 
 
 @pytest.fixture(scope="session")
@@ -36,63 +37,85 @@ def db_session(db_engine):
 
 
 annotation_data = {
-    "user_email": "user.email@ina.fr",
-    "task_id": 1,
-    "result": {"key":"value"},
-    "annotation_status": "draft",
-    "version": 1
+    "annotation": {
+        "user_email": "user.email@ina.fr",
+        "annotation_status": "draft",
+        "version": 1,
+        "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
+    },
+    "association": {
+        "annotation_id": 1,  # Ensure unique annotation IDs
+        "task_id": 1,
+        "direction": InOutEnum.IN
+    }
 }
 
 annotation_data_2 = {
-    "user_email": "user2.email@ina.fr",
-    "task_id": 1,
-    "result": {"key":"value"},
-    "annotation_status": "draft",
-    "version": 1
+    "annotation": {
+        "user_email": "user2.email@ina.fr",
+        "annotation_status": "draft",
+        "version": 1,
+        "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
+    },
+    "association": {
+        "annotation_id": 2,  # Ensure unique annotation IDs
+        "task_id": 2,
+        "direction": InOutEnum.OUT
+    }
+}
 
+annotation_data_3 = {
+    "annotation": {
+        "user_email": "user.email@ina.fr",
+        "annotation_status": "draft",
+        "version": 1,
+        "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
+    },
+    "association": {
+        "annotation_id": 3,  # Ensure unique annotation IDs
+        "task_id": 3,
+        "direction": InOutEnum.OUT
+    }
 }
 
 
 def test_create_annotation_crud(db_session: Session):
     """
-        Testing annotation creation service
+    Testing annotation creation service
     """
-    created_annotation = create_annotation_crud(db_session, AnnotationCreate(**annotation_data))
+    created_annotation = create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data_3))
+
     assert created_annotation is not None
     assert created_annotation.id is not None
-    assert created_annotation.user_email == annotation_data["user_email"]
-    assert created_annotation.task_id == annotation_data["task_id"]
-    assert created_annotation.result == annotation_data["result"]
-    assert created_annotation.annotation_status.value == annotation_data["annotation_status"]
-    assert created_annotation.version == annotation_data["version"]
+    assert created_annotation.user_email == annotation_data_3["annotation"]["user_email"]
+    assert created_annotation.result == annotation_data_3["annotation"]["result"]
+    assert created_annotation.annotation_status.value == annotation_data_3["annotation"]["annotation_status"]
+    assert created_annotation.version == annotation_data_3["annotation"]["version"]
+
+    association = db_session.query(Annotation_Task).filter(Annotation_Task.annotation_id == created_annotation.id).first()
+    assert association is not None
+    assert association.task_id == annotation_data_3["association"]["task_id"]
 
 
 def test_get_annotations_by_task_id_crud(db_session: Session):
     """
-        Testing getting all the annotation from one task object
-
-        note:
-        the assert part looks for retrieved_annotations[1] and retrieved_annotations[2]
-        because retrieved_annotations[0] is the one used in the previous test.
+    Testing getting all the annotation from one task object
     """
     created_annotation_1 = create_annotation_crud(
-        db_session, AnnotationCreate(**annotation_data))
-
+        db_session, AnnotationFullCreate(**annotation_data))
     created_annotation_2 = create_annotation_crud(
-        db_session, AnnotationCreate(**annotation_data_2))
+        db_session, AnnotationFullCreate(**annotation_data_2))
 
-    retrieved_annotations = get_annotations_by_task_id_crud(db_session, 1)
+    db_session.commit()
+    db_session.flush()
 
-    assert retrieved_annotations is not None
-    assert retrieved_annotations[1].id == created_annotation_1.id
-    assert retrieved_annotations[1].user_email == annotation_data["user_email"]
-    assert retrieved_annotations[1].task_id == annotation_data["task_id"]
-    assert retrieved_annotations[1].result == annotation_data["result"]
-    assert retrieved_annotations[1].version == annotation_data["version"]
-    assert retrieved_annotations[1].annotation_status.value == annotation_data["annotation_status"]
-    assert retrieved_annotations[2].id == created_annotation_2.id
-    assert retrieved_annotations[2].user_email == annotation_data_2["user_email"]
-    assert retrieved_annotations[2].task_id == annotation_data_2["task_id"]
-    assert retrieved_annotations[2].result == annotation_data_2["result"]
-    assert retrieved_annotations[2].version == annotation_data_2["version"]
-    assert retrieved_annotations[2].annotation_status.value == annotation_data["annotation_status"]
+    retrieved_annotations_in = get_annotations_by_task_id_crud(db_session, 1, InOutEnum.IN)
+    retrieved_annotations_out = get_annotations_by_task_id_crud(db_session, 2, InOutEnum.OUT)
+
+    assert retrieved_annotations_in is not None
+    assert len(retrieved_annotations_in) == 1
+    assert retrieved_annotations_in[0].id == created_annotation_1.id
+
+    assert retrieved_annotations_out is not None
+    assert len(retrieved_annotations_out) == 1
+    assert retrieved_annotations_out[0].id == created_annotation_2.id
