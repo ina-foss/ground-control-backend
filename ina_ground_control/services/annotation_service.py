@@ -6,6 +6,7 @@ Functions:
 - get_annotations_by_task_id_crud
 - get_annotations_by_id_crud
 - udpate_annotation_result_crud
+- finish_annotation_crud
 """
 
 from typing import Any, Dict
@@ -88,6 +89,18 @@ def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotatio
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     if db_annotation is not None:
         db_annotation.result = result
+        db.commit()
+        db.refresh(db_annotation)
+    return db_annotation
+
+def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
+
+    db_annotation = get_annotations_by_id_crud(db, annotation_id)
+    if db_annotation is not None:
+        db_annotation.result = result
+        db_annotation.annotation_status = AnnotationStatus.ENDED
+        db_annotation.validated_at =func.now()
+        db_annotation.updated_at =func.now()
         db.commit()
         db.refresh(db_annotation)
     return db_annotation
