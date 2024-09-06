@@ -1,0 +1,15 @@
+fastapi==0.110.2
+pydantic~=2.6.2
+pydantic_core==2.16.3
+pydantic[email]
+SQLAlchemy==2.0.29
+uvicorn[standard]==0.29.0
+dynaconf==3.2.4
+dynaconf[yaml]==3.2.4
+psycopg2-binary
+requests==2.31.0
+fastapi-keycloak-middleware==0.4.1
+python-dotenv==1.0.1
+alembic==1.13.1
+alembic-postgresql-enum==1.2.0
+latios==1.0.4

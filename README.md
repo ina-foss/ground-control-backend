@@ -1,93 +1,135 @@
-# backend
+# Ground Control Backend
 
 
 
-## Getting started
+### Création du virtualenv
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Si vous souhaitez lancer l'api sans le reste de la stack, exécutez les commandes suivantes depuis la racine de ce dépôt :
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://git.infra.sas.ina/ia/code/ground-control/backend.git
-git branch -M master
-git push -uf origin master
+```bash
+virtualenv venv
+source venv/bin/activate
+python -m pip install --upgrade pip
 ```
 
-## Integrate with your tools
+### Lancement avec docker compose
 
-- [ ] [Set up project integrations](https://git.infra.sas.ina/ia/code/ground-control/backend/-/settings/integrations)
+Sinon, créez un dossier pour le projet ground-control et récupérez les projets front et back :
 
-## Collaborate with your team
+```bash
+mkdir ground-control
+git clone https://git.infra.sas.ina/ia/code/ground-control/front.git
+git clone https://git.infra.sas.ina/ia/code/ground-control/backend.git
+cd ground-control/backend/.dev
+docker-compose up -d
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+### Alembic
 
-## Test and Deploy
+Pour générer un script de révision alembic après avoir modifié les fichiers models de l'application, se positionner dans le docker ou le virtual env et éxécuter : 
 
-Use the built-in continuous integration in GitLab.
+```bash
+alembic revision --autogenerate -m "Add model changes"
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Pour mettre à jour la base avec la dernière révision, éxécuter : 
 
-***
+```bash
+alembic upgrade head
+```
 
-# Editing this README
+### Documentation
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+La documentation utilise ![Sphinx](https://pypi.org/project/Sphinx/) et  ![myst](https://pypi.org/project/myst-parser/)
+Pour générer une nouvelle version de la doc, se placer dans le répertoire /docs et éxécuter : 
 
-## Suggestions for a good README
+```bash
+sphinx-build -E -b html . ./_build/
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Bug Possible
 
-## Name
-Choose a self-explaining name for your project.
+Pendant le developpement, il se peut que l'application Nuxt ne puisse plus se rafraîchir. Vous verrez alors dans le terminal du container ce genre d'erreur.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+![bug nuxt](https://ina1.sharepoint.com/:i:/r/sites/2IA/Documents%20partages/IHMIA/Screenshot%202024-05-21%20154329.png?csf=1&web=1&e=NqgDuH)
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+En attendant de trouver une solution, supprimer le container `dev-frontend-1` et le relancer suffit
+```bash
+docker rm dev-frontend-1
+docker compose up -d
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### Variables d'environnement :
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Les variables d'environnement sont définies dans le fichier [.env.local](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/.env.local) et sont utilisées dans la definition de l'url de connexion à la base de données (DATABASE_URL)
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+| NOM               | EXEMPLE           | DESCRIPTION                                                         |
+|-------------------|-------------------|---------------------------------------------------------------------|
+| PG_SERVER         | postgresql        | serveur de base de donnée utilisé                                   | 
+| PG_DATABASE       | ground_control_db | nom de la base de données                                           | 
+| PG_USERNAME       | user              | nom d'utilisateur comme login pour se connecté à la base de données | 
+| PG_PASSWORD       | postgres          | le mot de passe associé au login                                    |
+| PG_PORT           | 5432              | numero de port de la base de données                                | 
+| DATABASE_HOSTNAME | @db               | nom du domaine                                                      |
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Configuration SSO
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Le fichier [settings.yaml](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/ina_ground_control/settings.yaml) permet de gerer les parametres de configuration (pour l'environnement de dev et du prod).
+Il permet de stocker des paramètres de configuration de manière structurée et lisible.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+| VARIABLE             | EXEMPLE                             | UTILITE                                                                          |
+|----------------------|-------------------------------------|----------------------------------------------------------------------------------|
+| url                  | "http://keycloak:9080/"             | L'URL de base pour le service SSO qui est Keycloak                               | 
+| realm                | "ground-control"                    | le nom du lot defini dans keycloak qui gére le groupe d' utilisateurs            | 
+| client_id            | "backend"                           | L'identifiant du client qui va se connecter à Keycloak (à definir dans keycloak) | 
+| client_secret        | "S95Ja09NGqzB4UvXoUgbcM39IdTz8826"  | la clé secrete generer automatiquement avec keycloak                             |
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Utilisation du débugueur avec les IDE jetbrains
 
-## License
-For open source projects, say how it is licensed.
+* Tout d'abord, mettre à jour l'IDE à la dernière version disponible. (Help > Check for updates)
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+* Ensuite, dans le menu déroulant des configurations disponibles, sélectionner "Edit Configurations" :
+
+![Sélectionner "Edit Configurations"](.dev/img/1.png)
+
+* Cliquer sur le bouton "+", et ajouter une configuration de type "Python debug server" : 
+
+![Cliquer sur +](.dev/img/2.png)
+
+* Donner un nom à la configuration de debug,
+* Choisir un port 
+* Dans le champ "IDE host name", renseigner l'adresse ip où tourne l'IDE.
+* Mapper le chemin du projet sur la machine avec le chemin dans le container. Par exemple :
+  /home/ben/Projects/ground_control/backend=/code
+
+![Configurer](.dev/img/3.png)
+
+* Il faut rebuild le container avec la version à jour du plugin **pydevd-pycharm**, telle qu'elle est indiquée dans la configuration du serveur de debug. Ainsi, dans le container, faire par exemple :
+
+```
+pip install pydevd-pycharm~=241.18034.62
+```
+
+Ou bien ajouter **pydevd-pycharm~=241.18034.62** au requirements-dev.txt, puis rebuild le container :
+
+```
+docker compose up -d --build backend
+```
+
+* Une fois le projet relancé, lancer la configuration debug nouvellement créée en cliquant sur l'icône de debug. On doit voir cet écran :
+
+![En attente de debug](.dev/img/4.png)
+
+* Pour finir, recopier dans le fichier **main.py** juste après les imports les lignes indiquées dans la configuration de debug. Dans l'exemple :
+
+```
+import pydevd_pycharm
+pydevd_pycharm.settrace('192.168.1.21', port=12345, stdoutToServer=True, stderrToServer=True)
+```
+
+![Recopier les lignes dans le fichier main.py](.dev/img/5.png)
+
+* L'application va détecter un changement et, au reload, se connecter au debugueur. Si un warning apparait dans la console de debug au sujet d'un problème de version, faire simplement "resume program" (F9)
+

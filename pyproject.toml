@@ -1,0 +1,41 @@
+[project]
+name = "ina_ground_control"
+dynamic = [
+    "version",
+    "dependencies"
+]
+description = "INA Ground Control"
+authors = [
+    {name = "Pablo RATOUIT", email="pratouit-prestataire@ina.fr"},
+    {name = "Benjamin ELKAYS", email="belkays@ina.fr"},
+    {name = "Molka JELASSI", email="mjelassi-prestataire@ina.fr"},
+    {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"}
+]
+
+readme = "README.md"
+requires-python = ">=3.10"
+
+keywords = [
+    "ground truth"
+]
+
+[project.urls]
+repository = "https://git.infra.sas.ina/ia/code/ground-control/backend.git"
+
+[build-system]
+requires = [
+    "setuptools==68.2.2"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "python-simplified-semver"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages]
+find = {namespaces = false}
+
+[tool.pytest.ini_options]
+addopts = "--cov=ina_ground_control --cov-report=html"
