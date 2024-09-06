@@ -15,7 +15,8 @@ from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import Annotation_Task
 from ina_ground_control.models.annotation_task_association import Annotation_Task, InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationCreate,AnnotationFullCreate
-
+from ina_ground_control.models.annotation_model import AnnotationStatus
+from sqlalchemy.sql.expression import func
 def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     """
     Allow to create an annotation object and save it in the database.
