@@ -10,7 +10,11 @@ classifiers = []
 requires-python = ">=3.11"
 readme = "README.md"
 authors = [
-  {name = "", email = ""}
+    {name = "Pablo RATOUIT", email="pratouit-prestataire@ina.fr"},
+    {name = "Benjamin ELKAYS", email="belkays@ina.fr"},
+    {name = "Molka JELASSI", email="mjelassi-prestataire@ina.fr"},
+    {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"},
+    {name = "Abdelmalek AWAYNI", email="aawayni-prestataire@ina.fr"}
 ]
 
 [tool.setuptools_scm]
