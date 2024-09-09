@@ -1,13 +1,12 @@
 """
 Defines Data Transfer Object (DTO) classes for step-related data structures.
 """
-
+from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
 
-from .project_schemas import ProjectBaseDto, ProjectWithIdDto
-from .task_schemas import  TaskWithIdDto
+
 from ina_ground_control.models.step_model import AnnotationType, StepStatus
 
 
@@ -47,8 +46,13 @@ class StepDetailDto(StepDto):
     """
  
     project: ProjectBaseDto
-    tasks: Optional[list[TaskWithIdDto]]
+    tasks: Optional[list["TaskWithIdDto"]]
+
+
 
 class StepProjectDto(BaseModel):
     annotation_type: AnnotationType
     project: ProjectWithIdDto
+
+from ina_ground_control.schemas.task_schemas import  TaskWithIdDto
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectWithIdDto
