@@ -62,10 +62,9 @@ class ProjectListDto(ProjectWithIdDto):
 
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    steps: list[StepDetailDto]
+    steps: list["StepDetailDto"]
     medias: list[MediaCreate]
 
 
-from ina_ground_control.schemas.media_schemas import MediaCreate
-from .task_schemas import TaskListDto
 from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
+from ina_ground_control.schemas.media_schemas import MediaCreate

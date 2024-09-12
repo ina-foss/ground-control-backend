@@ -18,6 +18,7 @@ from ina_ground_control.services.annotation_service import (
     get_annotations_by_task_id_crud,
     get_annotations_by_id_crud,
     udpate_annotation_result_crud,
+    finish_annotation_crud
 )
 
 logger = get_logger()
@@ -77,6 +78,18 @@ def update_annotation_result(
     Edit the result of an existing annotation
     """
     annotation = udpate_annotation_result_crud(db, result, annotation_id)
+    if annotation is None:
+        logger.error("Failed to retrieve annotation with id: %s", annotation_id)
+        raise HTTPException(status_code=404, detail="Annotation not found")
+    return annotation
+
+@router.patch("/annotation/finish/{id}", response_model=AnnotationDto)
+def finish_annotation(
+        annotation_id: int, result: Dict[str, Any], db: Session = Depends(get_db)) -> AnnotationDto:
+    """
+    finish an annotation
+    """
+    annotation = finish_annotation_crud(db, result, annotation_id)
     if annotation is None:
         logger.error("Failed to retrieve annotation with id: %s", annotation_id)
         raise HTTPException(status_code=404, detail="Annotation not found")

@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Optional
 from typing import Optional
 from ina_ground_control.models.media_model import MediaType
 
-if TYPE_CHECKING:
-    from .task_schemas import TaskBaseDto
+
 
 
 class MediaCreate(BaseModel):
@@ -34,3 +33,5 @@ class MediaDto(MediaCreate):
             Config for reading attributes from other class.
         """
 
+
+from .task_schemas import TaskBaseDto

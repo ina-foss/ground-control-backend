@@ -6,6 +6,7 @@ Functions:
 - get_annotations_by_task_id_crud
 - get_annotations_by_id_crud
 - udpate_annotation_result_crud
+- finish_annotation_crud
 """
 
 from typing import Any, Dict
@@ -14,7 +15,8 @@ from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import Annotation_Task
 from ina_ground_control.models.annotation_task_association import Annotation_Task, InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationCreate,AnnotationFullCreate
-
+from ina_ground_control.models.annotation_model import AnnotationStatus
+from sqlalchemy.sql.expression import func
 def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     """
     Allow to create an annotation object and save it in the database.
@@ -88,6 +90,18 @@ def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotatio
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     if db_annotation is not None:
         db_annotation.result = result
+        db.commit()
+        db.refresh(db_annotation)
+    return db_annotation
+
+def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
+
+    db_annotation = get_annotations_by_id_crud(db, annotation_id)
+    if db_annotation is not None:
+        db_annotation.result = result
+        db_annotation.annotation_status = AnnotationStatus.ENDED
+        db_annotation.validated_at =func.now()
+        db_annotation.updated_at =func.now()
         db.commit()
         db.refresh(db_annotation)
     return db_annotation
