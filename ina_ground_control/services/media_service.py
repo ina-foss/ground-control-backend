@@ -7,7 +7,7 @@ It includes functions to retrieve a media by ID, create a new media, and update 
 
 from sqlalchemy.orm import Session
 from ina_ground_control.models.media_model import Media
-from ina_ground_control.schemas.media_schemas import MediaCreate, MediaDto
+from ina_ground_control.schemas.media_schemas import MediaCreate
 
 
 def get_media_by_id(db: Session, media_id: int):

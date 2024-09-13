@@ -94,3 +94,4 @@ def finish_annotation(
         logger.error("Failed to retrieve annotation with id: %s", annotation_id)
         raise HTTPException(status_code=404, detail="Annotation not found")
     return annotation
+

@@ -73,11 +73,11 @@ def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
 
 @router.post("/step/{step_id}", response_model=TaskWithIdDto)
 def task_inject(
-    annotation: AnnotationFullCreate, 
-    task: TaskBaseDto,  
-    media: MediaCreate,
-    step_id: int,
-    db: Session = Depends(get_db)
+        annotation: AnnotationFullCreate,
+        task: TaskBaseDto,
+        media: MediaCreate,
+        step_id: int,
+        db: Session = Depends(get_db)
 ):
     """
     Use to create a media, a task and an annotation in one request
@@ -100,17 +100,17 @@ def task_inject(
 
         # Use the task id for the Annotation
         annotation.association.task_id = created_task.id
-        created_annotation = create_annotation_crud(db, annotation)
+        create_annotation_crud(db, annotation)
 
         return created_task
 
     except IntegrityError as e:
         logger.error("Database integrity error: %s", e)
-        raise HTTPException(status_code=400, detail="Database integrity error")
+        raise HTTPException(status_code=400, detail="Database integrity error") from e
 
     except Exception as e:
         logger.error("An unexpected error occurred: %s", e)
-        raise HTTPException(status_code=400, detail="An unexpected error occurred")
+        raise HTTPException(status_code=400, detail="An unexpected error occurred") from e
 
 
 @router.patch("/task/{task_id}", response_model=TaskListDto)

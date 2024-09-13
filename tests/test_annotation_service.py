@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
-from ina_ground_control.models.annotation_task_association import Annotation_Task, InOutEnum
+from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud, create_annotation_crud
 from ina_ground_control.schemas.annotation_schemas import AnnotationCreate, AnnotationFullCreate
 
@@ -92,7 +92,7 @@ def test_create_annotation_crud(db_session: Session):
     assert created_annotation.annotation_status.value == annotation_data_3["annotation"]["annotation_status"]
     assert created_annotation.version == annotation_data_3["annotation"]["version"]
 
-    association = db_session.query(Annotation_Task).filter(Annotation_Task.annotation_id == created_annotation.id).first()
+    association = db_session.query(AnnotationTask).filter(AnnotationTask.annotation_id == created_annotation.id).first()
     assert association is not None
     assert association.task_id == annotation_data_3["association"]["task_id"]
 

@@ -14,7 +14,7 @@ from fastapi_keycloak_middleware import (
 )
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
-from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,taskComments
+from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
@@ -56,7 +56,7 @@ keycloak_config = KeycloakConfiguration(
 
 app = FastAPI()
 
-NO_AUTH=os.getenv('NO_AUTH')=="True"
+NO_AUTH = os.getenv("NO_AUTH") == "True"
 
 # Add middleware with basic config
 if not NO_AUTH:
@@ -87,8 +87,8 @@ app.include_router(resources.router)
 app.include_router(medias.router)
 app.include_router(steps.router)
 app.include_router(tags.router)
-app.include_router(taskComments.router)
-#app.servers = [{"url": "http://localhost:8000"}]
+app.include_router(task_comments.router)
+app.servers = [{"url": "http://localhost:8000"}]
 
 origins = [
     "http://localhost:3000",
@@ -116,8 +116,8 @@ async def info() -> dict:
     return {"status": "up"}
 
 
-load_dotenv('.env.local')
-APP_HOST = os.getenv('APP_HOST')
-APP_LOG_LEVEL = os.getenv('APP_LOG_LEVEL')
+load_dotenv(".env.local")
+APP_HOST = os.getenv("APP_HOST")
+APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL")
 if __name__ == "__main__":
     uvicorn.run("ina_ground_control.main:app", host=APP_HOST, port=8000,log_level=APP_LOG_LEVEL, reload=True )

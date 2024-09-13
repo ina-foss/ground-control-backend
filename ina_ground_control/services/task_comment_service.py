@@ -6,11 +6,11 @@ It includes functions to retrieve a taskComment by ID, create a new taskComment,
 
 
 from sqlalchemy.orm import Session
-from ina_ground_control.models.taskComment_model import TaskComment
-from ina_ground_control.schemas.taskComment_schemas import TaskCommentCreate , TaskCommentDto
+from ina_ground_control.models.task_comment_model import TaskComment
+from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate, TaskCommentDto
 
 
-def get_taskComment_by_id(db: Session, taskComment_id: int):
+def get_task_comment_by_id(db: Session, task_comment_id: int):
     """
     Retrieve a taskComment by its ID.
 
@@ -21,46 +21,49 @@ def get_taskComment_by_id(db: Session, taskComment_id: int):
     Returns:
         TaskComment: The taskComment object if found, otherwise None.
     """
-    return db.query(TaskComment).filter(TaskComment.id == taskComment_id).first()
+    return db.query(TaskComment).filter(TaskComment.id == task_comment_id).first()
 
-def create_taskComment_crud(taskComment: TaskCommentCreate, db: Session):
+
+def create_task_comment_crud(task_comment: TaskCommentCreate, db: Session):
     """
     Create a new taskComment in the database.
 
     Attributes:
-        taskComment (TaskCommentCreate): The taskComment data transfer object containing taskComment details.
+        task_comment (TaskCommentCreate): The taskComment data transfer object containing taskComment details.
         db (Session): The database session used for querying.
 
     Returns:
         TaskComment: The newly created TaskComment object.
     """
-    db_taskComment = TaskComment(**taskComment.model_dump())
-    db.add(db_taskComment)
+    db_task_comment = TaskComment(**task_comment.model_dump())
+    db.add(db_task_comment)
     db.commit()
-    db.refresh(db_taskComment)
-    return db_taskComment
+    db.refresh(db_task_comment)
+    return db_task_comment
 
-def update_taskComment_crud(taskComment_id:int, taskComment: TaskCommentDto, db: Session):
+
+def update_task_comment_crud(task_comment_id:int, task_comment: TaskCommentDto, db: Session):
     """
     Update the data of an existing taskComment in the database.
 
     Attributes:
-        taskComment_id (int): The unique identifier of the taskComment to update.
-        taskComment (TagCreate): A new url for the taskComment.
+        task_comment_id (int): The unique identifier of the taskComment to update.
+        task_comment (TagCreate): A new url for the taskComment.
         db (Session): The database session used for querying.
 
     Returns:
         TaskComment: The updated TaskComment object if the taskComment exists, otherwise None.
     """
-    db_taskComment = get_taskComment_by_id(db, taskComment_id)
-    if db_taskComment is not None:
-        for key, value in taskComment.model_dump().items():
-            setattr(db_taskComment, key, value)
+    db_task_comment = get_task_comment_by_id(db, task_comment_id)
+    if db_task_comment is not None:
+        for key, value in task_comment.model_dump().items():
+            setattr(db_task_comment, key, value)
         db.commit()
-        db.refresh(db_taskComment)
-    return db_taskComment
+        db.refresh(db_task_comment)
+    return db_task_comment
 
-def delete_taskComment_crud(db: Session, taskComment_id:int):
+
+def delete_task_comment_crud(db: Session, task_comment_id:int):
     """
     Delete a taskComment from the database.
 
@@ -71,13 +74,14 @@ def delete_taskComment_crud(db: Session, taskComment_id:int):
     Returns:
     TaskComment: The deleted TaskComment object if the taskComment exists, otherwise None.
     """
-    db_taskComment = db.query(TaskComment).filter(TaskComment.id == taskComment_id).first()
-    if db_taskComment is not None:
-        db.delete(db_taskComment)
+    db_task_comment = db.query(TaskComment).filter(TaskComment.id == task_comment_id).first()
+    if db_task_comment is not None:
+        db.delete(db_task_comment)
         db.commit()
-    return db_taskComment
+    return db_task_comment
 
-def get_taskComments(db: Session, skip: int = 0, limit: int = 100):
+
+def get_task_comments(db: Session, skip: int = 0, limit: int = 100):
     """
     Retrieve a list of taskComments from the database with optional pagination.
 

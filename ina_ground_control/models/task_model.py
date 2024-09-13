@@ -14,12 +14,12 @@ Classes:
 """
 
 from ina_ground_control.database import Base
+from ina_ground_control.models.annotation_task_association import AnnotationTask
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, JSON, and_
-from sqlalchemy.orm import backref, relationship, foreign, remote
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import and_
 
-from ina_ground_control.models.annotation_task_association import Annotation_Task
 
 
 class TaskDataType(PyEnum):
@@ -85,19 +85,17 @@ class Task(Base):
     step_id = Column(Integer, ForeignKey("step.id"))
     media_id = Column(Integer, ForeignKey("media.id"))
 
-    # project = relationship(
-    #     "Project", secondary='step', primaryjoin="Task.step_id==Step.id", secondaryjoin="Step.project_id == Project.id", viewonly=True
-    # )
+
     annotations = relationship(
         "Annotation",
-        secondary=Annotation_Task.__table__,
+        secondary=AnnotationTask.__table__,
         primaryjoin=and_(
-            Annotation_Task.direction == 'OUT',
-            Annotation_Task.task_id == id
+            AnnotationTask.direction == "OUT",
+            AnnotationTask.task_id == id
         ),
-        secondaryjoin="Annotation.id == Annotation_Task.annotation_id",
+        secondaryjoin="Annotation.id == AnnotationTask.annotation_id",
         backref="task",
-        cascade='all, delete-orphan',
+        cascade="all, delete-orphan",
         single_parent= True
     )
 

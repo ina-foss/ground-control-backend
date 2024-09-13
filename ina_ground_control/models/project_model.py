@@ -12,16 +12,13 @@ Classes:
     Project (Base): SqlAlchemy model representing a project record in the database.
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 from ina_ground_control.database import Base
-from ina_ground_control.models.media_projet_association import Media_Project
-from ina_ground_control.models.tag_project_association import Tag_Project
-from ina_ground_control.models.step_model import Step
-from ina_ground_control.models.tag_model import Tag
-from ina_ground_control.models.taskComment_model import TaskComment
-from ina_ground_control.models.media_model import Media
+from ina_ground_control.models.media_projet_association import MediaProject
+from ina_ground_control.models.tag_project_association import TagProject
 from enum import Enum as PyEnum
+
 
 class DistributionMode(PyEnum):
     """
@@ -93,8 +90,8 @@ class Project(Base):
 
     created_by = Column(String, ForeignKey("user.email"))
 
-    medias = relationship("Media", secondary=Media_Project.__table__, backref="projects", cascade="all")
-    tags = relationship("Tag", secondary=Tag_Project.__table__, backref="project", cascade="all")
+    medias = relationship("Media", secondary=MediaProject.__table__, backref="projects", cascade="all")
+    tags = relationship("Tag", secondary=TagProject.__table__, backref="project", cascade="all")
     owner = relationship("User", back_populates="projects")
     steps = relationship("Step", backref="project", cascade="all, delete-orphan")
 
