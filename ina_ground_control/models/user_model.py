@@ -9,7 +9,7 @@ Classes:
     User (Base): SqlAlchemy model representing a user record in the database.
 """
 
-from sqlalchemy import Column, String, DateTime, Integer
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 from ina_ground_control.database import Base
 

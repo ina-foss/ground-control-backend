@@ -34,8 +34,8 @@ from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.media_model import Media
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.models.tag_model import Tag
-from ina_ground_control.models.taskComment_model import TaskComment
-from ina_ground_control.models.annotation_task_association import Annotation_Task 
+from ina_ground_control.models.task_comment_model import TaskComment
+from ina_ground_control.models.annotation_task_association import AnnotationTask
 
 
 load_dotenv('.env.local')

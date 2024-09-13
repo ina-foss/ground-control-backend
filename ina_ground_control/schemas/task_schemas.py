@@ -3,11 +3,11 @@ Defines Data Transfer Object (DTO) classes for task-related data structures.
 """
 
 from __future__ import annotations
-from typing import Optional, Any, Dict
+from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from .annotation_schemas import AnnotationDto, AnnotationBase, AnnotationWithIdDto
-from .taskComment_schemas import TaskCommentDto
+from .annotation_schemas import AnnotationDto, AnnotationWithIdDto
+from .task_comment_schemas import TaskCommentDto
 from ina_ground_control.models.task_model import TaskStatus,TaskDataType
 
 class TaskBaseDto(BaseModel):
@@ -53,7 +53,7 @@ class TaskListDto(TaskCreateDto):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     annotations: list[AnnotationDto] = []
-    taskComments:list[TaskCommentDto] = []
+    task_comments:list[TaskCommentDto] = []
     step: Optional[StepProjectDto]
 
     class Config:

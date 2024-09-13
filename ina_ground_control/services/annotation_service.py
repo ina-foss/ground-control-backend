@@ -11,12 +11,12 @@ Functions:
 
 from typing import Any, Dict
 from sqlalchemy.orm import Session
-from ina_ground_control.models.annotation_model import Annotation
-from ina_ground_control.models.annotation_task_association import Annotation_Task
-from ina_ground_control.models.annotation_task_association import Annotation_Task, InOutEnum
-from ina_ground_control.schemas.annotation_schemas import AnnotationCreate,AnnotationFullCreate
-from ina_ground_control.models.annotation_model import AnnotationStatus
 from sqlalchemy.sql.expression import func
+from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
+from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
+from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
+
+
 def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     """
     Allow to create an annotation object and save it in the database.
@@ -35,7 +35,7 @@ def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     db.flush()
     association_data = data.association.model_dump()
     association_data['annotation_id'] = anno_db.id
-    association_db = Annotation_Task(**association_data)
+    association_db = AnnotationTask(**association_data)
     db.add(association_db)
     db.commit()
     db.refresh(anno_db)
@@ -68,10 +68,10 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int, direction: InOutE
     Returns:
     List[Annotation]: A list of Annotation objects that match the task_id.
     """
-    return db.query(Annotation).join(Annotation_Task).filter(
-        Annotation.id == Annotation_Task.annotation_id,
-        Annotation_Task.task_id == task_id,
-        Annotation_Task.direction == direction
+    return db.query(Annotation).join(AnnotationTask).filter(
+        Annotation.id == AnnotationTask.annotation_id,
+        AnnotationTask.task_id == task_id,
+        AnnotationTask.direction == direction
     ).all()
 
 

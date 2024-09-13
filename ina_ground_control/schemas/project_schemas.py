@@ -7,7 +7,6 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
 from ina_ground_control.models.project_model import ProjectStatus
-from .user_base_schemas import UserBaseDto
 
 
 class ProjectBaseDto(BaseModel):

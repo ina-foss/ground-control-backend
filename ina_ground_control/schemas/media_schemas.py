@@ -3,7 +3,6 @@ Defines Data Transfer Object (DTO) classes for media-related data structures.
 """
 from __future__ import annotations
 from pydantic import BaseModel
-from typing import TYPE_CHECKING, Optional
 from typing import Optional
 from ina_ground_control.models.media_model import MediaType
 

@@ -101,9 +101,10 @@ def delete_step(step_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Step not found")
     return deleted_step
 
+
 #get list of step
 @router.get("/steps/", response_model=list[StepDto])
-def read_step(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
+def read_steps(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Step]:
     """Retrieve a list of steps with pagination support."""
     steps = get_steps(db, skip=skip, limit=limit)

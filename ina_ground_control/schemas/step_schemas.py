@@ -44,7 +44,7 @@ class StepDetailDto(StepDto):
 
     Used in `/{project_id}` view
     """
- 
+
     project: ProjectBaseDto
     tasks: Optional[list["TaskWithIdDto"]]
 

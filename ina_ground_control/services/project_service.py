@@ -9,7 +9,7 @@ Functions:
 - delete_project_crud
 """
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
