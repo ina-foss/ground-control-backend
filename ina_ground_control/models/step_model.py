@@ -30,6 +30,7 @@ class AnnotationType(PyEnum):
     """
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
+    SPAN = "span"
 
 class StepStatus(PyEnum):
     """
