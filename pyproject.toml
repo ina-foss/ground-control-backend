@@ -23,9 +23,7 @@ keywords = [
 repository = "https://git.infra.sas.ina/ia/code/ground-control/backend.git"
 
 [build-system]
-requires = [
-    "setuptools==68.2.2"
-]
+requires = ["setuptools", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
