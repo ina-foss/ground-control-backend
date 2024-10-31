@@ -1,39 +1,39 @@
-[build-system]
-requires = [ "setuptools", "wheel", "setuptools_scm",]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "ina_ground_control"
-description = ""
-dynamic = [ "dependencies", "version",]
-classifiers = []
-requires-python = ">=3.11"
-readme = "README.md"
+dynamic = [
+    "version",
+    "dependencies"
+]
+description = "INA Ground Control"
 authors = [
     {name = "Pablo RATOUIT", email="pratouit-prestataire@ina.fr"},
     {name = "Benjamin ELKAYS", email="belkays@ina.fr"},
     {name = "Molka JELASSI", email="mjelassi-prestataire@ina.fr"},
-    {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"},
-    {name = "Abdelmalek AWAYNI", email="aawayni-prestataire@ina.fr"}
+    {name = "Denis RAKULAN", email="drakulan-prestataire@ina.fr"}
 ]
+
+readme = "README.md"
+requires-python = ">=3.10"
+
+keywords = [
+    "ground truth"
+]
+
+[project.urls]
+repository = "https://git.infra.sas.ina/ia/code/ground-control/backend.git"
+
+[build-system]
+requires = ["setuptools", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 version_scheme = "python-simplified-semver"
 
-[project.license]
-text = "Private"
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
-[project.scripts]
-py_create_faces = "py_create_faces.job:main"
-
-[project.urls]
-Homepage = "https://git.infra.sas.ina/ia/code/ground-control/backend"
-
-[tool.setuptools.dynamic.dependencies]
-file = [ "requirements.txt",]
-
-[tool.setuptools.packages.find]
-include = [ "ina_ground_control",]
+[tool.setuptools.packages]
+find = {namespaces = false}
 
 [tool.pytest.ini_options]
 addopts = "--cov=ina_ground_control --cov-report=html"
