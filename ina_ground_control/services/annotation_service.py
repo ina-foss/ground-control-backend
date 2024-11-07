@@ -68,7 +68,7 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int,user_email:str, di
     Returns:
     List[Annotation]: A list of Annotation objects that match the task_id.
     """
-    if user_email is not None and user_email != "":
+    if user_email is not None and user_email != '':
         return db.query(Annotation).join(AnnotationTask).filter(
             Annotation.id == AnnotationTask.annotation_id,
             Annotation.user_email == user_email,
