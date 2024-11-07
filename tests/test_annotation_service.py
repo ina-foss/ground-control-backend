@@ -109,8 +109,8 @@ def test_get_annotations_by_task_id_crud(db_session: Session):
     db_session.commit()
     db_session.flush()
 
-    retrieved_annotations_in = get_annotations_by_task_id_crud(db_session, 1, InOutEnum.IN,"")
-    retrieved_annotations_out = get_annotations_by_task_id_crud(db_session, 2, InOutEnum.OUT,"")
+    retrieved_annotations_in = get_annotations_by_task_id_crud(db_session, 1,"admin@localhost.com", InOutEnum.IN)
+    retrieved_annotations_out = get_annotations_by_task_id_crud(db_session, 2,"admin@localhost.com", InOutEnum.OUT)
 
     assert retrieved_annotations_in is not None
     assert len(retrieved_annotations_in) == 1
