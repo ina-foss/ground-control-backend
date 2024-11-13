@@ -62,12 +62,13 @@ def get_annotations_by_id(
 @router.get("/annotations/{task_id}", response_model=list[AnnotationDto])
 def get_annotation_by_task_id(
         task_id: int,
+        user_email: str= Query(None, description="user_email"),
         direction: InOutEnum = Query(None, description="Direction of the annotation ('in' or 'out')"),
         db: Session = Depends(get_db)) -> list[Annotation]:
     """
     Get a list of annotations that match the task_id attributes
     """
-    annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction= direction)
+    annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction= direction,user_email=user_email)
     return annotations
 
 
