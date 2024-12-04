@@ -36,6 +36,7 @@ from ina_ground_control.models.step_model import Step
 from ina_ground_control.models.tag_model import Tag
 from ina_ground_control.models.task_comment_model import TaskComment
 from ina_ground_control.models.annotation_task_association import AnnotationTask
+from ina_ground_control.models.plugin_model import Plugin
 
 
 load_dotenv('.env.local')

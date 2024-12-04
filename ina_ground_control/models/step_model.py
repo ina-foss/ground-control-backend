@@ -78,6 +78,7 @@ class Step(Base):
     updated_at = Column(DateTime)
     project_id = Column(Integer, ForeignKey("project.id"))
     tasks = relationship("Task", backref="step", cascade="all, delete-orphan")
+    plugins = relationship("Plugin", backref="step", cascade="all, delete-orphan")
 
 
 
