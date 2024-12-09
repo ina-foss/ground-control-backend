@@ -3,8 +3,14 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-from ina_ground_control.models.plugin_model import TypePlugin
+from ina_ground_control.models.plugin_model import TypePlugin,DisplayZone
 
+class ConfigData(BaseModel):
+    """
+    DTO for the configuration data of a plugin.
+    """
+    type: str
+    datasource: str
 
 class PluginCreate(BaseModel):
     """
@@ -13,8 +19,10 @@ class PluginCreate(BaseModel):
 
     name: str
     type: TypePlugin
-    step_id : int
-    configData : {}
+    data_categories: str
+    display_zone : DisplayZone
+    step_id: int
+    configData: ConfigData
 
     class Config:
         from_attributes = True

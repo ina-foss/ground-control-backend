@@ -12,7 +12,7 @@ logger = get_logger()
 router = APIRouter(tags=["plugin"])
 
 #search plugins
-@router.get("/step/{step_id}/{name}-autocomplete/search", response_model=List[PluginCreate])
+@router.get("/step/{step_id}/{name}-autocomplete/search", response_model=list[PluginCreate])
 def getPlugins(step_id: int,name:str, db: Session = Depends(get_db)):
 
     plugins = get_plugins(db, step_id=step_id,name=name)

@@ -34,6 +34,17 @@ class TypePlugin(PyEnum):
     LABEL = "label"
     AUTOCOMPLETE = "autocomplete"
 
+class DisplayZone(PyEnum):
+    """
+  Enum representing the different display zone available for plugin.
+
+      Attributes:
+          BLOC (str): Represents a bloc zone.
+          COMPONENT (str): Represents a component zone.
+    """
+    BLOC = "bloc"
+    COMPONENT = "component"
+
 class Plugin(Base):
     """
      Represents a plugin configuration record in the database.
@@ -54,7 +65,9 @@ class Plugin(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    data_categories = Column(String)
     type = Column(Enum(TypePlugin))
+    display_zone = Column(Enum(DisplayZone))
     step_id = Column(Integer, ForeignKey("step.id"))
     configData = Column(JSON)
 
