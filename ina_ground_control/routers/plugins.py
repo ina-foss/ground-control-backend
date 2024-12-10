@@ -30,7 +30,7 @@ router = APIRouter(tags=["plugin"])
 
 #search plugins
 @router.get("/step/{step_id}/{name}-autocomplete/search", response_model=list[PluginCreate])
-def get_plugins(step_id: int,name:str, db: Session = Depends(get_db)):
+def search_plugins(step_id: int, name: str, db: Session = Depends(get_db)):
     """
     Retrieve a list of plugins for a specific step and name.
 
@@ -46,7 +46,7 @@ def get_plugins(step_id: int,name:str, db: Session = Depends(get_db)):
         HTTPException: If no plugins are found for the given parameters.
     """
 
-    plugins = get_plugins(db, step_id=step_id,name=name)
+    plugins = get_plugins(db, step_id=step_id, name=name)
     if plugins is None:
         logger.error("Failed to retrieve plugins")
         raise HTTPException(status_code=404, detail="plugins not found")
