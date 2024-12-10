@@ -71,25 +71,25 @@ class Plugin(Base):
     type = Column(Enum(TypePlugin))
     display_zone = Column(Enum(DisplayZone))
     step_id = Column(Integer, ForeignKey("step.id"))
-    configData = Column(JSON)
+    config_data = Column(JSON)
 
     __table_args__ = (
         CheckConstraint("name = LOWER(name)", name="check_name_lowercase"),
         CheckConstraint("name NOT LIKE '% %'", name="check_name_no_spaces"),
     )
 
-    @validates('configData')
+    @validates("configData")
     def validate_config_data(self, key, value):
         #Validates that the configData JSON contains 'type' as a string and 'datasource' as a valid URL.
         if not isinstance(value, dict):
             raise ValueError("configData must be a JSON object (dictionary).")
 
         # Check for the required 'type' field
-        if 'type' not in value or not isinstance(value['type'], str):
+        if "type" not in value or not isinstance(value["type"], str):
             raise ValueError("configData must include a 'type' key with a string value.")
 
         # Check for the required 'datasource' field
-        if 'datasource' not in value or not isinstance(value['datasource'], str):
+        if "datasource" not in value or not isinstance(value["datasource"], str):
             raise ValueError("configData must include a 'datasource' key with a string value.")
 
         # Validate 'datasource' as a URL using a regex
@@ -97,7 +97,7 @@ class Plugin(Base):
             r'^(https?|ftp)://'
             r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+$'
         )
-        if not url_pattern.match(value['datasource']):
+        if not url_pattern.match(value["datasource"]):
             raise ValueError("The 'datasource' key must contain a valid URL.")
 
         return value

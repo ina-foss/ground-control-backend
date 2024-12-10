@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from ina_ground_control.models.plugin_model import TypePlugin,DisplayZone
 
-class ConfigData(BaseModel):
+class config_data(BaseModel):
     """
     DTO for the configuration data of a plugin.
     """
@@ -22,7 +22,7 @@ class PluginCreate(BaseModel):
     data_categories: str
     display_zone : DisplayZone
     step_id: int
-    configData: ConfigData
+    config_data: config_data
 
     class Config:
         from_attributes = True
