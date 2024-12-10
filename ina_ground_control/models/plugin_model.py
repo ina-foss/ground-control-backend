@@ -18,9 +18,10 @@ spaces using database-level constraints.
   `datasource` (valid URL), either in the application logic or as part of database constraints.
 """
 
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, Enum, CheckConstraint,validates
+from sqlalchemy import Column, Integer, String,  JSON, ForeignKey, Enum, CheckConstraint
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
+from sqlalchemy.orm import validates
 import re
 
 class TypePlugin(PyEnum):
