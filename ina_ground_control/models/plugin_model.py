@@ -11,8 +11,10 @@ Classes:
     Plugin (Base): SQLAlchemy model representing a plugin configuration record in the database.
 
 Features:
-- The `Plugin` model ensures that the `name` field is in lowercase and does not contain spaces using database-level constraints.
-- Additional validation for the `configData` JSON field can be added to ensure it includes required keys like `type` (string) and
+- The `Plugin` model ensures that the `name` field is in lowercase and does not contain
+spaces using database-level constraints.
+- Additional validation for the `configData` JSON field can be added to ensure it includes
+ required keys like `type` (string) and
   `datasource` (valid URL), either in the application logic or as part of database constraints.
 """
 
