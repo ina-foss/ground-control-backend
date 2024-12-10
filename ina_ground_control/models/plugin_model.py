@@ -18,11 +18,9 @@ spaces using database-level constraints.
   `datasource` (valid URL), either in the application logic or as part of database constraints.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Enum, CheckConstraint
-from sqlalchemy.sql.expression import func
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, Enum, CheckConstraint,validates
 from ina_ground_control.database import Base
 from enum import Enum as PyEnum
-from sqlalchemy.orm import validates
 import re
 
 class TypePlugin(PyEnum):
@@ -79,7 +77,7 @@ class Plugin(Base):
     )
 
     @validates("configData")
-    def validate_config_data(self, key, value):
+    def validate_config_data(self, value):
         #Validates that the configData JSON contains 'type' as a string and 'datasource' as a valid URL.
         if not isinstance(value, dict):
             raise ValueError("configData must be a JSON object (dictionary).")
@@ -94,8 +92,8 @@ class Plugin(Base):
 
         # Validate 'datasource' as a URL using a regex
         url_pattern = re.compile(
-            r'^(https?|ftp)://'
-            r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+$'
+            r"^(https?|ftp)://"
+            r"(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+$"
         )
         if not url_pattern.match(value["datasource"]):
             raise ValueError("The 'datasource' key must contain a valid URL.")
