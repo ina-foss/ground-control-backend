@@ -12,7 +12,8 @@ from ina_ground_control.schemas.plugin_schemas import PluginCreate
 
 def get_plugins_search(db: Session, step_id: int,name:str):
 
-    return db.query(Plugin).filter(Plugin.step_id == step_id,Plugin.name == name,Plugin.type == TypePlugin.AUTOCOMPLETE).all()
+    return db.query(Plugin).filter(Plugin.step_id == step_id,Plugin.name == name,
+                                   Plugin.type == TypePlugin.AUTOCOMPLETE).all()
 
 def create_plugin_crud(plugin: PluginCreate, db: Session):
     """
