@@ -51,3 +51,22 @@ def search_plugins(step_id: int, name: str, db: Session = Depends(get_db)):
         logger.error("Failed to retrieve plugins")
         raise HTTPException(status_code=404, detail="plugins not found")
     return plugins
+
+#add new plugin
+@router.post("/plugin/", response_model=PluginCreate)
+def create_step(plugin: PluginCreate, db: Session = Depends(get_db)):
+    """
+    Create a new plugin.
+
+    Args:
+        plugin (PluginCreate): The plugin data to be created.
+
+    Returns:
+        PluginCreate: The newly created plugin's details.
+    """
+    try:
+        return create_plugin_crud(plugin, db)
+    except Exception as e:
+        logger.error("Failed to create plugin: %s", e)
+        raise HTTPException(status_code=400, detail="Failed to create plugin") from e
+

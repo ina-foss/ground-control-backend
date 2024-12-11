@@ -53,3 +53,43 @@ def test_get_plugins(db_session: Session):
         "configData": {"type": "type test",
                        "datasource": 'test data'}
     }
+    created_plugin_1= create_plugin_crud(StepCreate(**plugin_1), db_session)
+    created_plugin_2 = create_plugin_crud(StepCreate(**plugin_2), db_session)
+
+    retrieved_plugins = get_steps(db_session)
+
+    assert retrieved_plugins is not None
+    assert retrieved_plugins[0].id == created_plugin_1.id
+    assert retrieved_plugins[0].name == created_plugin_1["name"]
+    assert retrieved_plugins[0].type.value == created_plugin_1["type"]
+    assert retrieved_plugins[0].data_categories == created_plugin_1["data_categories"]
+    assert retrieved_plugins[0].display_zone.value == created_plugin_1["display_zone"]
+    assert retrieved_plugins[0].step_id == created_plugin_1["step_id"]
+    assert retrieved_plugins[1].id == created_plugin_2.id
+    assert retrieved_plugins[1].name == created_plugin_2["name"]
+    assert retrieved_plugins[1].type.value == created_plugin_2["type"]
+    assert retrieved_plugins[1].data_categories == created_plugin_2["data_categories"]
+    assert retrieved_plugins[1].display_zone.value == created_plugin_2["display_zone"]
+    assert retrieved_plugins[1].step_id == created_plugin_2["step_id"]
+
+plugin_data = {
+    "name": "name test",
+    "type": "autocomplete",
+    "data_categories": "data_categories test",
+    "display_zone": "bloc",
+    "step_id": "1",
+    "configData": {"type": "type test",
+                   "datasource": 'test data'}
+}
+def test_create_plugin_crud(db_session: Session):
+    """
+        Testing plugin creation service
+    """
+    created_plugin = create_plugin_crud(PluginCreate(**plugin_data),db_session)
+    assert created_plugin is not None
+    assert created_plugin.id is not None
+    assert created_plugin.name == plugin_data["name"]
+    assert created_plugin.type.value == plugin_data["type"]
+    assert created_plugin.data_categories == plugin_data["data_categories"]
+    assert created_plugin.display_zone.value == plugin_data["display_zone"]
+    assert created_plugin.step_id == plugin_data["step_id"]
