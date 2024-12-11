@@ -35,7 +35,7 @@ def db_session(db_engine):
 
 def test_get_plugins(db_session: Session):
     plugin_1 = {
-        "name": "name test",
+        "name": "name_test",
         "type": "autocomplete",
         "data_categories": "data_categories test",
         "display_zone": "bloc",
@@ -45,7 +45,7 @@ def test_get_plugins(db_session: Session):
     }
 
     plugin_2 = {
-        "name": "name test",
+        "name": "name_test",
         "type": "autocomplete",
         "data_categories": "data_categories test",
         "display_zone": "bloc",
