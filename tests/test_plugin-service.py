@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
-from ina_ground_control.services.plugin_service import get_plugins
+from ina_ground_control.services.plugin_service import get_plugins,create_plugin_crud
 from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 
 
