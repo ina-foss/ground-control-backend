@@ -56,7 +56,8 @@ def test_get_plugins(db_session: Session):
     created_plugin_1= create_plugin_crud(PluginCreate(**plugin_1), db_session)
     created_plugin_2 = create_plugin_crud(PluginCreate(**plugin_2), db_session)
 
-    retrieved_plugins = get_plugins(db_session)
+    retrieved_plugins = get_plugins(db_session, step_id="1", name="name_test")
+
 
     assert retrieved_plugins is not None
     assert retrieved_plugins[0].id == created_plugin_1.id
