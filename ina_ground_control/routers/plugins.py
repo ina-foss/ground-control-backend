@@ -22,11 +22,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from ina_ground_control.database import get_db
-from ina_ground_control.schemas.plugin_schemas import PluginCreate
-from ina_ground_control.services.plugin_service import get_plugins
+from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
+from ina_ground_control.models.plugin_model import Plugin
+from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
 
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
+NOT_FOUND_STR = "Plugin not found"
 
 #search plugins
 @router.get("/step/{step_id}/{name}-autocomplete/search", response_model=list[PluginCreate])
@@ -46,15 +48,22 @@ def search_plugins(step_id: int, name: str, db: Session = Depends(get_db)):
         HTTPException: If no plugins are found for the given parameters.
     """
 
-    plugins = get_plugins(db, step_id=step_id, name=name)
+    plugins = get_plugins_search(db, step_id=step_id, name=name)
     if plugins is None:
         logger.error("Failed to retrieve plugins")
         raise HTTPException(status_code=404, detail="plugins not found")
     return plugins
 
+@router.get("/plugins/", response_model=list[PluginWithIdDto])
+def read_plugins(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
+        -> list[Plugins]:
+    """Retrieve a list of plugins with pagination support."""
+    plugins = get_plugins_crud(db, skip=skip, limit=limit)
+    return plugins
+
 #add new plugin
 @router.post("/plugin/", response_model=PluginCreate)
-def create_step(plugin: PluginCreate, db: Session = Depends(get_db)):
+def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
     """
     Create a new plugin.
 
@@ -70,3 +79,11 @@ def create_step(plugin: PluginCreate, db: Session = Depends(get_db)):
         logger.error("Failed to create plugin: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create plugin") from e
 
+@router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK,response_model=PluginWithIdDto)
+def delete_plugin(plugin_id: int, db: Session = Depends(get_db)):
+    """Delete a plugin by ID."""
+    deleted_plugin = delete_plugin_crud(db, plugin_id)
+    if deleted_plugin is None:
+        logger.error("Failed to delete plugin with id: %d", plugin_id)
+        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+    return deleted_plugin
