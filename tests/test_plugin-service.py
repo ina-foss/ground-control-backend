@@ -40,7 +40,7 @@ def test_get_plugins(db_session: Session):
         "data_categories": "data_categories test",
         "display_zone": "bloc",
         "step_id": "1",
-        "configData": {"type": "type test",
+        "config_data": {"type": "type test",
                          "datasource": 'test data'}
     }
 
@@ -50,7 +50,7 @@ def test_get_plugins(db_session: Session):
         "data_categories": "data_categories test",
         "display_zone": "bloc",
         "step_id": "1",
-        "configData": {"type": "type test",
+        "config_data": {"type": "type test",
                        "datasource": 'test data'}
     }
     created_plugin_1= create_plugin_crud(PluginCreate(**plugin_1), db_session)
@@ -78,7 +78,7 @@ plugin_data = {
     "data_categories": "data_categories test",
     "display_zone": "bloc",
     "step_id": "1",
-    "configData": {"type": "type test",
+    "config_data": {"type": "type test",
                    "datasource": 'test data'}
 }
 def test_create_plugin_crud(db_session: Session):
