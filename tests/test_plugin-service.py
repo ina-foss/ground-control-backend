@@ -53,10 +53,10 @@ def test_get_plugins(db_session: Session):
         "configData": {"type": "type test",
                        "datasource": 'test data'}
     }
-    created_plugin_1= create_plugin_crud(StepCreate(**plugin_1), db_session)
-    created_plugin_2 = create_plugin_crud(StepCreate(**plugin_2), db_session)
+    created_plugin_1= create_plugin_crud(PluginCreate(**plugin_1), db_session)
+    created_plugin_2 = create_plugin_crud(PluginCreate(**plugin_2), db_session)
 
-    retrieved_plugins = get_steps(db_session)
+    retrieved_plugins = get_plugins(db_session)
 
     assert retrieved_plugins is not None
     assert retrieved_plugins[0].id == created_plugin_1.id
