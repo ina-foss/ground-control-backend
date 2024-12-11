@@ -18,13 +18,13 @@ Dependencies:
 - Latios for logging.
 
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 from ina_ground_control.models.plugin_model import Plugin
-from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
+from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud
 
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
@@ -56,7 +56,7 @@ def search_plugins(step_id: int, name: str, db: Session = Depends(get_db)):
 
 @router.get("/plugins/", response_model=list[PluginWithIdDto])
 def read_plugins(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
-        -> list[Plugins]:
+        -> list[Plugin]:
     """Retrieve a list of plugins with pagination support."""
     plugins = get_plugins_crud(db, skip=skip, limit=limit)
     return plugins
