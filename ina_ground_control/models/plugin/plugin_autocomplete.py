@@ -1,7 +1,5 @@
 from typing import Optional
 
-from pydantic import Field, ConfigDict
-
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 
 
@@ -19,4 +17,3 @@ class PluginConfigAutoComplete(PluginConfigBase):
     search_query_param: Optional[str]
     search_item_size: Optional[int]
     search_item_sort: Optional[str]
-    # Use ConfigDict for configuration
