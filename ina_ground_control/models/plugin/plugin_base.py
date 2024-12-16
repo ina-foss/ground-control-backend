@@ -17,7 +17,7 @@ class PluginConfigBase(BaseModel):
     :type data_source: Optional[str]
     """
     type: str
-    data_source: Optional[str] = Field(None, alias="data_source")
+    data_source: Optional[str] = Field(None, alias='data_source')
 
     # Use ConfigDict for configuration
     model_config = ConfigDict(
