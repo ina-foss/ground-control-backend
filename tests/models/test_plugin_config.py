@@ -2,7 +2,7 @@ import unittest
 
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
-from models.plugin.plugin_config import PluginConfigDTO, TYPE_MAPPING
+from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO, TYPE_MAPPING
 
 
 class TestPluginConfigDTO(unittest.TestCase):
