@@ -1,7 +1,3 @@
-from typing import Optional
-
-from pydantic import BaseModel, ConfigDict, Field
-
 """
 This module defines the base and specific configuration models for plugins.
 
@@ -9,6 +5,11 @@ The `PluginConfigBase` class serves as the foundational configuration for plugin
 enforcing model validation rules and managing optional data sources. Derived from
 Pydantic's `BaseModel`, it adds flexibility and robust data handling for plugin setups.
 """
+
+
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PluginConfigBase(BaseModel):
