@@ -12,7 +12,7 @@ def test_plugin_config_base_valid_type():
         "data_source": "some_data_source",
         "search_attr": "title",
         "search_query_param": "q",
-        "search_item_size": "30",
+        "search_item_size": 30,
         "search_item_sort": "title,asc"
     }
     try:
@@ -59,8 +59,8 @@ def test_plugin_config_base_extra_fields():
         "search_item_size": 30,
         "search_item_sort": "title,asc"
     }
-    config = PluginConfigBase(**data)
+    config = PluginConfigDTO.build(data)
     assert isinstance(config, PluginConfigAutoComplete)
-    assert config.type == "plugin-autocomplete"
+    assert config.type == "plugin_autocomplete"
     assert config.data_source == "some_data_source"
     assert not hasattr(config, 'extra_field')  # Must not have extra fields if extra='ignore'
