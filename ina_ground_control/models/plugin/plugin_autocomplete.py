@@ -17,6 +17,6 @@ class PluginConfigAutoComplete(PluginConfigBase):
        """
     search_attr: Optional[str]
     search_query_param: Optional[str]
-    search_item_size: Optional[str]
+    search_item_size: Optional[int]
     search_item_sort: Optional[str]
     # Use ConfigDict for configuration
