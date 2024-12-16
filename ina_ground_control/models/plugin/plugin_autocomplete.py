@@ -1,5 +1,8 @@
-from typing import Optional
+"""
+This module defines the configuration for plugin autocomplete functionality.
+"""
 
+from typing import Optional
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 
 

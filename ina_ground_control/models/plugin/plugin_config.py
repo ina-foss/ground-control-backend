@@ -1,3 +1,12 @@
+"""
+This module provides the `PluginConfigDTO` class for dynamically building plugin
+configuration objects based on their type.
+
+The module maintains a `TYPE_MAPPING` dictionary, which maps plugin type names to
+their corresponding configuration classes. The `build` method in `PluginConfigDTO`
+constructs and validates plugin configurations by determining the correct class
+from `TYPE_MAPPING`.
+"""
 from typing import Type
 
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
@@ -10,6 +19,9 @@ TYPE_MAPPING = {
 
 
 class PluginConfigDTO():
+    """
+    Represents the Data Transfer Object (DTO) for Plugin Configuration.
+    """
     @staticmethod
     def build(values):
         type_field = values.get("type")
