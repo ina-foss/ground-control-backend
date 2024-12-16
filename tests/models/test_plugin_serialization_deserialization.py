@@ -35,7 +35,7 @@ def test_plugin_config_base_invalid_type():
         "type": "unknown-type",
         "data_source": "some_data_source"
     }
-    config = PluginConfigBase(**data)
+    config = PluginConfigDTO.build(data)
     assert isinstance(config, PluginConfigBase)
     assert config.type == "unknown-type"
     assert config.data_source == "some_data_source"
