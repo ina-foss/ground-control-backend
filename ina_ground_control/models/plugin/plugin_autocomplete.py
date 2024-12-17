@@ -17,7 +17,8 @@ class PluginConfigAutoComplete(PluginConfigBase):
            search_item_sort (str): Sorting criteria for items. Default is 'title,sc'.
        """
     search_attr: Optional[str]
-    search_query_param: Optional[str]
-    search_item_size: Optional[int]
-    search_item_sort: Optional[str]
+    response_id_key: Optional[str]
+    response_ext_id_key: Optional[str]
+    response_label_key: Optional[str]
+
 
