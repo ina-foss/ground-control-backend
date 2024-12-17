@@ -54,5 +54,10 @@ class StepProjectDto(BaseModel):
     annotation_type: AnnotationType
     project: ProjectWithIdDto
 
+class StepPluginDto(BaseModel):
+
+    plugins: PluginWithIdDto
+
 from ina_ground_control.schemas.task_schemas import  TaskWithIdDto
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectWithIdDto
+from ina_ground_control.schemas.plugin_schemas import PluginWithIdDto
