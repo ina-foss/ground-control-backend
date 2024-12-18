@@ -12,8 +12,10 @@ class TestPluginConfigDTO(unittest.TestCase):
             "type": "plugin_autocomplete",
             "search_attr": "title",
             "search_query_param": "q",
-            "search_item_size": 10,
             "search_item_sort": "title,asc",
+            "response_id_key": "id",  # Add this
+            "response_ext_id_key": "ext_id",  # Add this
+            "response_label_key": "label",  # Add this
         }
         self.invalid_data = {
             "search_attr": "title",  # Missing "type" field
@@ -25,6 +27,7 @@ class TestPluginConfigDTO(unittest.TestCase):
 
     def test_build_with_valid_data(self):
         """Test build method with valid data."""
+
         result = PluginConfigDTO.build(self.valid_data)
 
         # Verify that the result is an instance of PluginConfigAutoComplete
@@ -32,7 +35,7 @@ class TestPluginConfigDTO(unittest.TestCase):
 
         # Check that attributes are parsed correctly
         self.assertEqual(result.search_attr, self.valid_data["search_attr"])
-        self.assertEqual(result.search_item_size, self.valid_data["search_item_size"])
+        self.assertEqual(result.response_id_key, self.valid_data["response_id_key"])
 
     def test_build_with_missing_type_field(self):
         """Test build method when 'type' field is missing."""
