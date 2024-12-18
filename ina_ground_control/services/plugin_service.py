@@ -6,9 +6,8 @@ It includes functions to retrieve a plugins by ID_step and name.
 
 
 from sqlalchemy.orm import Session
-from ina_ground_control.models.plugin_model import Plugin,TypePlugin
+from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.schemas.plugin_schemas import PluginCreate
-
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO
 from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
@@ -21,7 +20,7 @@ def get_plugins_search(db: Session, plugin_id: int, query: str):
         plugin = PluginServiceAutoComplete(plugin.config_data)
         return plugin.search(query)
     else:
-        raise Exception(f'{result} not implemented')
+        raise NotImplementedError(f'{result} not implemented')
 
 
 def create_plugin_crud(plugin: PluginCreate, db: Session):

@@ -25,7 +25,7 @@ from ina_ground_control.database import get_db
 from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud
-from ina_ground_control.models.plugin.PluginAutocompleteValueDTO import PluginAutocompleteValueDTO
+from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
 NOT_FOUND_STR = "Plugin not found"
