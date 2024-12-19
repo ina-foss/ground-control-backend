@@ -25,14 +25,14 @@ from ina_ground_control.database import get_db
 from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud
-
+from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
 NOT_FOUND_STR = "Plugin not found"
 
 #search plugins
-@router.get("/step/{step_id}/{name}-autocomplete/search", response_model=list[PluginCreate])
-def search_plugins(step_id: int, name: str, db: Session = Depends(get_db)):
+@router.get("/plugins/{plugin_id}/search", response_model=list[PluginAutocompleteValueDTO])
+def search_plugins(plugin_id: int, query: str, db: Session = Depends(get_db)):
     """
     Retrieve a list of plugins for a specific step and name.
 
@@ -48,17 +48,17 @@ def search_plugins(step_id: int, name: str, db: Session = Depends(get_db)):
         HTTPException: If no plugins are found for the given parameters.
     """
 
-    plugins = get_plugins_search(db, step_id=step_id, name=name)
+    plugins = get_plugins_search(db, plugin_id=plugin_id, query=query)
     if plugins is None:
         logger.error("Failed to retrieve plugins")
         raise HTTPException(status_code=404, detail="plugins not found")
     return plugins
 
-@router.get("/plugins/", response_model=list[PluginWithIdDto])
-def read_plugins(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
-        -> list[Plugin]:
+@router.get("/plugins/step/{step_id}/{plugin_type}/display/{zone}", response_model=list[PluginWithIdDto])
+def read_plugins(db: Session = Depends(get_db),step_id=int, plugin_type=str,zone=str) \
+    -> list[Plugin]:
     """Retrieve a list of plugins with pagination support."""
-    plugins = get_plugins_crud(db, skip=skip, limit=limit)
+    plugins = get_plugins_crud(db, step_id=step_id, plugin_type=plugin_type,zone=zone)
     return plugins
 
 #add new plugin

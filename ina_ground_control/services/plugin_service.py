@@ -6,14 +6,22 @@ It includes functions to retrieve a plugins by ID_step and name.
 
 
 from sqlalchemy.orm import Session
-from ina_ground_control.models.plugin_model import Plugin,TypePlugin
+from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.schemas.plugin_schemas import PluginCreate
+from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
+from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO
+from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
 
 
-def get_plugins_search(db: Session, step_id: int,name:str):
+def get_plugins_search(db: Session, plugin_id: int, query: str):
+    plugin = get_plugin_by_id(db, plugin_id)
+    result = PluginConfigDTO.build(plugin.config_data)
+    if isinstance(result, PluginConfigAutoComplete):
+        plugin = PluginServiceAutoComplete(plugin.config_data)
+        return plugin.search(query)
+    else:
+        raise NotImplementedError(f'{result} not implemented')
 
-    return db.query(Plugin).filter(Plugin.step_id == step_id,Plugin.name == name,
-                                   Plugin.type == TypePlugin.AUTOCOMPLETE).all()
 
 def create_plugin_crud(plugin: PluginCreate, db: Session):
     """
@@ -32,19 +40,11 @@ def create_plugin_crud(plugin: PluginCreate, db: Session):
     db.refresh(db_plugin)
     return db_plugin
 
-def get_plugins_crud(db: Session, skip: int = 0, limit: int = 100):
-    """
-    Retrieve a list of plugins from the database with optional pagination.
+def get_plugins_crud(db: Session, step_id:int, plugin_type:str,zone:str):
 
-    Parameters:
-    db (Session): The database session used for querying.
-    skip (int): The number of records to skip for pagination. Default is 0.
-    limit (int): The maximum number of records to return. Default is 100.
+    return db.query(Plugin).filter(Plugin.step_id == step_id,Plugin.type == plugin_type,
+                                    Plugin.display_zone == zone).all()
 
-    Returns:
-    List[Plugin]: A list of Plugin objects.
-    """
-    return db.query(Plugin).offset(skip).limit(limit).all()
 
 def get_plugin_by_id(db: Session, plugin_id: int):
     """
