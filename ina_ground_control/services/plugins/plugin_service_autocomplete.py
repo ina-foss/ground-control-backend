@@ -61,8 +61,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
         """
         try:
             # Construct the data source URL
-            if self.config.search_query_param:
-                data_source = f"{self.config.data_source}?{self.config.search_query_param}={query}"
+            if self.config.search_attr:
+                data_source = f"{self.config.data_source}?{self.config.search_attr}={query}"
             else:
                 data_source = self.config.data_source
 

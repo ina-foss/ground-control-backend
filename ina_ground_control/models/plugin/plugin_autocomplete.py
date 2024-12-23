@@ -5,7 +5,7 @@ This module defines the configuration for plugin autocomplete functionality.
 from typing import Optional
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 
-
+from pydantic import BaseModel, ConfigDict, Field
 class PluginConfigAutoComplete(PluginConfigBase):
     """
        Configuration for plugin autocomplete functionality.
@@ -20,5 +20,11 @@ class PluginConfigAutoComplete(PluginConfigBase):
     response_id_key: Optional[str]
     response_ext_id_key: Optional[str]
     response_label_key: Optional[str]
+    # Use ConfigDict for configuration
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        populate_by_name=True,
+        extra='allow'
+    )
 
 
