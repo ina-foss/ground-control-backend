@@ -87,15 +87,15 @@ class Plugin(Base):
             raise ValueError("configData must include a 'type' key with a string value.")
 
         # Check for the required 'datasource' field
-        if "datasource" not in value or not isinstance(value["datasource"], str):
-            raise ValueError("configData must include a 'datasource' key with a string value.")
+        if "data_source" not in value or not isinstance(value["data_source"], str):
+            raise ValueError("configData must include a 'data_source' key with a string value.")
 
         # Validate 'datasource' as a URL using a regex
         url_pattern = re.compile(
             r"^(https?|ftp)://"
             r"(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+$"
         )
-        if not url_pattern.match(value["datasource"]):
-            raise ValueError("The 'datasource' key must contain a valid URL.")
+        if not url_pattern.match(value["data_source"]):
+            raise ValueError("The 'data_source' key must contain a valid URL.")
 
         return value

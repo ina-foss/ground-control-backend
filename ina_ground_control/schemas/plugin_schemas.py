@@ -17,10 +17,10 @@ class ConfigData(BaseModel):
 
    Attributes:
        type (str): The type of the plugin configuration.
-       datasource (str): The datasource URL for the plugin.
+       data_source (str): The datasource URL for the plugin.
    """
     type: str
-    datasource: str
+    data_source: str
 
 class PluginCreate(BaseModel):
     """

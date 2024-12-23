@@ -42,7 +42,7 @@ def test_get_plugins(db_session: Session):
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {"type": "type test",
-                         "datasource": 'test data'}
+                         "data_source": 'test data'}
     }
 
     plugin_2 = {
@@ -52,7 +52,7 @@ def test_get_plugins(db_session: Session):
         "display_zone": DisplayZone.BLOC,
         "step_id": 2,
         "config_data": {"type": "type test",
-                       "datasource": 'test data'}
+                       "data_source": 'test data'}
     }
     created_plugin_1= create_plugin_crud(PluginCreate(**plugin_1), db_session)
     created_plugin_2 = create_plugin_crud(PluginCreate(**plugin_2), db_session)
@@ -86,7 +86,7 @@ def test_get_plugins_search(db_session: Session):
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {"type": "type test",
-                        "datasource": 'test data'}
+                        "data_source": 'test data'}
     }
 
     plugin_2 = {
@@ -96,7 +96,7 @@ def test_get_plugins_search(db_session: Session):
         "display_zone": DisplayZone.BLOC,
         "step_id": 2,
         "config_data": {"type": "type test",
-                        "datasource": 'test data'}
+                        "data_source": 'test data'}
     }
     created_plugin_1= create_plugin_crud(PluginCreate(**plugin_1), db_session)
     created_plugin_2 = create_plugin_crud(PluginCreate(**plugin_2), db_session)
@@ -122,7 +122,7 @@ plugin_data = {
     "display_zone":DisplayZone.BLOC,
     "step_id": 1,
     "config_data": {"type": "type test",
-                   "datasource": 'test data'}
+                   "data_source": 'test data'}
 }
 def test_create_plugin_crud(db_session: Session):
 
@@ -146,7 +146,7 @@ def test_delete_plugin_crud(db_session: Session):
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {"type": "type test",
-                        "datasource": 'test data'}
+                        "data_source": 'test data'}
     }
     created_plugin= create_plugin_crud(PluginCreate(**plugin_1), db_session)
 
