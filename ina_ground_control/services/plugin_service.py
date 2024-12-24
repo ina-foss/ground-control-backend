@@ -16,15 +16,15 @@ from ina_ground_control.services.plugins.plugin_service_autocomplete import Plug
 def get_plugins_search(db: Session, plugin_id: int, query: str):
     plugin = get_plugin_by_id(db, plugin_id)
     result = PluginConfigDTO.build(plugin.config_data)
-    result = PluginConfigAutoComplete(**result)
+    #result = PluginConfigAutoComplete(**result)
     print(f"test: {isinstance(result, PluginConfigAutoComplete)}")
     print(f"test1: {type(result).__name__}")
     print(f"test1: {plugin.config_data}")
     if isinstance(result, PluginConfigAutoComplete):
-        plugin = PluginServiceAutoComplete(plugin.config_data)
+        plugin = PluginServiceAutoComplete(result)
         return plugin.search(query)
     else:
-        raise NotImplementedError(f'{str(result)} not implemented')
+        raise NotImplementedError(f"{str(result)} not implemented")
 
 
 def create_plugin_crud(plugin: PluginCreate, db: Session):
