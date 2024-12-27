@@ -7,7 +7,7 @@ import logging
 
 import requests
 from requests.exceptions import RequestException
-
+from jsonpath_ng.ext import parse as jsonpath_parse
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
@@ -137,22 +137,23 @@ class PluginServiceAutoComplete(PluginServiceBase):
         if self.config.data_type == "json":
             try:
                 # Handle potential UTF-8 BOM in the response
-                content = response.content.decode('utf-8-sig')
+                content = response.content.decode("utf-8-sig")
                 data = json.loads(content)
             except json.JSONDecodeError as e:
                 logger.error("Failed to parse JSON response: %s", e)
             if data:
+                jsonpath_expr = jsonpath_parse("$[*]")
                 transformed_data = [
-                    # @Molka TODO change config id and use jsonpath
                     PluginAutocompleteValueDTO(
-                        id=item.get("id"),
-                        ext_id=item.get("code"),  # Mapping "code" to "extId"
-                        label=item.get("label")
+                        id=match.value.get("id"),
+                        ext_id=match.value.get("code"),
+                        label=match.value.get("label")
                     )
-                    for item in data
+                    for match in jsonpath_expr.find(data)
                 ]
                 return transformed_data
             else:
+                logger.warning("JSON response is empty.")
                 return []
         else:
             raise ValueError(f"Unknown data type: {self.config.data_type} ")
