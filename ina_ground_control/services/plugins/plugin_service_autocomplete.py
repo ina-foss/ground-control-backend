@@ -12,7 +12,6 @@ from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAut
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
