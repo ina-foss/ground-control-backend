@@ -23,7 +23,8 @@ from ina_ground_control.services.annotation_service import (
 
 logger = get_logger()
 router = APIRouter(tags=["annotation"])
-
+ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
+ANNOTATION_NOT_FOUND_MESSAGE = "Annotation not found"
 
 @router.post("/annotation/", response_model=AnnotationDto)
 def create_annotation(
@@ -54,8 +55,8 @@ def get_annotations_by_id(
     """
     annotation: AnnotationDto = get_annotations_by_id_crud(db, annotation_id)
     if annotation is None:
-        logger.error("Failed to retrieve annotation with id: %s", annotation_id)
-        raise HTTPException(status_code=404, detail="Annotation not found")
+        logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
+        raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
     return annotation
 
 
@@ -80,8 +81,8 @@ def update_annotation_result(
     """
     annotation = udpate_annotation_result_crud(db, result, annotation_id)
     if annotation is None:
-        logger.error("Failed to retrieve annotation with id: %s", annotation_id)
-        raise HTTPException(status_code=404, detail="Annotation not found")
+        logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
+        raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
     return annotation
 
 @router.patch("/annotation/finish/{id}", response_model=AnnotationDto)
@@ -92,7 +93,7 @@ def finish_annotation(
     """
     annotation = finish_annotation_crud(db, result, annotation_id)
     if annotation is None:
-        logger.error("Failed to retrieve annotation with id: %s", annotation_id)
-        raise HTTPException(status_code=404, detail="Annotation not found")
+        logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
+        raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
     return annotation
 

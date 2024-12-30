@@ -31,6 +31,7 @@ from ina_ground_control.services.media_service import get_media_by_id, create_me
 
 logger = get_logger()
 router = APIRouter(tags=["media"])
+MEDIA_NOT_FOUND_MESSAGE = "Media not found"
 
 #get media by id
 @router.get("/media/{media_id}", response_model=MediaDto)
@@ -49,7 +50,7 @@ def read_media(media_id: int, db: Session = Depends(get_db)):
     media = get_media_by_id(db, media_id=media_id)
     if media is None:
         logger.error("Failed to retrieve media with id: %d", media_id)
-        raise HTTPException(status_code=404, detail="Media not found")
+        raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
     return media
 
 #add new media
@@ -88,7 +89,7 @@ s
     media = update_media_crud(media_id, media, db)
     if media is None:
         logger.error("Failed to update media with id: %d", media_id)
-        raise HTTPException(status_code=404, detail="Media not found")
+        raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
     return media
 
 #delete media
@@ -97,7 +98,7 @@ def delete_media(media_id: int, db: Session = Depends(get_db)):
     deleted_media = delete_media_crud(db, media_id)
     if deleted_media is None:
         logger.error("Failed to delete media with id: %d", media_id)
-        raise HTTPException(status_code=404, detail="Media not found")
+        raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
     return deleted_media
 
 #get list of media

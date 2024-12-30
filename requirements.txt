@@ -13,3 +13,4 @@ python-dotenv==1.0.1
 alembic==1.13.1
 alembic-postgresql-enum==1.2.0
 latios==1.0.4
+jsonpath-ng==1.7.0
