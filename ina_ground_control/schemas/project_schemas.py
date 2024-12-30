@@ -48,8 +48,6 @@ class ProjectDetailDto(ProjectWithIdDto):
     updated_at: Optional[datetime]
     steps: list[StepDto]
     medias: list[MediaCreate]
-    # total_users_with_annotations: int
-    # total_tasks: int
 
 
 class ProjectListDto(ProjectWithIdDto):

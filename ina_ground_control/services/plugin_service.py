@@ -16,10 +16,6 @@ from ina_ground_control.services.plugins.plugin_service_autocomplete import Plug
 def get_plugins_search(db: Session, plugin_id: int, query: str):
     plugin = get_plugin_by_id(db, plugin_id)
     result = PluginConfigDTO.build(plugin.config_data)
-    #result = PluginConfigAutoComplete(**result)
-    print(f"test: {isinstance(result, PluginConfigAutoComplete)}")
-    print(f"test1: {type(result).__name__}")
-    print(f"test1: {plugin.config_data}")
     if isinstance(result, PluginConfigAutoComplete):
         plugin = PluginServiceAutoComplete(result)
         return plugin.search(query)

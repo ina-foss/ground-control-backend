@@ -57,5 +57,4 @@ class Annotation(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     validated_at = Column(DateTime)
-    # task_id = Column(Integer, ForeignKey("task.id", ondelete="CASCADE", onupdate="CASCADE"))
 
