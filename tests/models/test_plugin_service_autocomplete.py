@@ -55,7 +55,6 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
     @patch("ina_ground_control.services.plugins.plugin_service_autocomplete.requests.get")
     def test_search_empty_response(self, mock_get):
         """Test the `search` method with an empty response."""
-        # Mock response
         mock_response = Mock(spec=Response)
         mock_response.status_code = 200
         mock_response.content = json.dumps([]).encode("utf-8")
@@ -67,7 +66,6 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
 
     def test_parse_valid_json(self):
         """Test the `parse` method with a valid JSON response."""
-        # Mock response
         mock_response = Mock()
         mock_response.content = json.dumps([
             {"id": "1", "code": "A123", "label": "Item 1"},
@@ -85,7 +83,6 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
 
     def test_parse_empty_json(self):
         """Test the `parse` method with an empty JSON response."""
-        # Mock response
         mock_response = Mock()
         mock_response.content = json.dumps([]).encode("utf-8")
 
@@ -93,7 +90,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_parse_unknown_data_type(self):
-        #Test the `parse` method with an unknown data type.
+        """Test the `parse` method with an unknown data type."""
         self.service.config.data_type = "xml"  # Unsupported data type
 
         mock_response = Mock()
