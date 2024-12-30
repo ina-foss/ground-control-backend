@@ -8,8 +8,12 @@ This module includes schemas for:
 """
 
 from __future__ import annotations
+
 from pydantic import BaseModel
-from ina_ground_control.models.plugin_model import TypePlugin,DisplayZone
+from pydantic import ConfigDict
+
+from ina_ground_control.models.plugin_model import TypePlugin, DisplayZone
+
 
 class ConfigData(BaseModel):
     """
@@ -21,6 +25,14 @@ class ConfigData(BaseModel):
    """
     type: str
     data_source: str
+    data_type: str
+    # Use ConfigDict for configuration
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        extra='allow'
+    )
+
 
 class PluginCreate(BaseModel):
     """
@@ -38,12 +50,16 @@ class PluginCreate(BaseModel):
     name: str
     type: TypePlugin
     data_categories: str
-    display_zone : DisplayZone
+    display_zone: DisplayZone
     step_id: int
     config_data: ConfigData
 
-    class Config:
-        from_attributes = True
+    # Use ConfigDict for configuration
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        extra='ignore'
+    )
 
 
 class PluginWithIdDto(PluginCreate):
@@ -55,4 +71,3 @@ class PluginWithIdDto(PluginCreate):
    """
 
     id: int
-

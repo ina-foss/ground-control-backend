@@ -2,9 +2,12 @@
 This module provides search operation for plugin.
 
 """
+import json
 import logging
+
 import requests
 from requests.exceptions import RequestException
+from jsonpath_ng.ext import parse as jsonpath_parse
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
@@ -35,6 +38,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         parse(response) -> list[PluginAutocompleteValueDTO]:
             Parses the HTTP response into a list of `PluginAutocompleteValueDTO` objects.
     """
+
     def __init__(self, config: PluginConfigAutoComplete):
         """
         Initializes the PluginServiceAutoComplete with the provided configuration.
@@ -61,16 +65,14 @@ class PluginServiceAutoComplete(PluginServiceBase):
         """
         try:
             # Construct the data source URL
-            if self.config.search_query_param:
-                data_source = f"{self.config.data_source}?{self.config.search_query_param}={query}"
+            if self.config.search_attr:
+                data_source = f"{self.config.data_source}?{self.config.search_attr}={query}"
             else:
                 data_source = self.config.data_source
 
             logger.info("Sending request to data source: %s", data_source)
-
             # Make an HTTP GET request
-            response = requests.get(data_source, timeout=30)
-
+            response = requests.get(data_source, timeout=30, verify=True)
             # Check if the HTTP response status is OK
             if response.status_code == 200:
                 logger.info("Received successful response from data source.")
@@ -131,16 +133,25 @@ class PluginServiceAutoComplete(PluginServiceBase):
            Exception: If the response's data type is unknown.
        """
         if self.config.data_type == "json":
-            data = response.json()
-            transformed_data = [
-                # TODO change config id and use jsonpath
-                PluginAutocompleteValueDTO(
-                    id=item.get("id"),
-                    ext_id=item.get("code"),  # Mapping "code" to "extId"
-                    label=item.get("label")
-                )
-                for item in data
-            ]
-            return transformed_data
+            try:
+                # Handle potential UTF-8 BOM in the response
+                content = response.content.decode("utf-8-sig")
+                data = json.loads(content)
+            except json.JSONDecodeError as e:
+                logger.error("Failed to parse JSON response: %s", e)
+            if data:
+                jsonpath_expr = jsonpath_parse("$[*]")
+                transformed_data = [
+                    PluginAutocompleteValueDTO(
+                        id=match.value.get("id"),
+                        ext_id=match.value.get("code"),
+                        label=match.value.get("label")
+                    )
+                    for match in jsonpath_expr.find(data)
+                ]
+                return transformed_data
+            else:
+                logger.warning("JSON response is empty.")
+                return []
         else:
             raise ValueError(f"Unknown data type: {self.config.data_type} ")
