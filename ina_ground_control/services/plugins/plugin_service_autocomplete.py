@@ -72,7 +72,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
             logger.info("Sending request to data source: %s", data_source)
             # Make an HTTP GET request
-            response = requests.get(data_source, timeout=30, verify=False)
+            response = requests.get(data_source, timeout=30, verify=True)
             # Check if the HTTP response status is OK
             if response.status_code == 200:
                 logger.info("Received successful response from data source.")
