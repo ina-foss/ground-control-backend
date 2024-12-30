@@ -24,7 +24,7 @@ from latios.log import get_logger
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 from ina_ground_control.models.plugin_model import Plugin
-from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud
+from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
@@ -87,3 +87,13 @@ def delete_plugin(plugin_id: int, db: Session = Depends(get_db)):
         logger.error("Failed to delete plugin with id: %d", plugin_id)
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return deleted_plugin
+
+@router.get("/plugin/{plugin_id}", response_model=PluginWithIdDto, response_model_by_alias=False)
+def read_plugin(plugin_id: int, db: Session = Depends(get_db)) -> Plugin:
+    """Get details of a single plugin by ID."""
+    plugin = get_plugin_by_id(db,plugin_id=plugin_id)
+    if plugin is None:
+        logger.error("Failed to retrieve plugin with id: %d", plugin_id)
+        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+    return plugin
+
