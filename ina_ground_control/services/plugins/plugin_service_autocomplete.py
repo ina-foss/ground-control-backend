@@ -4,7 +4,7 @@ This module provides search operation for plugin.
 """
 import json
 import logging
-
+import os
 import requests
 from requests.exceptions import RequestException
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -71,7 +71,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
             logger.info("Sending request to data source: %s", data_source)
             # Make an HTTP GET request
-            response = requests.get(data_source, timeout=30, verify=True)
+            NO_AUTH = os.getenv("NO_AUTH") == "False"
+            response = requests.get(data_source, timeout=30, verify= not NO_AUTH)
             # Check if the HTTP response status is OK
             if response.status_code == 200:
                 logger.info("Received successful response from data source.")
