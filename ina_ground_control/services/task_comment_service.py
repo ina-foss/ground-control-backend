@@ -23,6 +23,19 @@ def get_task_comment_by_id(db: Session, task_comment_id: int):
     """
     return db.query(TaskComment).filter(TaskComment.id == task_comment_id).first()
 
+def get_task_comment_by_task_id(db: Session, task_comment_task_id: int):
+    """
+    Retrieve a list of taskComments that match the task_id value.
+
+    Attributes:
+        db (Session): The database session used for querying.
+        task_comment_task_id (int): The id of the task which all taskComments should reffered to.
+
+    Returns:
+        List[TaskComment]: The list of all the TaskComments that match the task_id input.
+    """
+    return db.query(TaskComment).filter(TaskComment.task_id == task_comment_task_id).all()
+
 
 def create_task_comment_crud(task_comment: TaskCommentCreate, db: Session):
     """
