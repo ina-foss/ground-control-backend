@@ -45,11 +45,12 @@ def test_get_plugins(db_session: Session):
             "data_type": "json",
             "data_source": "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
             "search_attr": "title",
-            "response_id_key": "id",
-            "response_ext_id_key": "code",
-            "response_label_key": "label"
+            "response_id_key": "$[*].id",
+            "response_ext_id_key": "$[*].code",
+            "response_label_key": "$[*].label"
         }
     }
+
 
     plugin_2 = {
         "name": "name_test2",
@@ -57,9 +58,15 @@ def test_get_plugins(db_session: Session):
         "data_categories": "data_categories test",
         "display_zone": DisplayZone.BLOC,
         "step_id": 2,
-        "config_data": {"type": "plugin_autocomplete",
-                        "data_source": 'test data',
-                        "data_type": "test"}
+        "config_data": {
+            "type": "plugin_autocomplete",
+            "data_type": "json",
+            "data_source": "https://ground-control.2ia.d.sas.ina/cptall-fr.json",
+            "search_attr": "title",
+            "response_id_key": "$.conceptSet[*].qcode",
+            "response_ext_id_key": "$.conceptSet[*].uri",
+            "response_label_key": "$.conceptSet[*].prefLabel.fr"
+        }
     }
     created_plugin_1= create_plugin_crud(PluginCreate(**plugin_1), db_session)
     created_plugin_2 = create_plugin_crud(PluginCreate(**plugin_2), db_session)
@@ -67,18 +74,27 @@ def test_get_plugins(db_session: Session):
     assert created_plugin_2 is not None
     db_session.commit()
     db_session.refresh(created_plugin_1)
+    db_session.refresh(created_plugin_2)
     givenPlugin= get_plugin_by_id(db_session,1)
     assert givenPlugin is not None
     assert givenPlugin.id is not None
     assert givenPlugin.id == 1
-    '''retrieved_plugins = get_plugins_search(db_session, 1, "name_test")
+    givenPlugin2= get_plugin_by_id(db_session,2)
+    assert givenPlugin2 is not None
+    assert givenPlugin2.id is not None
+    assert givenPlugin2.id == 2
+    retrieved_plugins = get_plugins_search(db_session, 1, "name_test")
+    retrieved_plugins2 = get_plugins_search(db_session, 2, "name_test2")
     assert retrieved_plugins is not None
-    print(retrieved_plugins[0])
     assert retrieved_plugins[0].id is not None
     assert retrieved_plugins[0].id == 'ALAMAIS'
     assert retrieved_plugins[0].ext_id=='ALA'
-    assert retrieved_plugins[0].label == '#Alamaison' '''
-
+    assert retrieved_plugins[0].label == '#Alamaison'
+    assert retrieved_plugins2 is not None
+    assert retrieved_plugins2[0].id is not None
+    assert retrieved_plugins2[0].id == 'medtop:01000000'
+    assert retrieved_plugins2[0].ext_id=='http://cv.iptc.org/newscodes/mediatopic/01000000'
+    assert retrieved_plugins2[0].label == 'Arts, culture, divertissement et médias'
 
 plugin_data = {
     "name": "name_test",

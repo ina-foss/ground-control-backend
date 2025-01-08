@@ -139,14 +139,21 @@ class PluginServiceAutoComplete(PluginServiceBase):
             except json.JSONDecodeError as e:
                 logger.error("Failed to parse JSON response: %s", e)
             if data:
-                jsonpath_expr = jsonpath_parse("$[*]")
+                id_expr = jsonpath_parse(self.config.response_id_key)
+                ext_id_expr = jsonpath_parse(self.config.response_ext_id_key)
+                label_expr = jsonpath_parse(self.config.response_label_key)
+                # Find matches for each JSONPath
+                ids = id_expr.find(data)
+                ext_ids = ext_id_expr.find(data)
+                labels = label_expr.find(data)
+                # Create DTOs from matched data
                 transformed_data = [
                     PluginAutocompleteValueDTO(
-                        id=match.value.get("id"),
-                        ext_id=match.value.get("code"),
-                        label=match.value.get("label")
+                        id=id_match.value if id_match else None,
+                        ext_id=ext_id_match.value if ext_id_match else None,
+                        label=label_match.value if label_match else None,
                     )
-                    for match in jsonpath_expr.find(data)
+                    for id_match, ext_id_match, label_match in zip(ids, ext_ids, labels)
                 ]
                 return transformed_data
             else:
