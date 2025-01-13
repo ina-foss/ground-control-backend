@@ -38,11 +38,13 @@ def db_session(db_engine):
 def test_get_taskComments(db_session: Session):
     taskComment_data_1 = {
         "comment": "test A",
-        "task_id": 1
+        "task_id": 1,
+        "created_by": "admin@localhost.com"
     }
     taskComment_data_2 = {
         "comment": "test B",
-        "task_id": 2
+        "task_id": 2,
+        "created_by": "admin@localhost.com"
     }
     created_taskComment_1 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_1), db_session)
     created_taskComment_2 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_2), db_session)
@@ -59,8 +61,9 @@ def test_get_taskComments(db_session: Session):
 
 taskComment_data = {
         "comment": "test A",
-        "task_id": 1
-    }
+        "task_id": 1,
+        "created_by": "admin@localhost.com"
+}
 def test_get_taskComment_by_id(db_session: Session):
 
     created_taskComment = create_task_comment_crud(TaskCommentCreate(**taskComment_data), db_session)
@@ -75,11 +78,13 @@ def test_get_taskComment_by_id(db_session: Session):
 def test_get_taskComment_by_task_id(db_session: Session):
     taskComment_data_1 = {
         "comment": "test A",
-        "task_id": 3
+        "task_id": 3,
+        "created_by": "admin@localhost.com"
     }
     taskComment_data_2 = {
         "comment": "test B",
-        "task_id": 3
+        "task_id": 3,
+        "created_by": "admin@localhost.com"
     }
 
     created_taskComment_1 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_1), db_session)
@@ -111,7 +116,8 @@ def test_update_data_taskComment_crud(db_session: Session):
     created_taskComment = create_task_comment_crud(TaskCommentCreate(**taskComment_data), db_session)
     updated_taskComment_data = {
         "comment": "test B",
-        "task_id": 6
+        "task_id": 6,
+        "created_by": "admin@localhost.com"
     }
     update_task_comment_crud(created_taskComment.id, TaskCommentCreate(**updated_taskComment_data), db_session)
     retrieved_updated_taskComment = get_task_comment_by_id(db_session, created_taskComment.id)

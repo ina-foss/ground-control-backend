@@ -24,7 +24,7 @@ class TaskCommentDto(TaskCommentCreate):
     created_at: Optional[datetime]
 
 class Config:
-        from_attributes = True
-        """
-            Config for reading attributes from other class.
-        """
+    from_attributes = True
+    """
+        Config for reading attributes from other class.
+    """
