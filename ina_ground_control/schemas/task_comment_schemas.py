@@ -4,6 +4,7 @@ Defines Data Transfer Object (DTO) classes for taskComment-related data structur
 
 from typing import Optional
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class TaskCommentCreate(BaseModel):
@@ -12,6 +13,7 @@ class TaskCommentCreate(BaseModel):
     """
     comment: Optional[str]
     task_id: int
+    created_by: str
 
 class TaskCommentDto(TaskCommentCreate):
     """
@@ -19,7 +21,9 @@ class TaskCommentDto(TaskCommentCreate):
     """
 
     id: int
-    class Config:
+    created_at: Optional[datetime]
+
+class Config:
         from_attributes = True
         """
             Config for reading attributes from other class.
