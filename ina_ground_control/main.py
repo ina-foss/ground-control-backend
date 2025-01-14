@@ -56,7 +56,7 @@ keycloak_config = KeycloakConfiguration(
 
 app = FastAPI()
 
-NO_AUTH = os.getenv("NO_AUTH") != "True"
+NO_AUTH = os.getenv("NO_AUTH") == "True"
 
 # Add middleware with basic config
 if not NO_AUTH:
