@@ -63,7 +63,7 @@ def read_task_comments_by_task_id(task_comment_task_id: int, db: Session = Depen
     return task_comments
 
 #add new taskComment
-@router.post("/taskComment/", response_model=TaskCommentCreate)
+@router.post("/taskComment", response_model=TaskCommentCreate)
 def create_task_comment(task_comment: TaskCommentCreate, db: Session = Depends(get_db)):
     """
     Create a new taskComment.
@@ -112,7 +112,7 @@ def delete_task_comment(task_comment_id: int, db: Session = Depends(get_db)):
     return deleted_task_comment
 
 #get list of taskComment
-@router.get("/taskComments/", response_model=list[TaskCommentDto])
+@router.get("/taskComments", response_model=list[TaskCommentDto])
 def read_task_comments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[TaskComment]:
     """Retrieve a list of taskComments with pagination support."""

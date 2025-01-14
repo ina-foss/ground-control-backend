@@ -54,7 +54,7 @@ def read_step(step_id: int, db: Session = Depends(get_db)):
     return step
 
 #add new step
-@router.post("/step/", response_model=StepCreate)
+@router.post("/step", response_model=StepCreate)
 def create_step(step: StepCreate, db: Session = Depends(get_db)):
     """
     Create a new step.
@@ -103,7 +103,7 @@ def delete_step(step_id: int, db: Session = Depends(get_db)):
 
 
 #get list of step
-@router.get("/steps/", response_model=list[StepDto])
+@router.get("/steps", response_model=list[StepDto])
 def read_steps(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Step]:
     """Retrieve a list of steps with pagination support."""

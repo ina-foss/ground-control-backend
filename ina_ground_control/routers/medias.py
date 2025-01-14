@@ -54,7 +54,7 @@ def read_media(media_id: int, db: Session = Depends(get_db)):
     return media
 
 #add new media
-@router.post("/media/", response_model=MediaDto)
+@router.post("/media", response_model=MediaDto)
 def create_media(media: MediaCreate, db: Session = Depends(get_db)):
     """
     Create a new media.
@@ -102,7 +102,7 @@ def delete_media(media_id: int, db: Session = Depends(get_db)):
     return deleted_media
 
 #get list of media
-@router.get("/medias/", response_model=list[MediaDto])
+@router.get("/medias", response_model=list[MediaDto])
 def read_medias(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Media]:
     """Retrieve a list of medias with pagination support."""

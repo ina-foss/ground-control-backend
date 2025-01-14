@@ -54,7 +54,7 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-@router.post("/task/", response_model=TaskWithIdDto)
+@router.post("/task", response_model=TaskWithIdDto)
 def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
     """
     Create a new task.

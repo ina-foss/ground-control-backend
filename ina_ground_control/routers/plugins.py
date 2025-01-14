@@ -62,7 +62,7 @@ def read_plugins(db: Session = Depends(get_db),step_id=int, plugin_type=str,zone
     return plugins
 
 #add new plugin
-@router.post("/plugin/", response_model=PluginCreate)
+@router.post("/plugin", response_model=PluginCreate)
 def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
     """
     Create a new plugin.

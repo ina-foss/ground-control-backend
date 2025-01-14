@@ -37,7 +37,7 @@ router = APIRouter(tags=["project"])
 NOT_FOUND_STR = "Project not found"
 
 
-@router.get("/projects/", response_model=list[ProjectDetailDto])
+@router.get("/projects", response_model=list[ProjectDetailDto])
 def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Project]:
     """Retrieve a list of projects with pagination support."""
@@ -45,7 +45,7 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     return projects
 
 
-@router.post("/project/", response_model=ProjectDetailDto)
+@router.post("/project", response_model=ProjectDetailDto)
 def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) -> ProjectDetailDto:
     """Create a new project."""
     try:
