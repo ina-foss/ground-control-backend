@@ -26,7 +26,7 @@ router = APIRouter(tags=["annotation"])
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
 ANNOTATION_NOT_FOUND_MESSAGE = "Annotation not found"
 
-@router.post("/annotation/", response_model=AnnotationDto)
+@router.post("/annotation", response_model=AnnotationDto)
 def create_annotation(
         annotation: AnnotationFullCreate,
         db: Session = Depends(get_db)) -> AnnotationDto:

@@ -22,7 +22,7 @@ router = APIRouter(tags=["user"])
 NOT_FOUND_STR_USER = "User not found"
 
 
-@router.get("/users/", response_model=list[UserDto], response_model_by_alias=False)
+@router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Retrieve a list of users with pagination support.
@@ -42,7 +42,7 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to retrieve users") from e
 
 
-@router.post("/user/", response_model=UserDto, response_model_by_alias=False)
+@router.post("/user", response_model=UserDto, response_model_by_alias=False)
 def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
     """
     Create a new User object in database
