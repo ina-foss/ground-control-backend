@@ -1,19 +1,19 @@
-"""Update task_comment table
+"""Update db_model2
 
-Revision ID: abd2a535e869
-Revises: b7979dac3254
-Create Date: 2025-01-13 09:19:13.088163
+Revision ID: 3729afc7c00b
+Revises: 23ad5e7952b2
+Create Date: 2025-01-16 14:08:30.028323
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'abd2a535e869'
-down_revision: Union[str, None] = 'b7979dac3254'
+revision: str = '3729afc7c00b'
+down_revision: Union[str, None] = '23ad5e7952b2'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -45,3 +45,4 @@ def downgrade() -> None:
     )
     op.drop_table('task_comment')
     # ### end Alembic commands ###
+ ###
