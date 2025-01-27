@@ -22,8 +22,9 @@ class TaskBaseDto(BaseModel):
     lead_time: Optional[int]
     step_id: int
     media_id: int
+    documentation:Optional[str] = ""
 
-    class Config:
+class Config:
         from_attributes = True
 
 
