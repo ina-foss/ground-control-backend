@@ -26,6 +26,7 @@ class TaskBaseDto(BaseModel):
     documentation: Optional[str] = ""
 
 
+
 class Config:
     from_attributes = True
 
