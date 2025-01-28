@@ -8,7 +8,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from .annotation_schemas import AnnotationDto, AnnotationWithIdDto
 from .task_comment_schemas import TaskCommentDto
-from ina_ground_control.models.task_model import TaskStatus,TaskDataType
+from ina_ground_control.models.task_model import TaskStatus, TaskDataType
+
 
 class TaskBaseDto(BaseModel):
     """
@@ -22,10 +23,11 @@ class TaskBaseDto(BaseModel):
     lead_time: Optional[int]
     step_id: int
     media_id: int
-    documentation:Optional[str] = ""
+    documentation: Optional[str] = ""
+
 
 class Config:
-        from_attributes = True
+    from_attributes = True
 
 
 class TaskWithIdDto(TaskBaseDto):
@@ -33,7 +35,7 @@ class TaskWithIdDto(TaskBaseDto):
     Extends TaskBaseDto with an additional id field.
     """
     id: int
-    annotations : list[AnnotationWithIdDto]
+    annotations: list[AnnotationWithIdDto]
 
 
 class TaskCreateDto(TaskBaseDto):
@@ -54,7 +56,7 @@ class TaskListDto(TaskCreateDto):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
     annotations: list[AnnotationDto] = []
-    task_comments:list[TaskCommentDto] = []
+    task_comments: list[TaskCommentDto] = []
     step: Optional[StepProjectDto]
 
     class Config:
