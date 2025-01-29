@@ -56,7 +56,6 @@ class TaskListDto(TaskCreateDto):
     id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    annotations: list[AnnotationDto] = []
     task_comments: list[TaskCommentDto] = []
     step: Optional[StepProjectDto]
 
