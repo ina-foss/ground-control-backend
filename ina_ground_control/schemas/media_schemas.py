@@ -25,6 +25,8 @@ class MediaDto(MediaCreate):
 
     id: int
     tasks: Optional[list["TaskBaseDto"]]
+    player_parameters : Optional[dict] = None
+    details : Optional[dict] = None
 
     class Config:
         from_attributes = True
