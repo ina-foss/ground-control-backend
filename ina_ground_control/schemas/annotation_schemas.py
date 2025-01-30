@@ -19,6 +19,9 @@ class AnnotationBase(BaseModel):
     version: int
 
 class AnnotationWithIdDto(AnnotationBase):
+    """
+    DTO base infos + its ID
+    """
     id: int
 
 class AnnotationCreate(AnnotationBase):

@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from .annotation_schemas import AnnotationDto, AnnotationWithIdDto
+from .annotation_schemas import AnnotationWithIdDto
 from .task_comment_schemas import TaskCommentDto
 from ina_ground_control.models.task_model import TaskStatus, TaskDataType
 
@@ -56,7 +56,6 @@ class TaskListDto(TaskCreateDto):
     id: int
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    annotations: list[AnnotationDto] = []
     task_comments: list[TaskCommentDto] = []
     step: Optional[StepProjectDto]
 
