@@ -13,16 +13,15 @@ class PlayerParameters(BaseModel):
    DTO for the configuration data of a player_parameters.
 
    """
-    thumbnailBaseUrl: str = ""
-    waveForm: str = ""
-    tcOffset: str = ""
+    thumbnail_base_url: str = ""
+    wave_form: str = ""
+    tc_offset: int = 0
     # Use ConfigDict for configuration
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True,
-        extra='allow'
+        extra="allow"
     )
-
 
 class MediaCreate(BaseModel):
     """
@@ -40,7 +39,7 @@ class MediaDto(MediaCreate):
 
     id: int
     tasks: Optional[list["TaskBaseDto"]]
-    player_parameters: Optional[dict]|PlayerParameters = None
+    player_parameters: Optional[dict] | PlayerParameters = None
     details: Optional[dict] = None
 
     class Config:
