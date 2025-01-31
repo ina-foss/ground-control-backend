@@ -59,9 +59,11 @@ class TaskListDto(TaskCreateDto):
     annotations: list[AnnotationDto] = []
     task_comments: list[TaskCommentDto] = []
     step: Optional[StepProjectDto]
+    media: Optional[MediaDto]
 
     class Config:
         orm_mode: True
 
 
 from .step_schemas import StepProjectDto
+from .media_schemas import MediaDto
