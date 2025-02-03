@@ -3,11 +3,25 @@ Defines Data Transfer Object (DTO) classes for media-related data structures.
 """
 from __future__ import annotations
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from typing import Optional
 from ina_ground_control.models.media_model import MediaType
 
 
+class PlayerParameters(BaseModel):
+    """
+   DTO for the configuration data of a player_parameters.
 
+   """
+    thumbnail_base_url: str = ""
+    wave_form: str = ""
+    tc_offset: int = 0
+    # Use ConfigDict for configuration
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        extra="allow"
+    )
 
 class MediaCreate(BaseModel):
     """
@@ -25,8 +39,8 @@ class MediaDto(MediaCreate):
 
     id: int
     tasks: Optional[list["TaskBaseDto"]]
-    player_parameters : Optional[dict] = None
-    details : Optional[dict] = None
+    player_parameters: Optional[dict] | PlayerParameters = None
+    details: Optional[dict] = None
 
     class Config:
         from_attributes = True
