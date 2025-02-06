@@ -49,7 +49,7 @@
     "realm": [
       {
         "id": "8e986fb5-dafb-43bf-a7c2-7e57572d3d80",
-        "name": "ROLE_ADMIN",
+        "name": "GC_ADMIN",
         "description": "Ground Control administrator role",
         "composite": false,
         "clientRole": false,
@@ -415,7 +415,7 @@
       "name": "Admins",
       "path": "/Admins",
       "attributes": {},
-      "realmRoles": ["ROLE_ADMIN"],
+      "realmRoles": ["GC_ADMIN"],
       "clientRoles": {},
       "subGroups": []
     },

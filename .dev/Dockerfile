@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM hub.cr.ina/python:3.11
 
 WORKDIR /code
 
@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt -r /code/requ
 
 COPY .. .
 
-COPY ./alembic /code/alembic
+COPY ./ina_ground_control/alembic /code/alembic
 
 
 CMD ["sh", "-c", "alembic upgrade head && python3 -m ina_ground_control.main"]
