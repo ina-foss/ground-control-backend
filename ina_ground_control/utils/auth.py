@@ -1,5 +1,6 @@
 import jwt
 from fastapi import HTTPException
+from typing import List
 
 def get_current_user_role(token: str) -> list:
     """
@@ -33,3 +34,18 @@ def get_current_user_role(token: str) -> list:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.JWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
+def role_required(required_roles: List[str]):
+    """
+    Vérifie si l'utilisateur possède l'un des rôles requis.
+
+    Args:
+        required_roles (List[str]): Liste des rôles autorisés.
+
+    Returns:
+        Fonction de dépendance FastAPI pour la vérification des rôles.
+    """
+    def check_role(user_roles: List[str] = Depends(get_current_user_role)):
+        if not any(role in user_roles for role in required_roles):
+            raise HTTPException(status_code=403, detail="Access forbidden")
+    return check_role
