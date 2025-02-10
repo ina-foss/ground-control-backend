@@ -25,6 +25,7 @@ logger = get_logger()
 router = APIRouter(tags=["annotation"])
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
 ANNOTATION_NOT_FOUND_MESSAGE = "Annotation not found"
+ADMIN_ROLE = "CG_ADMIN"
 
 @router.post("/annotation", response_model=AnnotationDto)
 def create_annotation(
@@ -69,7 +70,14 @@ def get_annotation_by_task_id(
     """
     Get a list of annotations that match the task_id attributes
     """
-    annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction= direction,user_email=user_email)
+    email = get_user_info_from_token(token)["email"]
+    roles  = get_user_info_from_token(token)["roles"]
+    printf(email,roles)
+    if ADMIN_ROLE in roles:
+        annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=user_email)
+    else:
+        annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=email)
+
     return annotations
 
 

@@ -4,7 +4,7 @@ It includes routes for retrieving user data, utilizing the Keycloak middleware f
 authentication and permission checks.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 from latios.log import get_logger
@@ -16,10 +16,9 @@ from ina_ground_control.services.user_service import (
     get_user_by_email_crud,
     get_users,
 )
-from fastapi import APIRouter, Depends, HTTPException, status, Header
 from typing import List
 from jose import jwt
-from ina_ground_control.utils.auth import get_current_user_role  # Import the helper function for role extraction
+from ina_ground_control.utils.auth import get_user_info_from_token
 from fastapi.security import OAuth2PasswordBearer
 
 logger = get_logger()
@@ -88,8 +87,8 @@ def get_roles(authorization: str = Header(...)):
     token = authorization.split("Bearer ")[-1]
 
     try:
-        # Extract roles from the token using the get_current_user_role function
-        roles = get_current_user_role(token)
+        # Extract roles from the token using the get_user_info_from_token function
+        roles = get_user_info_from_token(token)["roles"]
 
         # Check if the user has the required basic roles
         missing_roles = [role for role in DEFAULT_ROLES if role not in roles]
@@ -103,3 +102,6 @@ def get_roles(authorization: str = Header(...)):
     except jwt.JWTError as e:
         raise HTTPException(status_code=400, detail=f"Failed to decode token: {str(e)}")
 
+#@router.get("/admin",dependencies=[Depends(role_required(["ROLE_ADMIN"]))])
+#async def admin_dashboard():
+#    return {"message": "Bienvenue, administrateur !"}
