@@ -16,18 +16,16 @@ def get_user_info_from_token(token: str) -> dict:
               - 'user_email': User's email extracted from the token.
     """
     try:
-        # Decode the JWT token (no signature verification for simplicity)
-        payload = jwt.decode(token, options={"verify_signature": False})
+
+        payload = jwt.decode(token, key=None, options={"verify_signature": False})
 
         # Extract roles from the "realm_access" field (if present)
         roles = []
         if "realm_access" in payload:
             roles.extend(payload["realm_access"].get("roles", []))
 
-        # Extract user email from the token (adjust field name as necessary)
         user_email = payload.get("email", None)
 
-        # If no email found, raise an exception
         if not user_email:
             raise HTTPException(status_code=400, detail="Email not found in the token")
 

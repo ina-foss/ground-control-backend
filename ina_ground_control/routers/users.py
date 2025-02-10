@@ -83,11 +83,8 @@ def get_roles(authorization: str = Header(...)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
-    # Extract the token from the Authorization header
     token = authorization.split("Bearer ")[-1]
-
     try:
-        # Extract roles from the token using the get_user_info_from_token function
         roles = get_user_info_from_token(token)["roles"]
 
         # Check if the user has the required basic roles
