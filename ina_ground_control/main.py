@@ -10,12 +10,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
-    AuthorizationMethod
+    AuthorizationMethod,
+    require_permission,
+    MatchStrategy
 )
-
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
+from ina_ground_control.utils.auth import require_role
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
@@ -117,6 +119,10 @@ async def info() -> dict:
     """
     return {"status": "up"}
 
+@app.get("/admin")
+@require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
+async def check_admin():
+    return {"message": "Welcome admin!"}
 
 load_dotenv(".env.local")
 APP_HOST = os.getenv("APP_HOST")

@@ -1,6 +1,8 @@
 from jose import jwt
 from fastapi import HTTPException, Header
-from typing import List
+from typing import List, Union
+from fastapi_keycloak_middleware import (MatchStrategy)
+from functools import wraps
 
 class TokenService:
     @staticmethod
@@ -64,3 +66,27 @@ class TokenService:
 
         token = authorization.split("Bearer ")[-1]
         return token
+
+def require_role(roles: Union[str, List[str]], match_strategy: MatchStrategy = MatchStrategy.AND):
+    if isinstance(roles, str):
+        roles = [roles]
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # To be modified just for test
+            user_roles = ["ROLE_USER", "GC_ADMIN"]
+
+            # Check if the user has required roles based on match_strategy
+            if match_strategy == MatchStrategy.AND:
+                if not all(role in user_roles for role in roles):
+                    raise HTTPException(status_code=403, detail="Insufficient roles")
+            elif match_strategy == MatchStrategy.OR:
+                if not any(role in user_roles for role in roles):
+                    raise HTTPException(status_code=403, detail="Insufficient roles")
+
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
