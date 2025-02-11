@@ -30,6 +30,8 @@ class MediaCreate(BaseModel):
 
     url: str
     type: MediaType
+    player_parameters: Optional[dict] | PlayerParameters = None
+    details: Optional[dict] = None
 
 
 class MediaDto(MediaCreate):
@@ -39,8 +41,6 @@ class MediaDto(MediaCreate):
 
     id: int
     tasks: Optional[list["TaskBaseDto"]]
-    player_parameters: Optional[dict] | PlayerParameters = None
-    details: Optional[dict] = None
 
     class Config:
         from_attributes = True
