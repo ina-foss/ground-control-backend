@@ -10,8 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
-    AuthorizationMethod,
+    AuthorizationMethod
 )
+
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins

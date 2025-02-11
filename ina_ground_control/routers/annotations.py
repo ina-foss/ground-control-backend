@@ -20,10 +20,11 @@ from ina_ground_control.services.annotation_service import (
     udpate_annotation_result_crud,
     finish_annotation_crud
 )
-from ina_ground_control.utils.auth import get_user_info_from_token
+from ina_ground_control.utils.auth import TokenService
 
 logger = get_logger()
 router = APIRouter(tags=["annotation"])
+
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
 ANNOTATION_NOT_FOUND_MESSAGE = "Annotation not found"
 ADMIN_ROLE = "GC_ADMIN"
@@ -67,23 +68,18 @@ def get_annotation_by_task_id(
         task_id: int,
         user_email: str= Query(None, description="user_email"),
         direction: InOutEnum = Query(None, description="Direction of the annotation ('in' or 'out')"),
-        authorization: str = Header(...),
+        token: str = Depends(TokenService.get_token_from_request),
         db: Session = Depends(get_db)) -> list[Annotation]:
     """
     Get a list of annotations that match the task_id attributes
     """
-    token = authorization.split("Bearer ")[-1]
-    email = get_user_info_from_token(token)["email"]
-    roles  = get_user_info_from_token(token)["roles"]
-    printf(email,roles)
+    email = TokenService.get_user_info_from_token(token)["email"]
+    roles  = TokenService.get_user_info_from_token(token)["roles"]
 
     if ADMIN_ROLE in roles:
-        printf("in admin section")
         annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=user_email)
     else:
-        printf("in user section")
         annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=email)
-
     return annotations
 
 

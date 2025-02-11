@@ -16,16 +16,10 @@ from ina_ground_control.services.user_service import (
     get_user_by_email_crud,
     get_users,
 )
-from typing import List
-from jose import jwt
-from ina_ground_control.utils.auth import get_user_info_from_token
-from fastapi.security import OAuth2PasswordBearer
 
 logger = get_logger()
 router = APIRouter(tags=["user"])
 NOT_FOUND_STR_USER = "User not found"
-
-DEFAULT_ROLES = ["default-roles-notilus", "offline_access", "uma_authorization"]
 
 @router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -68,37 +62,3 @@ def get_user_by_email(email: EmailStr, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error("Failed to retrieve user: %s", e)
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR_USER) from e
-
-@router.get("/roles", response_model=List[str], response_model_by_alias=False)
-def get_roles(authorization: str = Header(...)):
-    """
-    Retrieve the roles of the current authenticated user and verify if they have basic roles.
-
-    Args:
-        authorization (str): Authorization header containing the JWT token.
-
-    Returns:
-        List[str]: A list of roles associated with the user, or an error if basic roles are missing.
-    """
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
-
-    token = authorization.split("Bearer ")[-1]
-    try:
-        roles = get_user_info_from_token(token)["roles"]
-
-        # Check if the user has the required basic roles
-        missing_roles = [role for role in DEFAULT_ROLES if role not in roles]
-        if missing_roles:
-            raise HTTPException(status_code=403, detail=f"Missing basic roles: {', '.join(missing_roles)}")
-
-        return roles
-
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.JWTError as e:
-        raise HTTPException(status_code=400, detail=f"Failed to decode token: {str(e)}")
-
-#@router.get("/admin",dependencies=[Depends(role_required(["ROLE_ADMIN"]))])
-#async def admin_dashboard():
-#    return {"message": "Bienvenue, administrateur !"}
