@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 import uvicorn
 import typing
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
@@ -18,7 +18,7 @@ from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
 from ina_ground_control.utils.auth import require_role
-
+from ina_ground_control.utils.auth import TokenService
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
     Maps user information received from Keycloak to a User model instance.
@@ -121,7 +121,11 @@ async def info() -> dict:
 
 @app.get("/admin")
 @require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
-async def check_admin():
+async def check_admin(token: str = Depends(TokenService.get_token_from_request)):
+    """
+    Route to check admin access. This will return a success message if the user has
+    the "GC_ADMIN" role.
+    """
     return {"message": "Welcome admin!"}
 
 load_dotenv(".env.local")
