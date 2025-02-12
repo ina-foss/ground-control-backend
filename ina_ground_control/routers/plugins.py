@@ -26,6 +26,9 @@ from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdD
 from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from ina_ground_control.utils.auth import TokenService, require_role
+from fastapi_keycloak_middleware import MatchStrategy
+
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
 NOT_FOUND_STR = "Plugin not found"
@@ -80,7 +83,8 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to create plugin") from e
 
 @router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK,response_model=PluginWithIdDto)
-def delete_plugin(plugin_id: int, db: Session = Depends(get_db)):
+@require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
+def delete_plugin(plugin_id: int, db: Session = Depends(get_db),token: str = Depends(TokenService.get_token_from_request)):
     """Delete a plugin by ID."""
     deleted_plugin = delete_plugin_crud(db, plugin_id)
     if deleted_plugin is None:
