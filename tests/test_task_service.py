@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
-from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
+from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, delete_task_crud
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
 
 # Fixture to create an SQLite in-memory database for testing
@@ -92,3 +92,15 @@ def test_update_data_task_crud(db_session: Session):
 
     assert retrieved_updated_task is not None
     assert retrieved_updated_task.data == updated_data
+
+def test_delete_task_crud(db_session: Session):
+
+    created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
+
+    deleted_task = delete_task_crud(db_session, created_task)
+
+    retrieved_task = get_task_by_id(db_session, created_task.id)
+
+    assert created_task is not None
+    assert created_task == deleted_task
+    assert retrieved_task is None
