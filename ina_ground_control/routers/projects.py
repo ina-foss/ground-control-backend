@@ -78,9 +78,9 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return updated_project
 
-
 @router.delete("/project/{project_id}", status_code=status.HTTP_200_OK,response_model=ProjectWithIdDto)
-def delete_project(project_id: int, db: Session = Depends(get_db)):
+@require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
+def delete_project(project_id: int, db: Session = Depends(get_db), token: str = Depends(TokenService.get_token_from_request)):
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:
