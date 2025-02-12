@@ -73,14 +73,23 @@ def require_role(roles: Union[str, List[str]], match_strategy: MatchStrategy = M
 
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):
             token = kwargs.get('token', None)
-            user_roles  = TokenService.get_user_info_from_token(token)["roles"]
-            print("token",token)
-            print("roles",user_roles)
+
+            # Ensure the token is present
+            if not token:
+                raise HTTPException(status_code=401, detail="Authorization token is missing")
+
+            # Extract roles from token
+            user_roles = TokenService.get_user_info_from_token(token).get("roles", [])
+            print("token", token)
+            print("roles", user_roles)
+
+            # If roles are missing, raise an error
             if user_roles is None:
                 raise HTTPException(status_code=403, detail="User roles not provided")
 
+            # Check if the user has the required roles based on the match_strategy
             if match_strategy == MatchStrategy.AND:
                 if not all(role in user_roles for role in roles):
                     raise HTTPException(status_code=403, detail="Insufficient roles")
@@ -88,8 +97,11 @@ def require_role(roles: Union[str, List[str]], match_strategy: MatchStrategy = M
                 if not any(role in user_roles for role in roles):
                     raise HTTPException(status_code=403, detail="Insufficient roles")
 
-            return await func(*args, **kwargs)
+            # Call the wrapped function synchronously
+            return func(*args, **kwargs)
 
         return wrapper
+
+    return decorator
 
     return decorator

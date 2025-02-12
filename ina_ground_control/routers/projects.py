@@ -32,6 +32,9 @@ from ina_ground_control.services.project_service import (get_projects,
                                                          update_project_crud,
                                                          delete_project_crud)
 
+from ina_ground_control.utils.auth import TokenService, require_role
+from fastapi_keycloak_middleware import MatchStrategy
+
 logger = get_logger()
 router = APIRouter(tags=["project"])
 NOT_FOUND_STR = "Project not found"
@@ -46,7 +49,8 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 
 
 @router.post("/project", response_model=ProjectDetailDto)
-def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) -> ProjectDetailDto:
+@require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
+def create_project(project: ProjectBaseDto, db: Session = Depends(get_db), token: str = Depends(TokenService.get_token_from_request)) -> ProjectDetailDto:
     """Create a new project."""
     try:
         return create_project_crud(db, project)

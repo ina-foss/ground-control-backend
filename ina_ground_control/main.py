@@ -11,14 +11,12 @@ from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
     AuthorizationMethod,
-    require_permission,
     MatchStrategy
 )
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
-from ina_ground_control.utils.auth import require_role
-from ina_ground_control.utils.auth import TokenService
+from ina_ground_control.utils.auth import TokenService, require_role
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
     Maps user information received from Keycloak to a User model instance.
@@ -121,7 +119,7 @@ async def info() -> dict:
 
 @app.get("/admin")
 @require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
-async def check_admin(token: str = Depends(TokenService.get_token_from_request)):
+def check_admin(token: str = Depends(TokenService.get_token_from_request)):
     """
     Route to check admin access. This will return a success message if the user has
     the "GC_ADMIN" role.
