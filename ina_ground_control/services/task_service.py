@@ -61,7 +61,7 @@ def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
         db.refresh(db_task)
     return db_task
 
-def delete_task_crud(db: Session, task_id: int):
+def delete_task_crud(db: Session, task:Task):
     """
     Delete a task from the database
 
@@ -72,8 +72,7 @@ def delete_task_crud(db: Session, task_id: int):
     Returns:
         Task: The deleted Task object if the task exists, otherwise None.
     """
-    db_task = db.query(Task).filter(Task.id == task_id).first()
-    if db_task is not None:
-        db.delete(db_task)
+    if task is not None:
+        db.delete(task)
         db.commit()
-    return db_task
+    return task

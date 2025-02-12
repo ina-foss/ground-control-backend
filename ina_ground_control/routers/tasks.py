@@ -144,8 +144,14 @@ def delete_task(task_id: int, db:Session = Depends(get_db)):
     Returns:
         TaskWithIdDto: The deleted task
     """
-    deleted_task = delete_task_crud(db, task_id)
+    retrieved_task = get_task_by_id(db, task_id)
+    if retrieved_task is None:
+        logger.error("Task with id %d not found", task_id)
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    deleted_task = delete_task_crud(db, retrieved_task)
     if deleted_task is None:
         logger.error("Failed to delete task with id: %d", task_id)
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=500, detail="Failed to delete task")
+
     return deleted_task
