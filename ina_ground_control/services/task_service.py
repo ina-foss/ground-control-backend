@@ -73,9 +73,7 @@ def delete_task_crud(db: Session, task_id: int):
         Task: The deleted Task object if the task exists, otherwise None.
     """
     db_task = db.query(Task).filter(Task.id == task_id).first()
-    print(db_task)
     if db_task is not None:
         db.delete(db_task)
         db.commit()
-    print(db_task)
     return db_task
