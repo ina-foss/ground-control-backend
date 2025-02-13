@@ -1,4 +1,4 @@
-from jose import jwt
+import jwt
 from fastapi import HTTPException, Header
 from typing import List, Union
 from fastapi_keycloak_middleware import (MatchStrategy)

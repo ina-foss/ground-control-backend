@@ -8,7 +8,7 @@ dynaconf==3.2.4
 dynaconf[yaml]==3.2.4
 psycopg2-binary
 requests==2.31.0
-fastapi-keycloak-middleware==0.4.1
+fastapi-keycloak-middleware==1.2.0
 python-dotenv==1.0.1
 alembic==1.13.1
 alembic-postgresql-enum==1.2.0
