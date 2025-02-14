@@ -5,18 +5,20 @@ import os
 from dotenv import load_dotenv
 import uvicorn
 import typing
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
     AuthorizationMethod,
-    MatchStrategy
+    MatchStrategy,
+    require_permission,
+    CheckPermissions,
+    AuthorizationResult
 )
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import User
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
-from ina_ground_control.utils.auth import TokenService, require_role
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
     """
     Maps user information received from Keycloak to a User model instance.
@@ -39,11 +41,11 @@ keycloak_config = KeycloakConfiguration(
     client_secret=settings.sso.client_secret,
     claims=["openid","email","profile","roles"],
     reject_on_missing_claim=False,
-    verify=True,
-    validate_token=True,
-    authorization_method=AuthorizationMethod.NONE,
+    #verify=True,
+    #validate_token=True,
+    authorization_method= AuthorizationMethod.CLAIM,
     authorization_claim="roles",
-    use_introspection_endpoint=False,
+    #use_introspection_endpoint=False,
     swagger_client_id="web_app",
     swagger_auth_scopes=["openid"],  # Optional
     swagger_auth_pkce=True,  # Optional
@@ -57,7 +59,7 @@ keycloak_config = KeycloakConfiguration(
 
 app = FastAPI()
 
-NO_AUTH = os.getenv("NO_AUTH") != "True"
+NO_AUTH = os.getenv("NO_AUTH") != "False"
 
 # Add middleware with basic config
 if not NO_AUTH:
@@ -117,14 +119,15 @@ async def info() -> dict:
     """
     return {"status": "up"}
 
+
 @app.get("/admin")
-@require_role(roles=["GC_ADMIN"], match_strategy=MatchStrategy.AND)
-def check_admin(token: str = Depends(TokenService.get_token_from_request)):
-    """
-    Route to check admin access. This will return a success message if the user has
-    the "GC_ADMIN" role.
-    """
-    return {"message": "Welcome admin!"}
+def view_user(authorization_result: AuthorizationResult = Depends(CheckPermissions( [
+    "ROLE_USER",
+    "offline_access",
+    "GC_ADMIN",
+    "uma_authorization"
+], match_strategy=MatchStrategy.AND))):
+    return {"userinfo": "Hello Admin"}
 
 load_dotenv(".env.local")
 APP_HOST = os.getenv("APP_HOST")
