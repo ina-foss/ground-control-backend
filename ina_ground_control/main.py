@@ -46,7 +46,6 @@ async def custom_scope_mapper(auth_data):
     if Role.ADMIN.value in auth_data:
         permissions.extend([
             f"{Resource.PROJECT.value}:{Action.CREATE_PROJECT.value}",
-            f"{Resource.PROJECT.value}:{Action.READ_PROJECT.value}",
             f"{Resource.PROJECT.value}:{Action.DELETE_PROJECT.value}"
         ])
 
