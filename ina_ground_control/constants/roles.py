@@ -24,3 +24,8 @@ class Action(str, Enum):
     READ_PROJECT = "read_project"
     UPDATE_PROJECT = "update_project"
     DELETE_PROJECT = "delete_project"
+    #Annotation
+    CREATE_ANNOTATION= "create_annotation"
+    GET_ANNOTATIONS_BY_ID = "get_annotations_by_id"
+    UPDATE_ANNOTATION_RESULT = "update_annotation_result"
+    FINISH_ANNOTATION = "finish_annotation"
