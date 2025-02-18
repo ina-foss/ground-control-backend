@@ -1,10 +1,7 @@
 import jwt
 from fastapi import HTTPException, Header
-from typing import List, Union
-from fastapi_keycloak_middleware import (MatchStrategy)
-from functools import wraps
 
-class TokenService:
+class TokenUtils:
     @staticmethod
     def get_user_info_from_token(token: str) -> dict:
         """
@@ -66,42 +63,3 @@ class TokenService:
 
         token = authorization.split("Bearer ")[-1]
         return token
-
-def require_role(roles: Union[str, List[str]], match_strategy: MatchStrategy = MatchStrategy.AND):
-    if isinstance(roles, str):
-        roles = [roles]
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            token = kwargs.get('token', None)
-
-            # Ensure the token is present
-            if not token:
-                raise HTTPException(status_code=401, detail="Authorization token is missing")
-
-            # Extract roles from token
-            user_roles = TokenService.get_user_info_from_token(token).get("roles", [])
-            print("token", token)
-            print("roles", user_roles)
-
-            # If roles are missing, raise an error
-            if user_roles is None:
-                raise HTTPException(status_code=403, detail="User roles not provided")
-
-            # Check if the user has the required roles based on the match_strategy
-            if match_strategy == MatchStrategy.AND:
-                if not all(role in user_roles for role in roles):
-                    raise HTTPException(status_code=403, detail="Insufficient roles")
-            elif match_strategy == MatchStrategy.OR:
-                if not any(role in user_roles for role in roles):
-                    raise HTTPException(status_code=403, detail="Insufficient roles")
-
-            # Call the wrapped function synchronously
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-    return decorator
