@@ -29,6 +29,12 @@ from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepDto , StepCreate
 from ina_ground_control.services.step_service import (get_step_by_id, create_step_crud,
                                                       update_data_step_crud,delete_step_crud,get_steps)
+from fastapi_keycloak_middleware import (
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
+)
+from ina_ground_control.constants.roles import ROLE_PERMISSIONS, Role
 
 logger = get_logger()
 router = APIRouter(tags=["step"])
@@ -94,7 +100,7 @@ def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_d
 
 #delete step
 @router.delete("/step/{step_id}", status_code=status.HTTP_200_OK,response_model=StepCreate)
-def delete_step(step_id: int, db: Session = Depends(get_db)):
+def delete_step(step_id: int, db: Session = Depends(get_db), authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN], match_strategy=MatchStrategy.AND))):
     deleted_step = delete_step_crud(db, step_id)
     if deleted_step is None:
         logger.error("Failed to delete step with id: %d", step_id)

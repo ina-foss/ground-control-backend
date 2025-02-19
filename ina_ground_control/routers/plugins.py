@@ -26,6 +26,12 @@ from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdD
 from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from fastapi_keycloak_middleware import (
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
+)
+from ina_ground_control.constants.roles import ROLE_PERMISSIONS, Role
 
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
@@ -81,7 +87,7 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to create plugin") from e
 
 @router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK,response_model=PluginWithIdDto)
-def delete_plugin(plugin_id: int, db: Session = Depends(get_db)):
+def delete_plugin(plugin_id: int, db: Session = Depends(get_db), authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN], match_strategy=MatchStrategy.AND))):
     """Delete a plugin by ID."""
     deleted_plugin = delete_plugin_crud(db, plugin_id)
     if deleted_plugin is None:

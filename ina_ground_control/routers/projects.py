@@ -31,6 +31,12 @@ from ina_ground_control.services.project_service import (get_projects,
                                                          get_project_by_id,
                                                          update_project_crud,
                                                          delete_project_crud)
+from fastapi_keycloak_middleware import (
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
+)
+from ina_ground_control.constants.roles import ROLE_PERMISSIONS, Role
 
 logger = get_logger()
 router = APIRouter(tags=["project"])
@@ -46,7 +52,7 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 
 
 @router.post("/project", response_model=ProjectDetailDto)
-def create_project(project: ProjectBaseDto, db: Session = Depends(get_db)) -> ProjectDetailDto:
+def create_project(project: ProjectBaseDto, db: Session = Depends(get_db),authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN], match_strategy=MatchStrategy.AND))) -> ProjectDetailDto:
     """Create a new project."""
     try:
         return create_project_crud(db, project)
@@ -75,7 +81,7 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     return updated_project
 
 @router.delete("/project/{project_id}", status_code=status.HTTP_200_OK,response_model=ProjectWithIdDto)
-def delete_project(project_id: int, db: Session = Depends(get_db)):
+def delete_project(project_id: int, db: Session = Depends(get_db),authorization_result: AuthorizationResult = Depends(CheckPermissions([ROLE_PERMISSIONS[Role.GC_ADMIN]], match_strategy=MatchStrategy.AND))):
     """Delete a project by ID."""
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:

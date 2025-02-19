@@ -3,6 +3,11 @@ from typing import Dict, List
 
 GROUND_CONTROL = "ground-control"
 
+class Role(str, Enum):
+    GC_ADMIN = "GC_ADMIN"
+    GC_PROJECT_OWNER = "GC_PROJECT_OWNER"
+    GC_ANNOTATOR = "GC_ANNOTATOR"
+
 class Resource(str, Enum):
     PROJECT = "project"
     ANNOTATION = "annotation"
@@ -14,11 +19,6 @@ class Resource(str, Enum):
     TASK_COMMENT= "taskComment"
     TASK = "task"
     USER = "user"
-
-class Role(str, Enum):
-    GC_ADMIN = "GC_ADMIN"
-    GC_PROJECT_OWNER = "GC_PROJECT_OWNER"
-    GC_ANNOTATOR = "GC_ANNOTATOR"
 
 class Action(str, Enum):
     #Project
@@ -135,6 +135,6 @@ ROLE_PERMISSIONS: Dict[str, List[Permission]] = {
         Permission.DELETE_STEP.value,
         Permission.DELETE_PLUGIN.value,
         ],
-    Role.GC_PROJECT_OWNER.value: [],
-    Role.GC_ANNOTATOR.value: [],
+    Role.GC_PROJECT_OWNER: [],
+    Role.GC_ANNOTATOR: [],
 }
