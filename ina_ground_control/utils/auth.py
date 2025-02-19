@@ -1,5 +1,6 @@
 import jwt
 from fastapi import HTTPException, Header
+from fastapi import Request
 
 class TokenUtils:
     @staticmethod
@@ -63,3 +64,4 @@ class TokenUtils:
 
         token = authorization.split("Bearer ")[-1]
         return token
+

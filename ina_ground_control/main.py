@@ -17,11 +17,11 @@ from fastapi_keycloak_middleware import (
     AuthorizationResult
 )
 from ina_ground_control.config import settings
-from ina_ground_control.models.user_model import User
+from ina_ground_control.models.user_model import UserInfo
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
-from ina_ground_control.constants.roles import Role, Resource, Action
+from ina_ground_control.constants.roles import Role, ROLE_PERMISSIONS
 
-async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
+async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
     """
     Maps user information received from Keycloak to a User model instance.
 
@@ -29,28 +29,17 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
         userinfo (Dict[str, Any]): The user information dictionary.
 
     Returns:
-        User: An instance of the User model.
+        UserInfo: An instance of the UserInfo model.
     """
-    # Do something with the userinfo
-    print(userinfo)
-    return User()
+    print("*********************************************************",userinfo)  # Debugging the userinfo dict
 
-async def custom_scope_mapper(auth_data):
-    """
-    Extract roles from auth_data before storing it in request.scope['auth']
-    """
-    print("************************Original auth data:********************", auth_data)
+    # Map the fields from the userinfo to the UserInfo model
+    user = UserInfo(
+        email=userinfo.get("email"),
+        roles=userinfo.get("roles", []),
+    )
 
-    # Check if the user has the "GC_ADMIN" role
-    permissions = []
-    if Role.ADMIN.value in auth_data:
-        permissions.extend([
-            f"{Resource.PROJECT.value}:{Action.CREATE_PROJECT.value}",
-            f"{Resource.PROJECT.value}:{Action.DELETE_PROJECT.value}"
-        ])
-
-    print("*********************new permissions:************************", permissions)
-    return permissions
+    return user
 
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
@@ -70,7 +59,7 @@ keycloak_config = KeycloakConfiguration(
     swagger_auth_pkce=True,  # Optional
     swagger_scheme_name="openid",
     decode_options={
-        "verify_signature": True,
+        "verify_signature": False,
         "verify_aud": False,
         "verify_exp": True,
     },
@@ -87,7 +76,7 @@ if not NO_AUTH:
         keycloak_configuration=keycloak_config,
         exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
         add_swagger_auth=True,
-        scope_mapper=custom_scope_mapper
+        user_mapper=map_user
     )
 
 
@@ -139,11 +128,12 @@ async def info() -> dict:
     """
     return {"status": "up"}
 
-
 @app.get("/admin")
-def view_user(request: Request,authorization_result: AuthorizationResult = Depends(CheckPermissions( [f"{Resource.PROJECT.value}:{Action.CREATE_PROJECT.value}"], match_strategy=MatchStrategy.AND))):
-    return {"userinfo": "Hello Admin",
-            "permissions": request.scope.get("auth", {}) }
+def check_admin(request: Request,authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN], match_strategy=MatchStrategy.AND))):
+    roles_from_token = request.scope.get("auth", {})
+    return {"message": "Hello Admin",
+            "checked roles": ROLE_PERMISSIONS[Role.GC_ADMIN],
+            "roles from token": roles_from_token }
 
 
 load_dotenv(".env.local")
