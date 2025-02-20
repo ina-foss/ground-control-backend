@@ -58,7 +58,7 @@ keycloak_config = KeycloakConfiguration(
     swagger_auth_pkce=True,  # Optional
     swagger_scheme_name="openid",
     decode_options={
-        "verify_signature": False,
+        "verify_signature": True,
         "verify_aud": False,
         "verify_exp": True,
     },
@@ -66,7 +66,7 @@ keycloak_config = KeycloakConfiguration(
 
 app = FastAPI()
 
-NO_AUTH = os.getenv("NO_AUTH") != "False"
+NO_AUTH = os.getenv("NO_AUTH") != "True"
 
 # Add middleware with basic config
 if not NO_AUTH:

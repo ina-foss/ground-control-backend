@@ -36,7 +36,7 @@ from ina_ground_control.services.project_service import (get_projects,
                                                          get_project_by_id,
                                                          update_project_crud,
                                                          delete_project_crud)
-from ina_ground_control.constants.roles import ROLE_PERMISSIONS, Role
+from ina_ground_control.constants.roles import Permission
 
 logger = get_logger()
 router = APIRouter(tags=["project"])
@@ -55,7 +55,7 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 def create_project(project: ProjectBaseDto,
                    db: Session = Depends(get_db),
                    _authorization_result: AuthorizationResult = Depends(
-                       CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN],
+                       CheckPermissions( [Permission.CREATE_PROJECT.value],
                        match_strategy=MatchStrategy.AND))
                    # pylint: disable=invalid-name
                    ) -> ProjectDetailDto:
@@ -88,7 +88,7 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
 
 @router.delete("/project/{project_id}", status_code=status.HTTP_200_OK,response_model=ProjectWithIdDto)
 def delete_project(project_id: int, db: Session = Depends(get_db),_authorization_result: AuthorizationResult = Depends(
-    CheckPermissions([ROLE_PERMISSIONS[Role.GC_ADMIN]],
+    CheckPermissions([Permission.DELETE_PROJECT.value],
                      match_strategy=MatchStrategy.AND))
                    # pylint: disable=invalid-name
                    ):

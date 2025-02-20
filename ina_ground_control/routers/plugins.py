@@ -31,7 +31,7 @@ from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdD
 from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
-from ina_ground_control.constants.roles import ROLE_PERMISSIONS, Role
+from ina_ground_control.constants.roles import Permission
 
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
@@ -90,7 +90,7 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
 def delete_plugin(plugin_id: int,
                   db: Session = Depends(get_db),
                   _authorization_result: AuthorizationResult = Depends(
-                      CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN],
+                      CheckPermissions( [Permission.DELETE_PLUGIN.value],
                                         match_strategy=MatchStrategy.AND))
                   # pylint: disable=invalid-name
                   ):

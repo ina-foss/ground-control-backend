@@ -71,7 +71,8 @@ def get_annotation_by_task_id(
         db: Session = Depends(get_db)) -> list[Annotation]:
     """
     Get a list of annotations that match the task_id attributes
-    .....Add
+        - Admins can retrieve annotations for **any user**.
+        - Regular users can only retrieve **their own** annotations.
     """
     user = request.scope.get("user", {})
     email = user.email
