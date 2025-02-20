@@ -4,7 +4,7 @@ It includes routes for retrieving user data, utilizing the Keycloak middleware f
 authentication and permission checks.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 from latios.log import get_logger

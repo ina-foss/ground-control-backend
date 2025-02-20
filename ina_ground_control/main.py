@@ -12,7 +12,6 @@ from fastapi_keycloak_middleware import (
     setup_keycloak_middleware,
     AuthorizationMethod,
     MatchStrategy,
-    require_permission,
     CheckPermissions,
     AuthorizationResult
 )
@@ -130,7 +129,11 @@ async def info() -> dict:
     return {"status": "up"}
 
 @app.get("/admin")
-def check_admin(request: Request,authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN], match_strategy=MatchStrategy.AND))):
+def check_admin(request: Request,
+                _authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN],
+                                                                                      match_strategy=MatchStrategy.AND))
+                # pylint: disable=invalid-name
+                ):
     roles_from_token = request.scope.get("auth", {})
     return {"message": "Hello Admin",
             "checked roles": ROLE_PERMISSIONS[Role.GC_ADMIN],

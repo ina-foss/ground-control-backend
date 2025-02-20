@@ -15,6 +15,7 @@ from ina_ground_control.database import Base
 from pydantic import BaseModel
 from typing import List, Optional
 
+
 class User(Base):
     """
     Represents a user record in the database.
@@ -37,7 +38,11 @@ class User(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     projects = relationship("Project", back_populates="owner")
-    annotations = relationship("Annotation", backref="user", cascade="all, delete-orphan")
+    annotations = relationship(
+        "Annotation",
+        backref="user",
+        cascade="all, delete-orphan")
+
 
 class UserInfo(BaseModel):
     email: Optional[str] = None

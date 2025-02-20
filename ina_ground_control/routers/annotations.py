@@ -5,7 +5,7 @@ or the error status if something went wrong.
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, Header, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 
