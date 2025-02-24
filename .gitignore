@@ -34,3 +34,4 @@ data/
 .idea/
 ina_ground_control/.secrets.yaml
 .pypirc
+docs/_build
