@@ -5,18 +5,22 @@ import os
 from dotenv import load_dotenv
 import uvicorn
 import typing
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
     AuthorizationMethod,
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
 )
 from ina_ground_control.config import settings
-from ina_ground_control.models.user_model import User
+from ina_ground_control.models.user_model import UserInfo
 from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
+from ina_ground_control.constants.roles import Role, ROLE_PERMISSIONS
 
-async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
+async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
     """
     Maps user information received from Keycloak to a User model instance.
 
@@ -24,11 +28,17 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
         userinfo (Dict[str, Any]): The user information dictionary.
 
     Returns:
-        User: An instance of the User model.
+        UserInfo: An instance of the UserInfo model.
     """
-    # Do something with the userinfo
-    print(userinfo)
-    return User()
+    print("*********************************************************",userinfo)  # Debugging the userinfo dict
+
+    # Map the fields from the userinfo to the UserInfo model
+    user = UserInfo(
+        email=userinfo.get("email"),
+        roles=userinfo.get("roles", []),
+    )
+
+    return user
 
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
@@ -40,7 +50,7 @@ keycloak_config = KeycloakConfiguration(
     reject_on_missing_claim=False,
     verify=True,
     validate_token=True,
-    authorization_method=AuthorizationMethod.NONE,
+    authorization_method= AuthorizationMethod.CLAIM,
     authorization_claim="roles",
     use_introspection_endpoint=False,
     swagger_client_id="web_app",
@@ -65,6 +75,7 @@ if not NO_AUTH:
         keycloak_configuration=keycloak_config,
         exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
         add_swagger_auth=True,
+        user_mapper=map_user
     )
 
 
@@ -103,6 +114,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Authorization", "Link", "X-Total-Count", "Highlighted"]
 )
 
 
@@ -116,9 +128,21 @@ async def info() -> dict:
     """
     return {"status": "up"}
 
+@app.get("/admin")
+def check_admin(request: Request,
+                _authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN],
+                                                                                      match_strategy=MatchStrategy.AND))
+                # pylint: disable=invalid-name
+                ):
+    roles_from_token = request.scope.get("auth", {})
+    return {"message": "Hello Admin",
+            "checked roles": ROLE_PERMISSIONS[Role.GC_ADMIN],
+            "roles from token": roles_from_token }
+
 
 load_dotenv(".env.local")
 APP_HOST = os.getenv("APP_HOST")
 APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL")
+
 if __name__ == "__main__":
     uvicorn.run("ina_ground_control.main:app", host=APP_HOST, port=8000,log_level=APP_LOG_LEVEL, reload=True )

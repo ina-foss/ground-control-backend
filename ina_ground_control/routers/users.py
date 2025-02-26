@@ -21,7 +21,6 @@ logger = get_logger()
 router = APIRouter(tags=["user"])
 NOT_FOUND_STR_USER = "User not found"
 
-
 @router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """

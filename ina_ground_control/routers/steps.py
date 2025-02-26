@@ -20,15 +20,20 @@ Configuration:
     `src` module.
 """
 
-from fastapi import status
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from fastapi_keycloak_middleware import (
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
+)
 from latios.log import get_logger
 from ina_ground_control.database import get_db
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepDto , StepCreate
 from ina_ground_control.services.step_service import (get_step_by_id, create_step_crud,
                                                       update_data_step_crud,delete_step_crud,get_steps)
+from ina_ground_control.constants.roles import Permission
 
 logger = get_logger()
 router = APIRouter(tags=["step"])
@@ -94,7 +99,12 @@ def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_d
 
 #delete step
 @router.delete("/step/{step_id}", status_code=status.HTTP_200_OK,response_model=StepCreate)
-def delete_step(step_id: int, db: Session = Depends(get_db)):
+def delete_step(step_id: int, db: Session = Depends(get_db),
+                _authorization_result: AuthorizationResult = Depends(CheckPermissions(
+                    [Permission.DELETE_STEP.value],
+                    match_strategy=MatchStrategy.AND))
+                # pylint: disable=invalid-name
+                ):
     deleted_step = delete_step_crud(db, step_id)
     if deleted_step is None:
         logger.error("Failed to delete step with id: %d", step_id)

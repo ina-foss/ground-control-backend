@@ -20,12 +20,19 @@ Dependencies:
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from fastapi_keycloak_middleware import (
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
+)
 from latios.log import get_logger
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 from ina_ground_control.models.plugin_model import Plugin
 from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from ina_ground_control.constants.roles import Permission
+
 logger = get_logger()
 router = APIRouter(tags=["plugin"])
 NOT_FOUND_STR = "Plugin not found"
@@ -80,7 +87,13 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to create plugin") from e
 
 @router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK,response_model=PluginWithIdDto)
-def delete_plugin(plugin_id: int, db: Session = Depends(get_db)):
+def delete_plugin(plugin_id: int,
+                  db: Session = Depends(get_db),
+                  _authorization_result: AuthorizationResult = Depends(
+                      CheckPermissions( [Permission.DELETE_PLUGIN.value],
+                                        match_strategy=MatchStrategy.AND))
+                  # pylint: disable=invalid-name
+                  ):
     """Delete a plugin by ID."""
     deleted_plugin = delete_plugin_crud(db, plugin_id)
     if deleted_plugin is None:

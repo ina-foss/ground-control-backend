@@ -5,7 +5,7 @@ or the error status if something went wrong.
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from latios.log import get_logger
 
@@ -20,9 +20,11 @@ from ina_ground_control.services.annotation_service import (
     udpate_annotation_result_crud,
     finish_annotation_crud
 )
+from ina_ground_control.constants.roles import Role
 
 logger = get_logger()
 router = APIRouter(tags=["annotation"])
+
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
 ANNOTATION_NOT_FOUND_MESSAGE = "Annotation not found"
 
@@ -63,13 +65,23 @@ def get_annotations_by_id(
 @router.get("/annotations/{task_id}", response_model=list[AnnotationDto])
 def get_annotation_by_task_id(
         task_id: int,
+        request: Request,
         user_email: str= Query(None, description="user_email"),
         direction: InOutEnum = Query(None, description="Direction of the annotation ('in' or 'out')"),
         db: Session = Depends(get_db)) -> list[Annotation]:
     """
     Get a list of annotations that match the task_id attributes
+        - Admins can retrieve annotations for **any user**.
+        - Regular users can only retrieve **their own** annotations.
     """
-    annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction= direction,user_email=user_email)
+    user = request.scope.get("user", {})
+    email = user.email
+    roles  = user.roles
+
+    if Role.GC_ADMIN in roles:
+        annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=user_email)
+    else:
+        annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=email)
     return annotations
 
 
