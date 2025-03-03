@@ -31,13 +31,13 @@ from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, Ta
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, delete_task_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.annotation_service import create_annotation_crud
+from ina_ground_control.constants.roles import Permission
 
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
-from ina_ground_control.constants.roles import Permission
 
 logger = get_logger()
 router = APIRouter(tags=["task"])
@@ -145,6 +145,7 @@ def delete_task(task_id: int, db:Session = Depends(get_db),
                   _authorization_result: AuthorizationResult = Depends(
                        CheckPermissions( [Permission.DELETE_TASK.value],
                        match_strategy=MatchStrategy.AND))
+                   # pylint: disable=invalid-name
                    ) -> TaskWithIdDto:
     """
     Delete a task by ID.
