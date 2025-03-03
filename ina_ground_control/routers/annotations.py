@@ -78,7 +78,7 @@ def get_annotation_by_task_id(
     email = user.email
     roles  = user.roles
 
-    if Role.GC_ADMIN in roles:
+    if Role.GC_ADMIN in roles or user_email == '' :
         annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=user_email)
     else:
         annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=email)
