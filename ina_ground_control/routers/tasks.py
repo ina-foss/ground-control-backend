@@ -32,6 +32,13 @@ from ina_ground_control.services.task_service import get_task_by_id, create_task
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.annotation_service import create_annotation_crud
 
+from fastapi_keycloak_middleware import (
+    MatchStrategy,
+    CheckPermissions,
+    AuthorizationResult
+)
+from ina_ground_control.constants.roles import Permission
+
 logger = get_logger()
 router = APIRouter(tags=["task"])
 
@@ -134,7 +141,11 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
     return task
 
 @router.delete("/task/{task_id}",response_model=TaskWithIdDto)
-def delete_task(task_id: int, db:Session = Depends(get_db)):
+def delete_task(task_id: int, db:Session = Depends(get_db),
+                  _authorization_result: AuthorizationResult = Depends(
+                       CheckPermissions( [Permission.DELETE_TASK.value],
+                       match_strategy=MatchStrategy.AND))
+                   ) -> TaskWithIdDto:
     """
     Delete a task by ID.
 
