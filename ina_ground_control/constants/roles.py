@@ -99,6 +99,7 @@ class Permission(str, Enum):
     CREATE_TASK = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.CREATE.value}"
     TASK_INJECT = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.TASK_INJECT.value}"
     UPDATE_DATA_TASK = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.UPDATE.value}"
+    DELETE_TASK = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.DELETE.value}"
     #User
     READ_USERS = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.READ_ALL.value}"
     CREATE_USER = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.CREATE.value}"
