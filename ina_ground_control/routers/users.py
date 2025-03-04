@@ -6,7 +6,7 @@ authentication and permission checks.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import EmailStr
-from sqlalchemy.orm import Session, session
+from sqlalchemy.orm import Session
 from latios.log import get_logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
