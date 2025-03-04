@@ -12,7 +12,6 @@ from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 from ina_ground_control.schemas.user_schemas import UserDto
-from ina_ground_control.schemas.role_schemas import Role
 from ina_ground_control.services.user_service import (
     create_user_crud,
     get_user_by_email_crud,
