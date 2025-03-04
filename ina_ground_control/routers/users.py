@@ -6,11 +6,13 @@ authentication and permission checks.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import EmailStr
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, session
 from latios.log import get_logger
+from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 from ina_ground_control.schemas.user_schemas import UserDto
+from ina_ground_control.schemas.role_schemas import Role
 from ina_ground_control.services.user_service import (
     create_user_crud,
     get_user_by_email_crud,
@@ -51,6 +53,12 @@ def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error("Failed to create user: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create user") from e
+
+
+@router.get("/user/roles",response_model=Permission)
+def get_all_roles():
+    roles = Permission.CREATE_TASK_COMMENT
+    return roles
 
 
 @router.get("/user/")
