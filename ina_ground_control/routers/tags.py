@@ -53,7 +53,7 @@ def read_tag(tag_key: str, db: Session = Depends(get_db)):
     return tag
 
 #add new tag
-@router.post("/tag/", response_model=TagCreate)
+@router.post("/tag", response_model=TagCreate)
 def create_tag(tag: TagCreate, db: Session = Depends(get_db)):
     """
     Create a new tag.
@@ -104,7 +104,7 @@ def delete_tag(tag_key: str, db: Session = Depends(get_db)):
     return deleted_tag
 
 #get list of tag
-@router.get("/tags/", response_model=list[TagDto])
+@router.get("/tags", response_model=list[TagDto])
 def read_tags(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Tag]:
     """Retrieve a list of tags with pagination support."""

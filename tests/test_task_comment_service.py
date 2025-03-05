@@ -3,8 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
-from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate , TaskCommentDto
-from ina_ground_control.services.task_comment_service import get_task_comment_by_id, create_task_comment_crud, update_task_comment_crud,delete_task_comment_crud,get_task_comments
+from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate
+from ina_ground_control.services.task_comment_service import get_task_comment_by_id, create_task_comment_crud, update_task_comment_crud,delete_task_comment_crud,get_task_comments, get_task_comment_by_task_id
 
 
 
@@ -38,11 +38,13 @@ def db_session(db_engine):
 def test_get_taskComments(db_session: Session):
     taskComment_data_1 = {
         "comment": "test A",
-        "task_id": 1
+        "task_id": 1,
+        "created_by": "admin@localhost.com"
     }
     taskComment_data_2 = {
         "comment": "test B",
-        "task_id": 2
+        "task_id": 2,
+        "created_by": "admin@localhost.com"
     }
     created_taskComment_1 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_1), db_session)
     created_taskComment_2 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_2), db_session)
@@ -59,8 +61,9 @@ def test_get_taskComments(db_session: Session):
 
 taskComment_data = {
         "comment": "test A",
-        "task_id": 1
-    }
+        "task_id": 1,
+        "created_by": "admin@localhost.com"
+}
 def test_get_taskComment_by_id(db_session: Session):
 
     created_taskComment = create_task_comment_crud(TaskCommentCreate(**taskComment_data), db_session)
@@ -71,6 +74,31 @@ def test_get_taskComment_by_id(db_session: Session):
     assert retrieved_taskComment.id == created_taskComment.id
     assert retrieved_taskComment.comment == taskComment_data["comment"]
     assert retrieved_taskComment.task_id == taskComment_data["task_id"]
+
+def test_get_taskComment_by_task_id(db_session: Session):
+    taskComment_data_1 = {
+        "comment": "test A",
+        "task_id": 3,
+        "created_by": "admin@localhost.com"
+    }
+    taskComment_data_2 = {
+        "comment": "test B",
+        "task_id": 3,
+        "created_by": "admin@localhost.com"
+    }
+
+    created_taskComment_1 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_1), db_session)
+    created_taskComment_2 = create_task_comment_crud(TaskCommentCreate(**taskComment_data_2), db_session)
+
+    retrieved_taskComments = get_task_comment_by_task_id(db_session, created_taskComment_1.task_id)
+
+    assert retrieved_taskComments is not None
+    assert len(retrieved_taskComments) == 2 
+    assert retrieved_taskComments[0].id == created_taskComment_1.id
+    assert retrieved_taskComments[0].comment == taskComment_data_1["comment"]
+    assert retrieved_taskComments[1].id == created_taskComment_2.id
+    assert retrieved_taskComments[1].comment == taskComment_data_2["comment"]
+
 
 def test_create_taskComment_crud(db_session: Session):
     """
@@ -88,7 +116,8 @@ def test_update_data_taskComment_crud(db_session: Session):
     created_taskComment = create_task_comment_crud(TaskCommentCreate(**taskComment_data), db_session)
     updated_taskComment_data = {
         "comment": "test B",
-        "task_id": 6
+        "task_id": 6,
+        "created_by": "admin@localhost.com"
     }
     update_task_comment_crud(created_taskComment.id, TaskCommentCreate(**updated_taskComment_data), db_session)
     retrieved_updated_taskComment = get_task_comment_by_id(db_session, created_taskComment.id)

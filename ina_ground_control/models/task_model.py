@@ -79,6 +79,7 @@ class Task(Base):
     instruction = Column(String)
     data_type = Column(Enum(TaskDataType))  # , nullable=False
     status = Column(Enum(TaskStatus))
+    documentation = Column(String)
     lead_time = Column(Integer)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)

@@ -28,7 +28,7 @@ from ina_ground_control.database import get_db
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto
-from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud
+from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, delete_task_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.annotation_service import create_annotation_crud
 
@@ -54,7 +54,7 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-@router.post("/task/", response_model=TaskWithIdDto)
+@router.post("/task", response_model=TaskWithIdDto)
 def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
     """
     Create a new task.
@@ -132,3 +132,26 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
         logger.error("Failed to update task with id: %d", task_id)
         raise HTTPException(status_code=404, detail="Task not found")
     return task
+
+@router.delete("/task/{task_id}",response_model=TaskWithIdDto)
+def delete_task(task_id: int, db:Session = Depends(get_db)):
+    """
+    Delete a task by ID.
+
+    Args:
+        task_id (int): The unique identifier of the task to delete
+
+    Returns:
+        TaskWithIdDto: The deleted task
+    """
+    retrieved_task = get_task_by_id(db, task_id)
+    if retrieved_task is None:
+        logger.error("Task with id %d not found", task_id)
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    deleted_task = delete_task_crud(db, retrieved_task)
+    if deleted_task is None:
+        logger.error("Failed to delete task with id: %d", task_id)
+        raise HTTPException(status_code=500, detail="Failed to delete task")
+
+    return deleted_task

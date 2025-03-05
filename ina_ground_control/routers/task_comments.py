@@ -27,7 +27,7 @@ from latios.log import get_logger
 from ina_ground_control.database import get_db
 from ina_ground_control.models.task_comment_model import TaskComment
 from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate , TaskCommentDto
-from ina_ground_control.services.task_comment_service import (get_task_comment_by_id, create_task_comment_crud,
+from ina_ground_control.services.task_comment_service import (get_task_comment_by_id, create_task_comment_crud, get_task_comment_by_task_id,
                                                               update_task_comment_crud,
                                                               delete_task_comment_crud,get_task_comments)
 
@@ -54,8 +54,16 @@ def read_task_comment(task_comment_id : int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="TaskComment not found")
     return task_comment
 
+@router.get("/taskComments/{task_comment_task_id}", response_model=list[TaskCommentDto])
+def read_task_comments_by_task_id(task_comment_task_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a list of taskComments filtered on their `task_id` value.
+    """
+    task_comments = get_task_comment_by_task_id(db, task_comment_task_id=task_comment_task_id)
+    return task_comments
+
 #add new taskComment
-@router.post("/taskComment/", response_model=TaskCommentCreate)
+@router.post("/taskComment", response_model=TaskCommentCreate)
 def create_task_comment(task_comment: TaskCommentCreate, db: Session = Depends(get_db)):
     """
     Create a new taskComment.
@@ -104,7 +112,7 @@ def delete_task_comment(task_comment_id: int, db: Session = Depends(get_db)):
     return deleted_task_comment
 
 #get list of taskComment
-@router.get("/taskComments/", response_model=list[TaskCommentDto])
+@router.get("/taskComments", response_model=list[TaskCommentDto])
 def read_task_comments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[TaskComment]:
     """Retrieve a list of taskComments with pagination support."""
