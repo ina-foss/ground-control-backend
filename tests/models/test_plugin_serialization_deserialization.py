@@ -74,7 +74,3 @@ def test_plugin_config_base_extra_fields():
     assert config.type == "plugin_autocomplete"
     assert config.data_source == "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json"
     assert not hasattr(config, 'extra_field')  # Must not have extra fields if extra='ignore'
-
-
-
-

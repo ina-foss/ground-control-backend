@@ -1,4 +1,5 @@
 gc-demo-env
+*.iml
 .ipynb_checkpoints
 .mypy_cache
 .vscode
@@ -33,5 +34,8 @@ data/
 .vscode/
 .idea/
 ina_ground_control/.secrets.yaml
+ina_ground_control.egg-info
+htmlcov/
+*.log
 .pypirc
 docs/_build

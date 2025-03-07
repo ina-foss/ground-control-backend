@@ -9,6 +9,7 @@ Functions:
 
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
+
 from ina_ground_control.models.user_model import User
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 

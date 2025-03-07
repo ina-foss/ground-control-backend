@@ -8,11 +8,14 @@ such as url and relationships with other models like Project and Task.
 Classes:
     Media (Base): SqlAlchemy model representing a media record in the database.
 """
-from ina_ground_control.database import Base
-from sqlalchemy import Column, Integer, String, Enum
-from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
+
+from sqlalchemy import Column, Integer, String, Enum
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.orm import relationship
+
+from ina_ground_control.database import Base
+
 
 class MediaType(PyEnum):
     """
@@ -24,6 +27,7 @@ class MediaType(PyEnum):
     """
     MP4 = "mp4"
     HLS = "hls"
+
 
 class Media(Base):
     """
@@ -41,9 +45,8 @@ class Media(Base):
     __tablename__ = "media"
 
     id = Column(Integer, primary_key=True)
-    url = Column(String,nullable=False)
+    url = Column(String, nullable=False)
     type = Column(Enum(MediaType), nullable=False)
-    player_parameters = Column(JSON,nullable=True)
-    details = Column(JSON,nullable=True)
+    player_parameters = Column(JSON, nullable=True)
+    details = Column(JSON, nullable=True)
     tasks = relationship("Task", backref="media", cascade="all")
-

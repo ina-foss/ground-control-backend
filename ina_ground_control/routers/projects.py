@@ -18,13 +18,15 @@ Dependencies:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
-from latios.log import get_logger
+from sqlalchemy.orm import Session
+
+from ina_ground_control import logger
+from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.schemas.project_schemas import (ProjectBaseDto,
@@ -36,9 +38,7 @@ from ina_ground_control.services.project_service import (get_projects,
                                                          get_project_by_id,
                                                          update_project_crud,
                                                          delete_project_crud)
-from ina_ground_control.constants.roles import Permission
 
-logger = get_logger()
 router = APIRouter(tags=["project"])
 NOT_FOUND_STR = "Project not found"
 
@@ -55,8 +55,8 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 def create_project(project: ProjectBaseDto,
                    db: Session = Depends(get_db),
                    _authorization_result: AuthorizationResult = Depends(
-                       CheckPermissions( [Permission.CREATE_PROJECT.value],
-                       match_strategy=MatchStrategy.AND))
+                       CheckPermissions([Permission.CREATE_PROJECT.value],
+                                        match_strategy=MatchStrategy.AND))
                    # pylint: disable=invalid-name
                    ) -> ProjectDetailDto:
     """Create a new project."""
@@ -65,6 +65,7 @@ def create_project(project: ProjectBaseDto,
     except Exception as e:
         logger.error("Failed to create project: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create project") from e
+
 
 @router.get("/project/{project_id}", response_model=ProjectListDto, response_model_by_alias=False)
 def read_project(project_id: int, db: Session = Depends(get_db)) -> Project:
@@ -86,8 +87,9 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return updated_project
 
-@router.delete("/project/{project_id}", status_code=status.HTTP_200_OK,response_model=ProjectWithIdDto)
-def delete_project(project_id: int, db: Session = Depends(get_db),_authorization_result: AuthorizationResult = Depends(
+
+@router.delete("/project/{project_id}", status_code=status.HTTP_200_OK, response_model=ProjectWithIdDto)
+def delete_project(project_id: int, db: Session = Depends(get_db), _authorization_result: AuthorizationResult = Depends(
     CheckPermissions([Permission.DELETE_PROJECT.value],
                      match_strategy=MatchStrategy.AND))
                    # pylint: disable=invalid-name

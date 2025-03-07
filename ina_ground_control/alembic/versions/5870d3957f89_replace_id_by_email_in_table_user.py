@@ -7,9 +7,8 @@ Create Date: 2024-06-13 14:30:41.321485
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '5870d3957f89'
@@ -76,7 +75,7 @@ def downgrade():
 
     # Recreate the id column in user table
     op.add_column('user', sa.Column('id', sa.INTEGER(),
-                  autoincrement=True, nullable=False))
+                                    autoincrement=True, nullable=False))
 
     # Ensure email is nullable again and drop the unique constraint
     op.alter_column('user', 'email',

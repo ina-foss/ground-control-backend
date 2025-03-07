@@ -13,13 +13,14 @@ Classes:
     Task (Base): SqlAlchemy model representing a task record in the database.
 """
 
-from ina_ground_control.database import Base
-from ina_ground_control.models.annotation_task_association import AnnotationTask
 from enum import Enum as PyEnum
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import and_
 
+from ina_ground_control.database import Base
+from ina_ground_control.models.annotation_task_association import AnnotationTask
 
 
 class TaskDataType(PyEnum):
@@ -86,7 +87,6 @@ class Task(Base):
     step_id = Column(Integer, ForeignKey("step.id"))
     media_id = Column(Integer, ForeignKey("media.id"))
 
-
     annotations = relationship(
         "Annotation",
         secondary=AnnotationTask.__table__,
@@ -97,7 +97,7 @@ class Task(Base):
         secondaryjoin="Annotation.id == AnnotationTask.annotation_id",
         backref="task",
         cascade="all, delete-orphan",
-        single_parent= True
+        single_parent=True
     )
 
     task_comments = relationship(

@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 from ina_ground_control.services.user_service import create_user_crud, get_user_by_email_crud
@@ -51,12 +52,13 @@ def test_create_user_crud(db: Session):
     assert created_user.email == test_user['email']
     assert created_user.role == test_user["role"]
 
+
 def test_get_user_by_email(db: Session):
     """
     Retrieve the User object created before and check if it corresponds to the initial data
     """
 
-    retrieved_user = get_user_by_email_crud(db,test_user["email"]) 
-    
+    retrieved_user = get_user_by_email_crud(db, test_user["email"])
+
     assert retrieved_user.email == test_user["email"]
     assert retrieved_user.role == test_user["role"]

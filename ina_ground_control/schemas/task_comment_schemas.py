@@ -2,9 +2,10 @@
 Defines Data Transfer Object (DTO) classes for taskComment-related data structures.
 """
 
-from typing import Optional
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
 
 
 class TaskCommentCreate(BaseModel):
@@ -15,6 +16,7 @@ class TaskCommentCreate(BaseModel):
     task_id: int
     created_by: str
 
+
 class TaskCommentDto(TaskCommentCreate):
     """
     DTO representing a taskComment object, including association with task.
@@ -22,6 +24,7 @@ class TaskCommentDto(TaskCommentCreate):
 
     id: int
     created_at: Optional[datetime]
+
 
 class Config:
     from_attributes = True

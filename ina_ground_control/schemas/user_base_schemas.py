@@ -3,6 +3,7 @@ Defines base Data Transfer Object (DTO) classes for user-related data structures
 """
 
 from __future__ import annotations
+
 from pydantic import BaseModel, EmailStr
 
 

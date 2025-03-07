@@ -9,11 +9,13 @@ Classes:
     User (Base): SqlAlchemy model representing a user record in the database.
 """
 
+from typing import List, Optional
+
+from pydantic import BaseModel
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
+
 from ina_ground_control.database import Base
-from pydantic import BaseModel
-from typing import List, Optional
 
 
 class User(Base):

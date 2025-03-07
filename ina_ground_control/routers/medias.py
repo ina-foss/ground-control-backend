@@ -20,20 +20,22 @@ Configuration:
     `src` module.
 """
 
-from fastapi import status
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi import status
 from sqlalchemy.orm import Session
-from latios.log import get_logger
+
+from ina_ground_control import logger
 from ina_ground_control.database import get_db
 from ina_ground_control.models.media_model import Media
-from ina_ground_control.schemas.media_schemas import MediaDto , MediaCreate
-from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_media_crud,delete_media_crud,get_medias
+from ina_ground_control.schemas.media_schemas import MediaDto, MediaCreate
+from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_media_crud, \
+    delete_media_crud, get_medias
 
-logger = get_logger()
 router = APIRouter(tags=["media"])
 MEDIA_NOT_FOUND_MESSAGE = "Media not found"
 
-#get media by id
+
+# get media by id
 @router.get("/media/{media_id}", response_model=MediaDto)
 def read_media(media_id: int, db: Session = Depends(get_db)):
     """
@@ -53,7 +55,8 @@ def read_media(media_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
     return media
 
-#add new media
+
+# add new media
 @router.post("/media", response_model=MediaDto)
 def create_media(media: MediaCreate, db: Session = Depends(get_db)):
     """
@@ -71,7 +74,8 @@ def create_media(media: MediaCreate, db: Session = Depends(get_db)):
         logger.error("Failed to create media: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create media") from e
 
-#update media by id
+
+# update media by id
 @router.patch("/media/{media_id}", response_model=MediaDto)
 def update_data_media(media_id: int, media: MediaCreate, db: Session = Depends(get_db)):
     """
@@ -92,8 +96,9 @@ s
         raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
     return media
 
-#delete media
-@router.delete("/media/{media_id}", status_code=status.HTTP_200_OK,response_model=MediaCreate)
+
+# delete media
+@router.delete("/media/{media_id}", status_code=status.HTTP_200_OK, response_model=MediaCreate)
 def delete_media(media_id: int, db: Session = Depends(get_db)):
     deleted_media = delete_media_crud(db, media_id)
     if deleted_media is None:
@@ -101,7 +106,8 @@ def delete_media(media_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
     return deleted_media
 
-#get list of media
+
+# get list of media
 @router.get("/medias", response_model=list[MediaDto])
 def read_medias(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Media]:

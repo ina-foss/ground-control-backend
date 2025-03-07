@@ -4,10 +4,10 @@ This module provides CRUD operations for tags.
 It includes functions to retrieve a tag by ID, create a new tag, and update an existing tag.
 """
 
-
 from sqlalchemy.orm import Session
+
 from ina_ground_control.models.tag_model import Tag
-from ina_ground_control.schemas.tag_schemas import TagCreate,TagDto
+from ina_ground_control.schemas.tag_schemas import TagCreate, TagDto
 
 
 def get_tag_by_key(db: Session, tag_key: str):
@@ -22,6 +22,7 @@ def get_tag_by_key(db: Session, tag_key: str):
         Tag: The tag object if found, otherwise None.
     """
     return db.query(Tag).filter(Tag.key == tag_key).first()
+
 
 def create_tag_crud(tag: TagCreate, db: Session):
     """
@@ -39,6 +40,7 @@ def create_tag_crud(tag: TagCreate, db: Session):
     db.commit()
     db.refresh(db_tag)
     return db_tag
+
 
 def update_tag_crud(tag_key: str, tag: TagDto, db: Session):
     """
@@ -60,7 +62,8 @@ def update_tag_crud(tag_key: str, tag: TagDto, db: Session):
         db.refresh(db_tag)
     return db_tag
 
-def delete_tag_crud(db: Session, tag_key:str):
+
+def delete_tag_crud(db: Session, tag_key: str):
     """
     Delete a tag from the database.
 
@@ -76,6 +79,7 @@ def delete_tag_crud(db: Session, tag_key:str):
         db.delete(db_tag)
         db.commit()
     return db_tag
+
 
 def get_tags(db: Session, skip: int = 0, limit: int = 100):
     """

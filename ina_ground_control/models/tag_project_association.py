@@ -4,7 +4,9 @@ between a tag and a project in the database.
 """
 
 from sqlalchemy import Column, Integer, ForeignKey, String
+
 from ina_ground_control.database import Base
+
 
 class TagProject(Base):
     """
