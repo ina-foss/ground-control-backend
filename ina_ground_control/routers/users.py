@@ -3,9 +3,8 @@ This module defines the API endpoints related to user management within the appl
 It includes routes for retrieving user data, utilizing the Keycloak middleware for
 authentication and permission checks.
 """
-from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi import status
 from latios.log import get_logger
 from pydantic import EmailStr
@@ -58,24 +57,10 @@ def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to create user") from e
 
 
-@router.get("/user/roles", response_model=list[Permission])
-def get_all_roles(request: Request):
-    """
-    Map user roles to permissions and return them.
-
-    Args:
-        request (Request): The FastAPI request object containing user information in the scope.
-
-    Returns:
-        list[Permission]: A list of permissions mapped from the user's roles.
-    """
-    user = request.scope.get("user")
-    permissions = [Permission.READ_TASK]  # Default permissions
-    if user:  # Ensure the 'user' object exists and is valid
-        # Log user info (use attributes directly)
-        roles = user.roles or []  # Ensure roles is a list if None
-        logger.info("User roles: %s", roles)
-    return permissions
+@router.get("/user/roles", response_model=Permission)
+def get_all_roles():
+    roles = Permission.CREATE_TASK_COMMENT
+    return roles
 
 
 @router.get("/user/")
