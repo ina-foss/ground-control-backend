@@ -3,11 +3,14 @@ This module defines the API endpoints related to user management within the appl
 It includes routes for retrieving user data, utilizing the Keycloak middleware for
 authentication and permission checks.
 """
+from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import status
+from latios.log import get_logger
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from latios.log import get_logger
+
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
@@ -21,6 +24,7 @@ from ina_ground_control.services.user_service import (
 logger = get_logger()
 router = APIRouter(tags=["user"])
 NOT_FOUND_STR_USER = "User not found"
+
 
 @router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -54,10 +58,31 @@ def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to create user") from e
 
 
-@router.get("/user/roles",response_model=Permission)
-def get_all_roles():
-    roles = Permission.CREATE_TASK_COMMENT
-    return roles
+@router.get("/user/roles", response_model=list[Permission])
+def get_all_roles(request: Request):
+    """
+    Map user roles to permissions and return them.
+
+    Args:
+        request (Request): The FastAPI request object containing user information in the scope.
+
+    Returns:
+        list[Permission]: A list of permissions mapped from the user's roles.
+    """
+    user = request.scope.get("user")
+    permissions = [Permission.READ_TASK]  # Default permissions
+    try:
+        if user:  # Ensure the 'user' object exists and is valid
+            # Log user info (use attributes directly)
+            roles = user.roles or []  # Ensure roles is a list if None
+            logger.info("User roles: %s", roles)
+        return permissions
+    except AttributeError as ae:
+        logger.error("Failed to fetch user roles: %s", ae)
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Invalid user object in request")
+    except Exception as e:
+        logger.error("Failed to fetch user roles: %s", e)
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Failed to fetch user roles")
 
 
 @router.get("/user/")
