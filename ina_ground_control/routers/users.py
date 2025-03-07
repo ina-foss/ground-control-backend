@@ -71,18 +71,11 @@ def get_all_roles(request: Request):
     """
     user = request.scope.get("user")
     permissions = [Permission.READ_TASK]  # Default permissions
-    try:
-        if user:  # Ensure the 'user' object exists and is valid
-            # Log user info (use attributes directly)
-            roles = user.roles or []  # Ensure roles is a list if None
-            logger.info("User roles: %s", roles)
-        return permissions
-    except AttributeError as ae:
-        logger.error("Failed to fetch user roles: %s", ae)
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Invalid user object in request")
-    except Exception as e:
-        logger.error("Failed to fetch user roles: %s", e)
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Failed to fetch user roles")
+    if user:  # Ensure the 'user' object exists and is valid
+        # Log user info (use attributes directly)
+        roles = user.roles or []  # Ensure roles is a list if None
+        logger.info("User roles: %s", roles)
+    return permissions
 
 
 @router.get("/user/")
