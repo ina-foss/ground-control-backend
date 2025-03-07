@@ -7,8 +7,8 @@ Create Date: 2024-12-10 08:33:09.977622
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -23,18 +23,21 @@ def upgrade() -> None:
     sa.Enum('BLOC', 'COMPONENT', name='displayzone').create(op.get_bind())
     sa.Enum('LABEL', 'AUTOCOMPLETE', name='typeplugin').create(op.get_bind())
     op.create_table('plugin',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('data_categories', sa.String(), nullable=True),
-    sa.Column('type', postgresql.ENUM('LABEL', 'AUTOCOMPLETE', name='typeplugin', create_type=False), nullable=True),
-    sa.Column('display_zone', postgresql.ENUM('BLOC', 'COMPONENT', name='displayzone', create_type=False), nullable=True),
-    sa.Column('step_id', sa.Integer(), nullable=True),
-    sa.Column('configData', sa.JSON(), nullable=True),
-    sa.CheckConstraint("name NOT LIKE '%% %%'", name='check_name_no_spaces'),
-    sa.CheckConstraint('name = LOWER(name)', name='check_name_lowercase'),
-    sa.ForeignKeyConstraint(['step_id'], ['step.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
+                    sa.Column('id', sa.Integer(), nullable=False),
+                    sa.Column('name', sa.String(), nullable=True),
+                    sa.Column('data_categories', sa.String(), nullable=True),
+                    sa.Column('type', postgresql.ENUM('LABEL', 'AUTOCOMPLETE', name='typeplugin', create_type=False),
+                              nullable=True),
+                    sa.Column('display_zone',
+                              postgresql.ENUM('BLOC', 'COMPONENT', name='displayzone', create_type=False),
+                              nullable=True),
+                    sa.Column('step_id', sa.Integer(), nullable=True),
+                    sa.Column('configData', sa.JSON(), nullable=True),
+                    sa.CheckConstraint("name NOT LIKE '%% %%'", name='check_name_no_spaces'),
+                    sa.CheckConstraint('name = LOWER(name)', name='check_name_lowercase'),
+                    sa.ForeignKeyConstraint(['step_id'], ['step.id'], ),
+                    sa.PrimaryKeyConstraint('id')
+                    )
     # ### end Alembic commands ###
 
 

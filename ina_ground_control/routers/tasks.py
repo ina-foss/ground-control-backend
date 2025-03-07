@@ -20,27 +20,29 @@ Configuration:
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-from latios.log import get_logger
-from ina_ground_control.database import get_db
-from ina_ground_control.schemas.media_schemas import MediaCreate
-from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
-from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto
-from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, delete_task_crud
-from ina_ground_control.services.media_service import create_media_crud
-from ina_ground_control.services.annotation_service import create_annotation_crud
-from ina_ground_control.constants.roles import Permission
 
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-logger = get_logger()
+from ina_ground_control import logger
+from ina_ground_control.constants.roles import Permission
+from ina_ground_control.database import get_db
+from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
+from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto
+from ina_ground_control.services.annotation_service import create_annotation_crud
+from ina_ground_control.services.media_service import create_media_crud
+from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
+    delete_task_crud
+
 router = APIRouter(tags=["task"])
+
 
 @router.get("/task/{task_id}", response_model=TaskListDto)
 def read_task(task_id: int, db: Session = Depends(get_db)):
@@ -61,6 +63,7 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
+
 @router.post("/task", response_model=TaskWithIdDto)
 def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
     """
@@ -77,6 +80,7 @@ def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error("Failed to create task: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create task") from e
+
 
 @router.post("/step/{step_id}", response_model=TaskWithIdDto)
 def task_inject(
@@ -140,13 +144,14 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-@router.delete("/task/{task_id}",response_model=TaskWithIdDto)
-def delete_task(task_id: int, db:Session = Depends(get_db),
-                  _authorization_result: AuthorizationResult = Depends(
-                       CheckPermissions( [Permission.DELETE_TASK.value],
-                       match_strategy=MatchStrategy.AND))
-                   # pylint: disable=invalid-name
-                   ) -> TaskWithIdDto:
+
+@router.delete("/task/{task_id}", response_model=TaskWithIdDto)
+def delete_task(task_id: int, db: Session = Depends(get_db),
+                _authorization_result: AuthorizationResult = Depends(
+                    CheckPermissions([Permission.DELETE_TASK.value],
+                                     match_strategy=MatchStrategy.AND))
+                # pylint: disable=invalid-name
+                ) -> TaskWithIdDto:
     """
     Delete a task by ID.
 

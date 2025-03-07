@@ -3,6 +3,7 @@ This module sets up the SQLAlchemy engine and session factory for our applicatio
 """
 
 import os
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
@@ -27,10 +28,10 @@ except ValueError:
           f' PG_USERNAME: {PG_USERNAME}, PG_PORT: {PG_PORT}, '
           f'DATABASE_HOSTNAME: {DATABASE_HOSTNAME}')
 
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     """

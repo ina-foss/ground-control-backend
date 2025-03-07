@@ -3,9 +3,12 @@ Defines Data Transfer Object (DTO) classes for project-related data structures.
 """
 
 from __future__ import annotations
-from typing import Optional
+
 from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel
+
 from ina_ground_control.models.project_model import ProjectStatus
 
 

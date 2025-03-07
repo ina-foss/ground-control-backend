@@ -11,13 +11,15 @@ Classes:
     ProjectStatus (PyEnum): Enum representing the different statuses a project can have.
     Project (Base): SqlAlchemy model representing a project record in the database.
 """
+from enum import Enum as PyEnum
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
+
 from ina_ground_control.database import Base
 from ina_ground_control.models.media_projet_association import MediaProject
 from ina_ground_control.models.tag_project_association import TagProject
-from enum import Enum as PyEnum
 
 
 class DistributionMode(PyEnum):
@@ -31,6 +33,7 @@ class DistributionMode(PyEnum):
     """
     STATIC = "static"
     DYNAMIC = "dynamic"
+
 
 class ProjectStatus(PyEnum):
     """

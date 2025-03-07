@@ -4,9 +4,12 @@ between annotations and tasks in the database, and includes an enumeration for
 specifying the direction of the relationship.
 """
 
-from sqlalchemy import Column, Enum, ForeignKey, Integer
 from enum import Enum as PyEnum
+
+from sqlalchemy import Column, Enum, ForeignKey, Integer
+
 from ina_ground_control.database import Base
+
 
 class InOutEnum(PyEnum):
     """
@@ -21,6 +24,7 @@ class InOutEnum(PyEnum):
 
     IN = "in"
     OUT = "out"
+
 
 class AnnotationTask(Base):
     """

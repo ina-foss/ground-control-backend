@@ -15,29 +15,30 @@ Endpoint:
 Dependencies:
 - FastAPI for routing and dependency injection.
 - SQLAlchemy for database session management.
-- Latios for logging.
 
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
-from latios.log import get_logger
-from ina_ground_control.database import get_db
-from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
-from ina_ground_control.models.plugin_model import Plugin
-from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
-from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
-from ina_ground_control.constants.roles import Permission
+from sqlalchemy.orm import Session
 
-logger = get_logger()
+from ina_ground_control import logger
+from ina_ground_control.constants.roles import Permission
+from ina_ground_control.database import get_db
+from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from ina_ground_control.models.plugin_model import Plugin
+from ina_ground_control.schemas.plugin_schemas import PluginCreate, PluginWithIdDto
+from ina_ground_control.services.plugin_service import get_plugins_search, create_plugin_crud, get_plugins_crud, \
+    delete_plugin_crud, get_plugin_by_id
+
 router = APIRouter(tags=["plugin"])
 NOT_FOUND_STR = "Plugin not found"
 
-#search plugins
+
+# search plugins
 @router.get("/plugins/{plugin_id}/search", response_model=list[PluginAutocompleteValueDTO])
 def search_plugins(plugin_id: int, query: str, db: Session = Depends(get_db)):
     """
@@ -61,14 +62,16 @@ def search_plugins(plugin_id: int, query: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="plugins not found")
     return plugins
 
+
 @router.get("/plugins/step/{step_id}/{plugin_type}/display/{zone}", response_model=list[PluginWithIdDto])
-def read_plugins(db: Session = Depends(get_db),step_id=int, plugin_type=str,zone=str) \
-    -> list[Plugin]:
+def read_plugins(db: Session = Depends(get_db), step_id=int, plugin_type=str, zone=str) \
+        -> list[Plugin]:
     """Retrieve a list of plugins with pagination support."""
-    plugins = get_plugins_crud(db, step_id=step_id, plugin_type=plugin_type,zone=zone)
+    plugins = get_plugins_crud(db, step_id=step_id, plugin_type=plugin_type, zone=zone)
     return plugins
 
-#add new plugin
+
+# add new plugin
 @router.post("/plugin", response_model=PluginCreate)
 def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
     """
@@ -86,12 +89,13 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
         logger.error("Failed to create plugin: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create plugin") from e
 
-@router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK,response_model=PluginWithIdDto)
+
+@router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK, response_model=PluginWithIdDto)
 def delete_plugin(plugin_id: int,
                   db: Session = Depends(get_db),
                   _authorization_result: AuthorizationResult = Depends(
-                      CheckPermissions( [Permission.DELETE_PLUGIN.value],
-                                        match_strategy=MatchStrategy.AND))
+                      CheckPermissions([Permission.DELETE_PLUGIN.value],
+                                       match_strategy=MatchStrategy.AND))
                   # pylint: disable=invalid-name
                   ):
     """Delete a plugin by ID."""
@@ -101,12 +105,12 @@ def delete_plugin(plugin_id: int,
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return deleted_plugin
 
+
 @router.get("/plugin/{plugin_id}", response_model=PluginWithIdDto, response_model_by_alias=False)
 def read_plugin(plugin_id: int, db: Session = Depends(get_db)) -> Plugin:
     """Get details of a single plugin by ID."""
-    plugin = get_plugin_by_id(db,plugin_id=plugin_id)
+    plugin = get_plugin_by_id(db, plugin_id=plugin_id)
     if plugin is None:
         logger.error("Failed to retrieve plugin with id: %d", plugin_id)
         raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
     return plugin
-

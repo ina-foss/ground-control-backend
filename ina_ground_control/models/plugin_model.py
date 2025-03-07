@@ -20,9 +20,13 @@ spaces using database-level constraints.
 
 import re
 from enum import Enum as PyEnum
+
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.orm import validates
+
 from ina_ground_control.database import Base
+
+
 class TypePlugin(PyEnum):
     """
       Enum representing the different types available for plugin.
@@ -34,6 +38,7 @@ class TypePlugin(PyEnum):
     LABEL = "label"
     AUTOCOMPLETE = "autocomplete"
 
+
 class DisplayZone(PyEnum):
     """
   Enum representing the different display zone available for plugin.
@@ -44,6 +49,7 @@ class DisplayZone(PyEnum):
     """
     BLOC = "bloc"
     COMPONENT = "component"
+
 
 class Plugin(Base):
     """
@@ -78,7 +84,7 @@ class Plugin(Base):
 
     @validates("configData")
     def validate_config_data(self, value):
-        #Validates that the configData JSON contains 'type' as a string and 'datasource' as a valid URL.
+        # Validates that the configData JSON contains 'type' as a string and 'datasource' as a valid URL.
         if not isinstance(value, dict):
             raise ValueError("configData must be a JSON object (dictionary).")
 

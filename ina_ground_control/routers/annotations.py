@@ -5,10 +5,12 @@ or the error status if something went wrong.
 """
 
 from typing import Dict, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
-from latios.log import get_logger
 
+from ina_ground_control import logger
+from ina_ground_control.constants.roles import Role
 from ina_ground_control.database import get_db
 from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import InOutEnum
@@ -20,13 +22,12 @@ from ina_ground_control.services.annotation_service import (
     udpate_annotation_result_crud,
     finish_annotation_crud
 )
-from ina_ground_control.constants.roles import Role
 
-logger = get_logger()
 router = APIRouter(tags=["annotation"])
 
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
 ANNOTATION_NOT_FOUND_MESSAGE = "Annotation not found"
+
 
 @router.post("/annotation", response_model=AnnotationDto)
 def create_annotation(
@@ -66,7 +67,7 @@ def get_annotations_by_id(
 def get_annotation_by_task_id(
         task_id: int,
         request: Request,
-        user_email: str= Query(None, description="user_email"),
+        user_email: str = Query(None, description="user_email"),
         direction: InOutEnum = Query(None, description="Direction of the annotation ('in' or 'out')"),
         db: Session = Depends(get_db)) -> list[Annotation]:
     """
@@ -76,9 +77,9 @@ def get_annotation_by_task_id(
     """
     user = request.scope.get("user", {})
     email = user.email
-    roles  = user.roles
+    roles = user.roles
 
-    if Role.GC_ADMIN in roles or user_email == "" :
+    if Role.GC_ADMIN in roles or user_email == "":
         annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=user_email)
     else:
         annotations = get_annotations_by_task_id_crud(db, task_id=task_id, direction=direction, user_email=email)
@@ -97,6 +98,7 @@ def update_annotation_result(
         raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
     return annotation
 
+
 @router.patch("/annotation/finish/{id}", response_model=AnnotationDto)
 def finish_annotation(
         annotation_id: int, result: Dict[str, Any], db: Session = Depends(get_db)) -> AnnotationDto:
@@ -108,4 +110,3 @@ def finish_annotation(
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
         raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
     return annotation
-

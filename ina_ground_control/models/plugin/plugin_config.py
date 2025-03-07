@@ -22,6 +22,7 @@ class PluginConfigDTO():
     """
     Represents the Data Transfer Object (DTO) for Plugin Configuration.
     """
+
     @staticmethod
     def build(values):
         type_field = values.get("type")

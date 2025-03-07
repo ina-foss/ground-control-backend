@@ -6,10 +6,10 @@ authentication and permission checks.
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi import status
-from latios.log import get_logger
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
+from ina_ground_control import logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
@@ -20,7 +20,6 @@ from ina_ground_control.services.user_service import (
     get_users,
 )
 
-logger = get_logger()
 router = APIRouter(tags=["user"])
 NOT_FOUND_STR_USER = "User not found"
 

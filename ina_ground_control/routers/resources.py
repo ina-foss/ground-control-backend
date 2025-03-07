@@ -19,17 +19,18 @@ Configuration:
     configured in the `settings` module.
 """
 
-
 import datetime
 import json
+
 import requests
-from latios.log import get_logger
 from fastapi import APIRouter, HTTPException, Query
+
+from ina_ground_control import logger
 from ina_ground_control.config import settings
 from ina_ground_control.utils import segments_to_task
 
-logger = get_logger()
 router = APIRouter(tags=["resources"])
+
 
 @router.get("/transcription")
 def get_transcription(
@@ -39,7 +40,7 @@ def get_transcription(
         channel: str = Query("TF1"),
         start_date: str = Query("2022-1-25 20:0:0"),
         end_date: str = Query("2022-1-25 20:30:0"),
-        ):
+):
     """Get transcriptions from PX"""
 
     base_url = settings.player_expert.base_url
@@ -73,7 +74,7 @@ def get_transcription(
 
     print(video_id)
 
-    if response.status_code!= 200:
+    if response.status_code != 200:
         logger.error("Failed to fetch transcription data for : %d", video_id)
         raise HTTPException(status_code=response.status_code,
                             detail="Failed to fetch transcription data")

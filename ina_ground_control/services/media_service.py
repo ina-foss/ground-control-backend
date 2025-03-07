@@ -4,8 +4,8 @@ This module provides CRUD operations for medias.
 It includes functions to retrieve a media by ID, create a new media, and update an existing media.
 """
 
-
 from sqlalchemy.orm import Session
+
 from ina_ground_control.models.media_model import Media
 from ina_ground_control.schemas.media_schemas import MediaCreate
 
@@ -22,6 +22,7 @@ def get_media_by_id(db: Session, media_id: int):
         Media: The media object if found, otherwise None.
     """
     return db.query(Media).filter(Media.id == media_id).first()
+
 
 def create_media_crud(media: MediaCreate, db: Session):
     """
@@ -40,7 +41,8 @@ def create_media_crud(media: MediaCreate, db: Session):
     db.refresh(db_media)
     return db_media
 
-def update_media_crud(media_id: int,  media: MediaCreate, db: Session):
+
+def update_media_crud(media_id: int, media: MediaCreate, db: Session):
     """
     Update the data of an existing media in the database.
 
@@ -60,6 +62,7 @@ def update_media_crud(media_id: int,  media: MediaCreate, db: Session):
         db.refresh(db_media)
     return db_media
 
+
 def delete_media_crud(db: Session, media_id: int):
     """
     Delete a media from the database.
@@ -76,6 +79,7 @@ def delete_media_crud(db: Session, media_id: int):
         db.delete(db_media)
         db.commit()
     return db_media
+
 
 def get_medias(db: Session, skip: int = 0, limit: int = 100):
     """

@@ -6,7 +6,6 @@ enforcing model validation rules and managing optional data sources. Derived fro
 Pydantic's `BaseModel`, it adds flexibility and robust data handling for plugin setups.
 """
 
-
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
