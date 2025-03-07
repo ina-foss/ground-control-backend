@@ -21,24 +21,25 @@ Configuration:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
-from latios.log import get_logger
+from sqlalchemy.orm import Session
+
+from ina_ground_control import logger
+from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.models.step_model import Step
-from ina_ground_control.schemas.step_schemas import StepDto , StepCreate
+from ina_ground_control.schemas.step_schemas import StepDto, StepCreate
 from ina_ground_control.services.step_service import (get_step_by_id, create_step_crud,
-                                                      update_data_step_crud,delete_step_crud,get_steps)
-from ina_ground_control.constants.roles import Permission
+                                                      update_data_step_crud, delete_step_crud, get_steps)
 
-logger = get_logger()
 router = APIRouter(tags=["step"])
 
-#get step by id
+
+# get step by id
 @router.get("/step/{step_id}", response_model=StepDto)
 def read_step(step_id: int, db: Session = Depends(get_db)):
     """
@@ -58,7 +59,8 @@ def read_step(step_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Step not found")
     return step
 
-#add new step
+
+# add new step
 @router.post("/step", response_model=StepCreate)
 def create_step(step: StepCreate, db: Session = Depends(get_db)):
     """
@@ -76,7 +78,8 @@ def create_step(step: StepCreate, db: Session = Depends(get_db)):
         logger.error("Failed to create step: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create step") from e
 
-#update step by id
+
+# update step by id
 @router.patch("/step/{step_id}", response_model=StepDto)
 def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_db)):
     """
@@ -97,8 +100,9 @@ def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="step not found")
     return updated_step
 
-#delete step
-@router.delete("/step/{step_id}", status_code=status.HTTP_200_OK,response_model=StepCreate)
+
+# delete step
+@router.delete("/step/{step_id}", status_code=status.HTTP_200_OK, response_model=StepCreate)
 def delete_step(step_id: int, db: Session = Depends(get_db),
                 _authorization_result: AuthorizationResult = Depends(CheckPermissions(
                     [Permission.DELETE_STEP.value],
@@ -112,11 +116,10 @@ def delete_step(step_id: int, db: Session = Depends(get_db),
     return deleted_step
 
 
-#get list of step
+# get list of step
 @router.get("/steps", response_model=list[StepDto])
 def read_steps(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Step]:
     """Retrieve a list of steps with pagination support."""
     steps = get_steps(db, skip=skip, limit=limit)
     return steps
-

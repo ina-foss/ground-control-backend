@@ -2,9 +2,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
-from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, delete_task_crud
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
+from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
+    delete_task_crud
+
 
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing
@@ -34,19 +37,16 @@ def db_session(db_engine):
 task_data = {
     "name": "Test Task",
     "instruction": "Test instruction",
-    "data": {"key":"value"},
-    "data_type" : "ldd",
-    "status" : "draft",
-    "lead_time" : 1,
-    "step_id" : 1,
-    "media_id" : 1,
+    "data": {"key": "value"},
+    "data_type": "ldd",
+    "status": "draft",
+    "lead_time": 1,
+    "step_id": 1,
+    "media_id": 1,
 }
 
 
-
-
 def test_get_task_by_id(db_session: Session):
-
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
     retrieved_task = get_task_by_id(db_session, created_task.id)
@@ -63,9 +63,7 @@ def test_get_task_by_id(db_session: Session):
     assert retrieved_task.media_id == task_data["media_id"]
 
 
-
 def test_create_task_crud(db_session: Session):
-
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
     assert created_task is not None
@@ -79,11 +77,11 @@ def test_create_task_crud(db_session: Session):
     assert created_task.step_id == task_data["step_id"]
     assert created_task.media_id == task_data["media_id"]
 
-def test_update_data_task_crud(db_session: Session):
 
+def test_update_data_task_crud(db_session: Session):
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
-    updated_data ={"key":"value updated"}
+    updated_data = {"key": "value updated"}
 
     update_data_task_crud(
         created_task.id, updated_data, db_session)
@@ -93,8 +91,8 @@ def test_update_data_task_crud(db_session: Session):
     assert retrieved_updated_task is not None
     assert retrieved_updated_task.data == updated_data
 
-def test_delete_task_crud(db_session: Session):
 
+def test_delete_task_crud(db_session: Session):
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
     deleted_task = delete_task_crud(db_session, created_task)

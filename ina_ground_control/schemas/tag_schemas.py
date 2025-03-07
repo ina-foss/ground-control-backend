@@ -13,14 +13,13 @@ class TagCreate(BaseModel):
     value: str
 
 
-
 class TagDto(TagCreate):
     """
     DTO representing a tag object, including association with projectls.
     """
 
+    project_id: int
 
-    project_id : int
     class Config:
         from_attributes = True
         """

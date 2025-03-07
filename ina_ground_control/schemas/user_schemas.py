@@ -3,13 +3,15 @@ Defines Data Transfer Object (DTO) classes for user-related data structures.
 """
 
 from __future__ import annotations
-from typing import Optional
-from datetime import datetime
 
-from .user_base_schemas import UserBaseDto
+from datetime import datetime
+from typing import Optional
+
+from .annotation_schemas import AnnotationCreate
 from .project_schemas import ProjectDetailDto
 from .task_schemas import TaskListDto
-from .annotation_schemas import AnnotationCreate
+from .user_base_schemas import UserBaseDto
+
 
 class UserDto(UserBaseDto):
     """

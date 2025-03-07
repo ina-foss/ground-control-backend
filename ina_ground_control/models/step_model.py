@@ -13,11 +13,13 @@ Classes:
     Step (Base): SqlAlchemy model representing a step record in the database.
 """
 
+from enum import Enum as PyEnum
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
+
 from ina_ground_control.database import Base
-from enum import Enum as PyEnum
 
 
 class AnnotationType(PyEnum):
@@ -32,6 +34,7 @@ class AnnotationType(PyEnum):
     TRANSCRIPTION = "transcription"
     SPAN = "span"
 
+
 class StepStatus(PyEnum):
     """
     Enum representing the different status of a step.
@@ -45,7 +48,6 @@ class StepStatus(PyEnum):
     DRAFT = "draft"
     PENDING = "pending"
     ENDED = "ended"
-
 
 
 class Step(Base):
@@ -71,7 +73,7 @@ class Step(Base):
     title = Column(String, nullable=False)
     description = Column(String)
     annotation_type = Column(Enum(AnnotationType), nullable=False)
-    status = Column(Enum(StepStatus),nullable=False)
+    status = Column(Enum(StepStatus), nullable=False)
     order = Column(Integer)
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())
@@ -79,7 +81,3 @@ class Step(Base):
     project_id = Column(Integer, ForeignKey("project.id"))
     tasks = relationship("Task", backref="step", cascade="all, delete-orphan")
     plugins = relationship("Plugin", backref="step", cascade="all, delete-orphan")
-
-
-
-

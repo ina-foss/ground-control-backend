@@ -1,0 +1,15 @@
+meta {
+  name: get plugin autocomplete plugins search
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{GC_BACKEND_BASE_URL}}/plugins/step/2/AUTOCOMPLETE/display/BLOC
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}

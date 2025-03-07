@@ -4,8 +4,8 @@ This module provides CRUD operations for taskComments.
 It includes functions to retrieve a taskComment by ID, create a new taskComment, and update an existing taskComment.
 """
 
-
 from sqlalchemy.orm import Session
+
 from ina_ground_control.models.task_comment_model import TaskComment
 from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate, TaskCommentDto
 
@@ -22,6 +22,7 @@ def get_task_comment_by_id(db: Session, task_comment_id: int):
         TaskComment: The taskComment object if found, otherwise None.
     """
     return db.query(TaskComment).filter(TaskComment.id == task_comment_id).first()
+
 
 def get_task_comment_by_task_id(db: Session, task_comment_task_id: int):
     """
@@ -55,7 +56,7 @@ def create_task_comment_crud(task_comment: TaskCommentCreate, db: Session):
     return db_task_comment
 
 
-def update_task_comment_crud(task_comment_id:int, task_comment: TaskCommentDto, db: Session):
+def update_task_comment_crud(task_comment_id: int, task_comment: TaskCommentDto, db: Session):
     """
     Update the data of an existing taskComment in the database.
 
@@ -76,7 +77,7 @@ def update_task_comment_crud(task_comment_id:int, task_comment: TaskCommentDto, 
     return db_task_comment
 
 
-def delete_task_comment_crud(db: Session, task_comment_id:int):
+def delete_task_comment_crud(db: Session, task_comment_id: int):
     """
     Delete a taskComment from the database.
 

@@ -4,6 +4,7 @@ Utility functions for converting segment data into task formats.
 
 import json
 
+
 def convert(segments):
     """
     Convert segment data into a JSON-formatted task structure.

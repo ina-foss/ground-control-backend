@@ -10,8 +10,10 @@ Functions:
 """
 
 from typing import Any, Dict
+
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
+
 from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
 from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
@@ -30,7 +32,7 @@ def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     """
     # Take all the attributes of AnnotationCreate schemas
     # to create a sqlalchemy model
-    anno_db= Annotation(**data.annotation.model_dump())
+    anno_db = Annotation(**data.annotation.model_dump())
     db.add(anno_db)
     db.flush()
     association_data = data.association.model_dump()
@@ -56,8 +58,7 @@ def get_annotations_by_id_crud(db: Session, annotation_id: int):
     return db.query(Annotation).filter(Annotation.id == annotation_id).first()
 
 
-
-def get_annotations_by_task_id_crud(db: Session, task_id: int,user_email:str, direction: InOutEnum):
+def get_annotations_by_task_id_crud(db: Session, task_id: int, user_email: str, direction: InOutEnum):
     """
     Return all the annotation objects whose attribute "task_id" matches the argument.
 
@@ -77,10 +78,10 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int,user_email:str, di
         ).all()
     else:
         return db.query(Annotation).join(AnnotationTask).filter(
-        Annotation.id == AnnotationTask.annotation_id,
-        AnnotationTask.task_id == task_id,
-        AnnotationTask.direction == direction
-    ).all()
+            Annotation.id == AnnotationTask.annotation_id,
+            AnnotationTask.task_id == task_id,
+            AnnotationTask.direction == direction
+        ).all()
 
 
 def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
@@ -102,14 +103,14 @@ def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotatio
         db.refresh(db_annotation)
     return db_annotation
 
-def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
 
+def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     if db_annotation is not None:
         db_annotation.result = result
         db_annotation.annotation_status = AnnotationStatus.ENDED
-        db_annotation.validated_at =func.now()
-        db_annotation.updated_at =func.now()
+        db_annotation.validated_at = func.now()
+        db_annotation.updated_at = func.now()
         db.commit()
         db.refresh(db_annotation)
     return db_annotation
