@@ -2,10 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
 from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
+from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud, create_annotation_crud
-from ina_ground_control.schemas.annotation_schemas import AnnotationCreate, AnnotationFullCreate
 
 
 @pytest.fixture(scope="session")
@@ -33,7 +34,6 @@ def db_session(db_engine):
     session.close()
     transaction.rollback()
     connection.close()
-
 
 
 annotation_data = {
@@ -109,8 +109,8 @@ def test_get_annotations_by_task_id_crud(db_session: Session):
     db_session.commit()
     db_session.flush()
 
-    retrieved_annotations_in = get_annotations_by_task_id_crud(db_session, 1,"user.email@ina.fr", InOutEnum.IN)
-    retrieved_annotations_out = get_annotations_by_task_id_crud(db_session, 2,"user2.email@ina.fr", InOutEnum.OUT)
+    retrieved_annotations_in = get_annotations_by_task_id_crud(db_session, 1, "user.email@ina.fr", InOutEnum.IN)
+    retrieved_annotations_out = get_annotations_by_task_id_crud(db_session, 2, "user2.email@ina.fr", InOutEnum.OUT)
 
     assert retrieved_annotations_in is not None
     assert len(retrieved_annotations_in) == 1

@@ -7,8 +7,8 @@ Create Date: 2024-07-29 13:38:35.692632
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -23,14 +23,17 @@ def upgrade() -> None:
     sa.Enum('IN', 'OUT', name='inoutenum').create(op.get_bind())
     sa.Enum('STATIC', 'DYNAMIC', name='distributionmode').create(op.get_bind())
     op.create_table('annotation_task',
-    sa.Column('annotation_id', sa.Integer(), nullable=False),
-    sa.Column('task_id', sa.Integer(), nullable=False),
-    sa.Column('direction', postgresql.ENUM('IN', 'OUT', name='inoutenum', create_type=False), nullable=False),
-    sa.ForeignKeyConstraint(['annotation_id'], ['annotation.id'], ondelete="CASCADE" ),
-    sa.ForeignKeyConstraint(['task_id'], ['task.id'], ondelete="CASCADE" ),
-    sa.PrimaryKeyConstraint('annotation_id', 'task_id')
-    )
-    op.add_column('project', sa.Column('distribution_mode', postgresql.ENUM('STATIC', 'DYNAMIC', name='distributionmode', create_type=False), nullable=True))
+                    sa.Column('annotation_id', sa.Integer(), nullable=False),
+                    sa.Column('task_id', sa.Integer(), nullable=False),
+                    sa.Column('direction', postgresql.ENUM('IN', 'OUT', name='inoutenum', create_type=False),
+                              nullable=False),
+                    sa.ForeignKeyConstraint(['annotation_id'], ['annotation.id'], ondelete="CASCADE"),
+                    sa.ForeignKeyConstraint(['task_id'], ['task.id'], ondelete="CASCADE"),
+                    sa.PrimaryKeyConstraint('annotation_id', 'task_id')
+                    )
+    op.add_column('project', sa.Column('distribution_mode',
+                                       postgresql.ENUM('STATIC', 'DYNAMIC', name='distributionmode', create_type=False),
+                                       nullable=True))
     op.add_column('step', sa.Column('order', sa.Integer(), nullable=True))
     op.drop_column('task', 'data')
     # ### end Alembic commands ###

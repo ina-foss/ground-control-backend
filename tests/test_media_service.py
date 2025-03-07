@@ -2,9 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
-from ina_ground_control.services.media_service import create_media_crud,get_media_by_id,update_media_crud,delete_media_crud,get_medias
 from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.services.media_service import create_media_crud, get_media_by_id, update_media_crud, \
+    delete_media_crud, get_medias
 
 
 @pytest.fixture(scope="session")
@@ -17,6 +19,7 @@ def db_engine():
     yield engine
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
+
 
 @pytest.fixture(scope="session")
 def db_session(db_engine):
@@ -57,6 +60,7 @@ def test_get_medias(db_session: Session):
     assert retrieved_medias[1].url == media_data_2["url"]
     assert retrieved_medias[1].type.value == media_data_2["type"]
 
+
 def test_create_media_crud(db_session: Session):
     """
         Testing media creation service
@@ -65,7 +69,7 @@ def test_create_media_crud(db_session: Session):
         "url": "url test",
         "type": "mp4"
     }
-    created_media = create_media_crud(MediaCreate(**media_data),db_session)
+    created_media = create_media_crud(MediaCreate(**media_data), db_session)
     assert created_media is not None
     assert created_media.id is not None
     assert created_media.url == media_data["url"]
@@ -86,10 +90,11 @@ def test_get_media_by_id(db_session: Session):
     assert retrieved_media.url == media_data["url"]
     assert retrieved_media.type.value == media_data["type"]
 
-def test_get_media_by_inexistant_id(db_session: Session):
 
+def test_get_media_by_inexistant_id(db_session: Session):
     inexistant_media = get_media_by_id(db_session, 999)
     assert inexistant_media is None
+
 
 def test_update_media_crud(db_session: Session):
     media_data = {
@@ -122,4 +127,3 @@ def test_delete_media_crud(db_session: Session):
 
     assert created_media is not None
     assert retrieved_media is None
-

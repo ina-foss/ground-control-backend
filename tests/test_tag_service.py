@@ -2,9 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
-from ina_ground_control.services.tag_service import get_tag_by_key, create_tag_crud, update_tag_crud,delete_tag_crud,get_tags
 from ina_ground_control.schemas.tag_schemas import TagCreate
+from ina_ground_control.services.tag_service import get_tag_by_key, create_tag_crud, update_tag_crud, delete_tag_crud, \
+    get_tags
 
 
 @pytest.fixture(scope="session")
@@ -58,6 +60,7 @@ def test_get_tags(db_session: Session):
     assert retrieved_tags[1].key == tag_data_2["key"]
     assert retrieved_tags[1].value == tag_data_2["value"]
 
+
 def test_get_tag_by_key(db_session: Session):
     tag_data = {
         "key": "124",
@@ -72,6 +75,8 @@ def test_get_tag_by_key(db_session: Session):
     assert retrieved_tag.key == created_tag.key
     assert retrieved_tag.key == tag_data["key"]
     assert retrieved_tag.value == tag_data["value"]
+
+
 def test_create_tag_crud(db_session: Session):
     """
         Testing tag creation service
@@ -89,12 +94,13 @@ def test_create_tag_crud(db_session: Session):
         assert created_tag.key == tag_data["key"]
         assert created_tag.value == tag_data["value"]
     else:
-        tag_data["key"]="125"
+        tag_data["key"] = "125"
         created_tag = create_tag_crud(TagCreate(**tag_data), db_session)
         assert created_tag is not None
         assert created_tag.key is not None
         assert created_tag.key == tag_data["key"]
         assert created_tag.value == tag_data["value"]
+
 
 def test_update_data_tag_crud(db_session: Session):
     tag_data = {
@@ -106,14 +112,15 @@ def test_update_data_tag_crud(db_session: Session):
     updated_tag_data = {
         "key": "12",
         "value": "tag value",
-        "project_id":1,
+        "project_id": 1,
     }
-    update_tag_crud(created_tag.key,TagCreate(**updated_tag_data), db_session)
+    update_tag_crud(created_tag.key, TagCreate(**updated_tag_data), db_session)
     retrieved_updated_tag = get_tag_by_key(db_session, created_tag.key)
 
     assert retrieved_updated_tag is not None
     assert retrieved_updated_tag.key == updated_tag_data["key"]
     assert retrieved_updated_tag.value == updated_tag_data["value"]
+
 
 def test_delete_tag_crud(db_session: Session):
     tag_data = {
@@ -127,4 +134,3 @@ def test_delete_tag_crud(db_session: Session):
 
     assert created_tag is not None
     assert retrieved_tag is None
-

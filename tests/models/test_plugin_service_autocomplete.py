@@ -1,11 +1,12 @@
+import json
 import unittest
 from unittest.mock import Mock, patch
+
 from requests.models import Response
-from requests.exceptions import RequestException
-from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
-from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
-import json
+from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
 
 """{"type": "plugin_autocomplete",
  "data_source": '"https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json"',
@@ -17,6 +18,8 @@ import json
  "response_ext_id_key": "ext_id",
  "response_label_key": "label",
  }"""
+
+
 class TestPluginServiceAutoComplete(unittest.TestCase):
 
     def setUp(self):
@@ -25,15 +28,15 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             search_attr="query",
             data_type="json",
             type="plugin_autocomplete",
-            response_id_key= "$.conceptSet[*].qcode",
-            response_ext_id_key= "$.conceptSet[*].uri",
-            response_label_key= "$.conceptSet[*].prefLabel.fr",
+            response_id_key="$.conceptSet[*].qcode",
+            response_ext_id_key="$.conceptSet[*].uri",
+            response_label_key="$.conceptSet[*].prefLabel.fr",
         )
         self.service = PluginServiceAutoComplete(config=self.config)
 
     @patch("ina_ground_control.services.plugins.plugin_service_autocomplete.requests.get")
     def test_search_valid_response(self, mock_get):
-        #Test the `search` method with a valid HTTP response.
+        # Test the `search` method with a valid HTTP response.
         # Mock response
         mock_response = Mock(spec=Response)
         mock_response.status_code = 200
@@ -132,8 +135,10 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
 
         # Expected result
         expected_result = [
-            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000", label="Arts, culture, divertissement et médias"),
-            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/02000000", label="Criminalité, droit et justice")
+            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000",
+                                       label="Arts, culture, divertissement et médias"),
+            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/02000000",
+                                       label="Criminalité, droit et justice")
         ]
 
         result = self.service.search("test-query")
@@ -151,15 +156,15 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_parse_valid_json_with_id(self):
-        #Test the `parse` method with a valid JSON response.
+        # Test the `parse` method with a valid JSON response.
         self.config = PluginConfigAutoComplete(
             data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
             search_attr="query",
             data_type="json",
             type="plugin_autocomplete",
-            response_id_key= "$[*].id",
-            response_ext_id_key= "$[*].code",
-            response_label_key= "$[*].label"
+            response_id_key="$[*].id",
+            response_ext_id_key="$[*].code",
+            response_label_key="$[*].label"
         )
         self.service = PluginServiceAutoComplete(config=self.config)
 
@@ -179,7 +184,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_parse_valid_json(self):
-        #Test the `parse` method with a valid JSON response.
+        # Test the `parse` method with a valid JSON response.
         mock_response = Mock()
         mock_response.content = json.dumps({
             "@context": "https://www.iptc.org/std/IKOS/IKOS.jsonld",
@@ -273,8 +278,10 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             ]}).encode("utf-8")
         # Expected result
         expected_result = [
-            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000", label="Arts, culture, divertissement et médias"),
-            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/02000000", label="Criminalité, droit et justice")
+            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000",
+                                       label="Arts, culture, divertissement et médias"),
+            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/02000000",
+                                       label="Criminalité, droit et justice")
         ]
 
         result = self.service.parse(mock_response)
@@ -296,6 +303,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.service.parse(mock_response)
+
 
 if __name__ == "__main__":
     unittest.main()

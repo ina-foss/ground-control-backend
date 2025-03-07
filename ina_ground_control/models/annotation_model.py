@@ -12,10 +12,13 @@ Classes:
     Annotation (Base): SqlAlchemy model representing an annotation record in the database.
 """
 
+from enum import Enum as PyEnum
+
 from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Enum
 from sqlalchemy.sql.expression import func
+
 from ina_ground_control.database import Base
-from enum import Enum as PyEnum
+
 
 class AnnotationStatus(PyEnum):
     """
@@ -29,6 +32,7 @@ class AnnotationStatus(PyEnum):
     DRAFT = "draft"
     PENDING = "pending"
     ENDED = "ended"
+
 
 class Annotation(Base):
     """
@@ -57,4 +61,3 @@ class Annotation(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)
     validated_at = Column(DateTime)
-

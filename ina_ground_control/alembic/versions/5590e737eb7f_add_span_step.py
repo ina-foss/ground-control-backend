@@ -7,8 +7,8 @@ Create Date: 2024-10-07 14:29:18.726342
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from alembic_postgresql_enum import TableReference
 
 # revision identifiers, used by Alembic.
@@ -25,7 +25,8 @@ def upgrade() -> None:
     op.drop_constraint('annotation_task_annotation_id_fkey', 'annotation_task', type_='foreignkey')
     op.drop_constraint('annotation_task_task_id_fkey', 'annotation_task', type_='foreignkey')
     op.create_foreign_key(None, 'annotation_task', 'task', ['task_id'], ['id'], onupdate='CASCADE', ondelete='CASCADE')
-    op.create_foreign_key(None, 'annotation_task', 'annotation', ['annotation_id'], ['id'], onupdate='CASCADE', ondelete='CASCADE')
+    op.create_foreign_key(None, 'annotation_task', 'annotation', ['annotation_id'], ['id'], onupdate='CASCADE',
+                          ondelete='CASCADE')
     op.sync_enum_values('public', 'annotationtype', ['SEGMENTATION', 'TRANSCRIPTION', 'SPAN'],
                         [TableReference(table_schema='public', table_name='step', column_name='annotation_type')],
                         enum_values_to_rename=[])
@@ -39,8 +40,10 @@ def downgrade() -> None:
                         enum_values_to_rename=[])
     op.drop_constraint(None, 'annotation_task', type_='foreignkey')
     op.drop_constraint(None, 'annotation_task', type_='foreignkey')
-    op.create_foreign_key('annotation_task_task_id_fkey', 'annotation_task', 'task', ['task_id'], ['id'], ondelete='CASCADE')
-    op.create_foreign_key('annotation_task_annotation_id_fkey', 'annotation_task', 'annotation', ['annotation_id'], ['id'], ondelete='CASCADE')
+    op.create_foreign_key('annotation_task_task_id_fkey', 'annotation_task', 'task', ['task_id'], ['id'],
+                          ondelete='CASCADE')
+    op.create_foreign_key('annotation_task_annotation_id_fkey', 'annotation_task', 'annotation', ['annotation_id'],
+                          ['id'], ondelete='CASCADE')
     op.add_column('annotation', sa.Column('task_id', sa.INTEGER(), autoincrement=False, nullable=True))
     op.create_foreign_key('annotation_task_id_fkey', 'annotation', 'task', ['task_id'], ['id'])
     # ### end Alembic commands ###

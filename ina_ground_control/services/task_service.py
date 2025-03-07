@@ -5,7 +5,9 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 """
 
 from typing import Any, Dict
+
 from sqlalchemy.orm import Session
+
 from ina_ground_control.models.task_model import Task
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
 
@@ -61,7 +63,8 @@ def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
         db.refresh(db_task)
     return db_task
 
-def delete_task_crud(db: Session, task:Task):
+
+def delete_task_crud(db: Session, task: Task):
     """
     Delete a task from the database
 

@@ -2,10 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
-from ina_ground_control.services.project_service import create_project_crud, get_projects, get_project_by_id, update_project_crud, delete_project_crud
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
-from ina_ground_control.models.project_model import ProjectStatus
+from ina_ground_control.services.project_service import create_project_crud, get_projects, get_project_by_id, \
+    update_project_crud, delete_project_crud
 
 
 @pytest.fixture(scope="session")

@@ -4,12 +4,12 @@ This module provides CRUD operations for plugins.
 It includes functions to retrieve a plugins by ID_step and name.
 """
 
-
 from sqlalchemy.orm import Session
-from ina_ground_control.models.plugin_model import Plugin
-from ina_ground_control.schemas.plugin_schemas import PluginCreate
+
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO
+from ina_ground_control.models.plugin_model import Plugin
+from ina_ground_control.schemas.plugin_schemas import PluginCreate
 from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
 
 
@@ -40,10 +40,10 @@ def create_plugin_crud(plugin: PluginCreate, db: Session):
     db.refresh(db_plugin)
     return db_plugin
 
-def get_plugins_crud(db: Session, step_id:int, plugin_type:str,zone:str):
 
-    return db.query(Plugin).filter(Plugin.step_id == step_id,Plugin.type == plugin_type,
-                                    Plugin.display_zone == zone).all()
+def get_plugins_crud(db: Session, step_id: int, plugin_type: str, zone: str):
+    return db.query(Plugin).filter(Plugin.step_id == step_id, Plugin.type == plugin_type,
+                                   Plugin.display_zone == zone).all()
 
 
 def get_plugin_by_id(db: Session, plugin_id: int):
@@ -58,6 +58,8 @@ def get_plugin_by_id(db: Session, plugin_id: int):
     Plugin: The Plugin object if found, otherwise None.
     """
     return db.query(Plugin).filter(Plugin.id == plugin_id).first()
+
+
 def delete_plugin_crud(db: Session, plugin_id: int):
     """
     Delete a plugin from the database.

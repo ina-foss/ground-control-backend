@@ -2,9 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+
 from ina_ground_control.database import Base
-from ina_ground_control.services.step_service import create_step_crud,get_step_by_id,update_data_step_crud,delete_step_crud,get_steps
 from ina_ground_control.schemas.step_schemas import StepCreate
+from ina_ground_control.services.step_service import create_step_crud, get_step_by_id, update_data_step_crud, \
+    delete_step_crud, get_steps
 
 
 @pytest.fixture(scope="session")
@@ -71,19 +73,22 @@ def test_get_steps(db_session: Session):
     assert retrieved_steps[1].status.value == step_data_2["status"]
     assert retrieved_steps[1].project_id == step_data_2["project_id"]
 
+
 step_data = {
-        "title": "step 1",
-        "description": "la premiere step",
-        "annotation_type": "segmentation",
-        "status": "draft",
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "project_id": 1,
-    }
+    "title": "step 1",
+    "description": "la premiere step",
+    "annotation_type": "segmentation",
+    "status": "draft",
+    "pinned_at": "2022-12-27 08:26:49.219717",
+    "project_id": 1,
+}
+
+
 def test_create_step_crud(db_session: Session):
     """
         Testing step creation service
     """
-    created_step = create_step_crud(StepCreate(**step_data),db_session)
+    created_step = create_step_crud(StepCreate(**step_data), db_session)
     assert created_step is not None
     assert created_step.id is not None
     assert created_step.title == step_data["title"]
@@ -94,7 +99,6 @@ def test_create_step_crud(db_session: Session):
 
 
 def test_get_step_by_id(db_session: Session):
-
     created_step = create_step_crud(StepCreate(**step_data), db_session)
     retrieved_step = get_step_by_id(db_session, created_step.id)
     assert retrieved_step is not None
@@ -105,10 +109,11 @@ def test_get_step_by_id(db_session: Session):
     assert retrieved_step.status.value == step_data["status"]
     assert retrieved_step.project_id == step_data["project_id"]
 
-def test_get_step_by_inexistant_id(db_session: Session):
 
+def test_get_step_by_inexistant_id(db_session: Session):
     inexistant_step = get_step_by_id(db_session, 999)
     assert inexistant_step is None
+
 
 def test_update_step_crud(db_session: Session):
     """
@@ -124,7 +129,7 @@ def test_update_step_crud(db_session: Session):
         "pinned_at": "2022-12-27 08:26:49.219717",
         "project_id": 2,
     }
-    update_data_step_crud(created_step.id,StepCreate(**updated_step_data),db_session)
+    update_data_step_crud(created_step.id, StepCreate(**updated_step_data), db_session)
     retrieved_updated_step = get_step_by_id(db_session, created_step.id)
 
     assert retrieved_updated_step is not None
@@ -137,7 +142,6 @@ def test_update_step_crud(db_session: Session):
 
 
 def test_delete_media_crud(db_session: Session):
-
     created_step = create_step_crud(StepCreate(**step_data), db_session)
     delete_step_crud(db_session, created_step.id)
 
@@ -145,4 +149,3 @@ def test_delete_media_crud(db_session: Session):
 
     assert created_step is not None
     assert retrieved_step is None
-

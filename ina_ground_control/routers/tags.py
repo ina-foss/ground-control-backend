@@ -20,19 +20,21 @@ Configuration:
     `src` module.
 """
 
-from fastapi import status
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi import status
 from sqlalchemy.orm import Session
-from latios.log import get_logger
+
+from ina_ground_control import logger
 from ina_ground_control.database import get_db
 from ina_ground_control.models.tag_model import Tag
-from ina_ground_control.schemas.tag_schemas import TagDto , TagCreate
-from ina_ground_control.services.tag_service import get_tag_by_key, create_tag_crud, update_tag_crud,delete_tag_crud,get_tags
+from ina_ground_control.schemas.tag_schemas import TagDto, TagCreate
+from ina_ground_control.services.tag_service import get_tag_by_key, create_tag_crud, update_tag_crud, delete_tag_crud, \
+    get_tags
 
-logger = get_logger()
 router = APIRouter(tags=["tag"])
 
-#get tag by key
+
+# get tag by key
 @router.get("/tag/{tag_key}", response_model=TagDto)
 def read_tag(tag_key: str, db: Session = Depends(get_db)):
     """
@@ -52,7 +54,8 @@ def read_tag(tag_key: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Tag not found")
     return tag
 
-#add new tag
+
+# add new tag
 @router.post("/tag", response_model=TagCreate)
 def create_tag(tag: TagCreate, db: Session = Depends(get_db)):
     """
@@ -73,7 +76,7 @@ def create_tag(tag: TagCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Failed to create tag") from e
 
 
-#update tag by key
+# update tag by key
 @router.patch("/tag/{tag_key}", response_model=TagDto)
 def update_tag(tag_key: str, tag: TagDto, db: Session = Depends(get_db)):
     """
@@ -94,8 +97,9 @@ def update_tag(tag_key: str, tag: TagDto, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="tag not found")
     return updated_tag
 
-#delete tag
-@router.delete("/tag/{tag_key}", status_code=status.HTTP_200_OK,response_model=TagCreate)
+
+# delete tag
+@router.delete("/tag/{tag_key}", status_code=status.HTTP_200_OK, response_model=TagCreate)
 def delete_tag(tag_key: str, db: Session = Depends(get_db)):
     deleted_tag = delete_tag_crud(db, tag_key)
     if deleted_tag is None:
@@ -103,7 +107,8 @@ def delete_tag(tag_key: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Tag not found")
     return deleted_tag
 
-#get list of tag
+
+# get list of tag
 @router.get("/tags", response_model=list[TagDto])
 def read_tags(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
         -> list[Tag]:

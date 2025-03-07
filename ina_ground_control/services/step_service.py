@@ -4,8 +4,8 @@ This module provides CRUD operations for steps.
 It includes functions to retrieve a step by ID, create a new step, and update an existing step.
 """
 
-
 from sqlalchemy.orm import Session
+
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepCreate
 
@@ -22,6 +22,7 @@ def get_step_by_id(db: Session, step_id: int):
         Step: The step object if found, otherwise None.
     """
     return db.query(Step).filter(Step.id == step_id).first()
+
 
 def create_step_crud(step: StepCreate, db: Session):
     """
@@ -40,7 +41,8 @@ def create_step_crud(step: StepCreate, db: Session):
     db.refresh(db_step)
     return db_step
 
-def update_data_step_crud(step_id: int, step: StepCreate, db: Session ):
+
+def update_data_step_crud(step_id: int, step: StepCreate, db: Session):
     """
     Update the data of an existing step in the database.
 
@@ -60,6 +62,7 @@ def update_data_step_crud(step_id: int, step: StepCreate, db: Session ):
         db.refresh(db_step)
     return db_step
 
+
 def delete_step_crud(db: Session, step_id: int):
     """
     Delete a step from the database.
@@ -76,6 +79,7 @@ def delete_step_crud(db: Session, step_id: int):
         db.delete(db_step)
         db.commit()
     return db_step
+
 
 def get_steps(db: Session, skip: int = 0, limit: int = 100):
     """
