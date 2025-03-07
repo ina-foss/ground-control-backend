@@ -13,3 +13,7 @@ python-dotenv==1.0.1
 alembic==1.13.1
 alembic-postgresql-enum==1.2.0
 jsonpath-ng==1.7.0
+opentelemetry-instrumentation-fastapi==0.51b0
+opentelemetry-api==1.30.0
+opentelemetry-sdk==1.30.0
+opentelemetry-exporter-prometheus==0.51b0
