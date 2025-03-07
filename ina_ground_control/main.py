@@ -2,7 +2,9 @@
 Ground control application, including routes, middleware, and configuration.
 """
 import os
+import time
 import typing
+from urllib.request import Request
 
 import uvicorn
 from dotenv import load_dotenv
@@ -18,7 +20,8 @@ from ina_ground_control import logger
 from ina_ground_control.config import settings
 from ina_ground_control.models.user_model import UserInfo
 from ina_ground_control.routers import projects, tasks, users, resources, annotations, medias, steps, tags, \
-    task_comments, plugins
+    task_comments, plugins, management
+from ina_ground_control.services.telemetry_service import TelemetryService
 
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
@@ -86,6 +89,7 @@ app.include_router(plugins.router)
 app.include_router(steps.router)
 app.include_router(tags.router)
 app.include_router(task_comments.router)
+app.include_router(management.router)
 app.servers = [{"url": "http://localhost:8000"}]
 
 app.add_middleware(
@@ -97,16 +101,18 @@ app.add_middleware(
     expose_headers=["Authorization", "Link", "X-Total-Count", "Highlighted"]
 )
 
+# Initialize Telemetry Service
+telemetry = TelemetryService(app)
 
-@app.get("/management/health")
-async def info() -> dict:
-    """
-    Health check endpoint that returns the status of the service.
 
-    Returns:
-        dict: A dictionary indicating the service status.
-    """
-    return {"status": "up"}
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    """Middleware to capture metrics."""
+    start_time = time.time()
+    response = await call_next(request)
+    latency = time.time() - start_time
+    telemetry.record_metrics(request, latency, response.status_code)
+    return response
 
 
 load_dotenv(".env.local")
