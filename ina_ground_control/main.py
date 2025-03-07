@@ -66,29 +66,14 @@ keycloak_config = KeycloakConfiguration(
 
 app = FastAPI()
 
-NO_AUTH = os.getenv("NO_AUTH") != "True"
 
-# Add middleware with basic config
-if not NO_AUTH:
-    setup_keycloak_middleware(
-        app,
-        keycloak_configuration=keycloak_config,
-        exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
-        add_swagger_auth=True,
-        user_mapper=map_user
-    )
-
-
-@app.get("/test")
-async def root() -> dict:
-    """
-    Root endpoint that returns a simple message.
-
-    Returns:
-        dict: A dictionary with a greeting message.
-    """
-    return {"message": "Hello World"}
-
+setup_keycloak_middleware(
+    app,
+    keycloak_configuration=keycloak_config,
+    exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
+    add_swagger_auth=True,
+    user_mapper=map_user
+)
 
 app.include_router(users.router)
 app.include_router(projects.router)

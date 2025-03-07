@@ -4,10 +4,13 @@ It includes routes for retrieving user data, utilizing the Keycloak middleware f
 authentication and permission checks.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi import status
+from latios.log import get_logger
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from latios.log import get_logger
+
+from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
 from ina_ground_control.schemas.user_schemas import UserDto
@@ -20,6 +23,7 @@ from ina_ground_control.services.user_service import (
 logger = get_logger()
 router = APIRouter(tags=["user"])
 NOT_FOUND_STR_USER = "User not found"
+
 
 @router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -51,6 +55,12 @@ def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error("Failed to create user: %s", e)
         raise HTTPException(status_code=400, detail="Failed to create user") from e
+
+
+@router.get("/user/roles", response_model=Permission)
+def get_all_roles():
+    roles = Permission.CREATE_TASK_COMMENT
+    return roles
 
 
 @router.get("/user/")
