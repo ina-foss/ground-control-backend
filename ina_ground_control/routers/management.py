@@ -19,14 +19,16 @@ from fastapi.responses import PlainTextResponse
 from prometheus_client import generate_latest
 from pydantic import BaseModel
 
-from ina_ground_control import logger
+from ina_ground_control import logger, get_application_version
+from ina_ground_control.config import settings
 
 
 class HealthCheck(BaseModel):
     """Response model to validate and return when performing a health check."""
 
     status: str = "OK"
-    """The status of the health check."""
+    service_name: str
+    version: str
 
 
 router = APIRouter(tags=["management"])
@@ -49,7 +51,7 @@ def get_health() -> HealthCheck:
     Returns:
         HealthCheck: Returns a JSON response with the health status
     """
-    return HealthCheck(status="OK")
+    return HealthCheck(service_name=settings.app.service_name, version=get_application_version(), status="OK")
 
 
 @router.get("/management/metrics", summary="Metrics",
