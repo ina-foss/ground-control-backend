@@ -1,4 +1,22 @@
 default:
+  app:
+    service_name: Ground Control API
+    description: Ground Control API designed for secure communication between clients and a backend system.
+    server: "http://localhost:8000"
+    version: "V1.0.0"
+  cors:
+    allow_origins:
+      - "*"
+    allow_credentials: True,
+    allow_methods:
+      - "*"
+    allow_headers:
+      - "*"
+    expose_headers:
+      - "Authorization"
+      - "Link"
+      - "X-Total-Count"
+      - "Highlighted"
   player_expert:
     base_url: "https://player-expert.p.sas.ina/notilusLdd/notilus/search/plugin"
     verify_tls: false

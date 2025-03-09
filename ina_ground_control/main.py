@@ -3,54 +3,31 @@ Ground control application, including routes, middleware, and configuration.
 """
 import os
 import time
-import typing
 from urllib.request import Request
 
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
     AuthorizationMethod
 )
+from starlette.staticfiles import StaticFiles
 
-from ina_ground_control import logger
+from ina_ground_control import logger, get_application_version, map_user
 from ina_ground_control.config import settings
-from ina_ground_control.models.user_model import UserInfo
 from ina_ground_control.routers import projects, tasks, users, resources, annotations, medias, steps, tags, \
     task_comments, plugins, management
 from ina_ground_control.services.telemetry_service import TelemetryService
 
-
-async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
-    """
-    Maps user information received from Keycloak to a User model instance.
-
-    Args:
-        userinfo (Dict[str, Any]): The user information dictionary.
-
-    Returns:
-        UserInfo: An instance of the UserInfo model.
-    """
-
-    # Map the fields from the userinfo to the UserInfo model
-    unk_email = "unknown@unknown.com"
-    if userinfo is not None:
-        user = UserInfo(
-            email=userinfo.get("email", unk_email),
-            roles=userinfo.get("roles", []),
-        )
-    else:
-        logger.warning("Userinfo is none check sso has userinfo enabled and token has roles: %s", userinfo)
-        user = UserInfo(
-            email=unk_email,
-            roles=[]
-        )
-    return user
-
-
+app = FastAPI(
+    title=settings.app.service_name,
+    version=get_application_version(),
+    description=settings.app.description,
+)
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
     url=settings.sso.url,
@@ -71,14 +48,15 @@ keycloak_config = KeycloakConfiguration(
     },
 )
 
-app = FastAPI()
 setup_keycloak_middleware(
     app,
     keycloak_configuration=keycloak_config,
-    exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
+    exclude_patterns=["/management/*", "/docs", "/gen_docs/*", "/openapi.json", "/redoc", "/static/*"],
     add_swagger_auth=True,
     user_mapper=map_user
 )
+
+# Add router
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
@@ -90,17 +68,62 @@ app.include_router(steps.router)
 app.include_router(tags.router)
 app.include_router(task_comments.router)
 app.include_router(management.router)
-app.servers = [{"url": "http://localhost:8000"}]
+# Mount the static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/gen_docs", StaticFiles(directory="docs/_build"), name="gen_docs")
+app.servers = [{"url": settings.app.server}]
 
+# Add CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Authorization", "Link", "X-Total-Count", "Highlighted"]
+    allow_origins=settings.cors.allow_origins,
+    allow_credentials=settings.cors.allow_credentials,
+    allow_methods=settings.cors.allow_methods,
+    allow_headers=settings.cors.allow_headers,
+    expose_headers=settings.cors.expose_headers
 )
 
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    try:
+        # Generate the base schema
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+        )
+
+        # Add components if missing
+        if "components" not in openapi_schema:
+            openapi_schema["components"] = {}
+
+        # Add securitySchemes if missing
+        if "securitySchemes" not in openapi_schema["components"]:
+            openapi_schema["components"]["securitySchemes"] = {}
+
+        # Add custom OAuth2 security scheme
+        openapi_schema["components"]["securitySchemes"]["OAuth2ClientCredentials"] = {
+            "type": "oauth2",
+            "flows": {
+                "clientCredentials": {
+                    "tokenUrl": f"{settings.sso.url}realms/{settings.sso.realm}/protocol/openid-connect/token",
+                    "scopes": {}
+                }
+            }
+        }
+
+        app.openapi_schema = openapi_schema  # Cache the schema
+        return app.openapi_schema
+    except Exception as e:
+        logger.error("Error generating OpenAPI schema: %s", str(e))
+        raise
+
+
+app.openapi = custom_openapi
 # Initialize Telemetry Service
 telemetry = TelemetryService(app)
 
