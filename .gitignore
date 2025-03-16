@@ -39,3 +39,4 @@ htmlcov/
 *.log
 .pypirc
 docs/_build
+*.iml

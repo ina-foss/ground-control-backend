@@ -46,7 +46,6 @@ def get_application_version(package_name="ina-ground-control"):
         logger.error("An unexpected error occurred while retrieving the package version: %s", ex, exc_info=True)
         raise RuntimeError(f"Failed to retrieve version for package '{package_name}'.") from ex
 
-
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
     """
     Maps user information received from Keycloak to a User model instance.
@@ -72,5 +71,3 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
             roles=[]
         )
     return user
-
-
