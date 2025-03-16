@@ -2,8 +2,6 @@
 Ground control application, including routes, middleware, and configuration.
 """
 import os
-import time
-from urllib.request import Request
 
 import uvicorn
 from dotenv import load_dotenv
@@ -19,10 +17,13 @@ from starlette.staticfiles import StaticFiles
 
 from ina_ground_control import logger, get_application_version, map_user
 from ina_ground_control.config import settings
+from ina_ground_control.database import engine
 from ina_ground_control.routers import projects, tasks, users, resources, annotations, medias, steps, tags, \
     task_comments, plugins, management
 from ina_ground_control.services.telemetry_service import TelemetryService
+from ina_ground_control.utils.prometheus import PrometheusMiddleware
 
+load_dotenv(".env.local")
 app = FastAPI(
     title=settings.app.service_name,
     version=get_application_version(),
@@ -52,7 +53,6 @@ setup_keycloak_middleware(
     app,
     keycloak_configuration=keycloak_config,
     exclude_patterns=["/management/*", "/docs", "/gen_docs/*", "/openapi.json", "/redoc", "/static/*"],
-    add_swagger_auth=True,
     user_mapper=map_user
 )
 
@@ -68,6 +68,8 @@ app.include_router(steps.router)
 app.include_router(tags.router)
 app.include_router(task_comments.router)
 app.include_router(management.router)
+# Setting metrics middleware
+app.add_middleware(PrometheusMiddleware, app_name=settings.app.service_name)
 # Mount the static directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/gen_docs", StaticFiles(directory="docs/_build"), name="gen_docs")
@@ -125,20 +127,8 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 # Initialize Telemetry Service
-telemetry = TelemetryService(app)
+telemetry = TelemetryService(app, engine)
 
-
-@app.middleware("http")
-async def metrics_middleware(request: Request, call_next):
-    """Middleware to capture metrics."""
-    start_time = time.time()
-    response = await call_next(request)
-    latency = time.time() - start_time
-    telemetry.record_metrics(request, latency, response.status_code)
-    return response
-
-
-load_dotenv(".env.local")
 APP_HOST = os.getenv("APP_HOST")
 APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL")
 
