@@ -17,25 +17,24 @@ Dependencies:
 - SQLAlchemy for database session management.
 
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
-from sqlalchemy.orm import Session
-
-from ina_ground_control import logger
-from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
-from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from ina_ground_control.schemas.plugin_schemas import PluginCreate,PluginWithIdDto
 from ina_ground_control.models.plugin_model import Plugin
-from ina_ground_control.schemas.plugin_schemas import PluginCreate, PluginWithIdDto
-from ina_ground_control.services.plugin_service import get_plugins_search, create_plugin_crud, get_plugins_crud, \
-    delete_plugin_crud, get_plugin_by_id
+from ina_ground_control.services.plugin_service import get_plugins_search,create_plugin_crud,get_plugins_crud,delete_plugin_crud,get_plugin_by_id
+from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
+from ina_ground_control.constants.roles import Permission
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
+from ina_ground_control import logger
 
 router = APIRouter(tags=["plugin"])
-NOT_FOUND_STR = "Plugin not found"
 
 
 # search plugins
@@ -59,7 +58,7 @@ def search_plugins(plugin_id: int, query: str, db: Session = Depends(get_db)):
     plugins = get_plugins_search(db, plugin_id=plugin_id, query=query)
     if plugins is None:
         logger.error("Failed to retrieve plugins")
-        raise HTTPException(status_code=404, detail="plugins not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Plugin",id=plugin_id)
     return plugins
 
 
@@ -87,7 +86,7 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
         return create_plugin_crud(plugin, db)
     except Exception as e:
         logger.error("Failed to create plugin: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to create plugin") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create plugin") from e
 
 
 @router.delete("/plugin/{plugin_id}", status_code=status.HTTP_200_OK, response_model=PluginWithIdDto)
@@ -102,7 +101,7 @@ def delete_plugin(plugin_id: int,
     deleted_plugin = delete_plugin_crud(db, plugin_id)
     if deleted_plugin is None:
         logger.error("Failed to delete plugin with id: %d", plugin_id)
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Plugin", id=plugin_id)
     return deleted_plugin
 
 
@@ -112,5 +111,5 @@ def read_plugin(plugin_id: int, db: Session = Depends(get_db)) -> Plugin:
     plugin = get_plugin_by_id(db, plugin_id=plugin_id)
     if plugin is None:
         logger.error("Failed to retrieve plugin with id: %d", plugin_id)
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Plugin", id=plugin_id)
     return plugin

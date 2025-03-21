@@ -20,8 +20,7 @@ Configuration:
 """
 
 from typing import Dict, Any
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
@@ -29,7 +28,6 @@ from fastapi_keycloak_middleware import (
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
 from ina_ground_control import logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
@@ -40,6 +38,7 @@ from ina_ground_control.services.annotation_service import create_annotation_cru
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
     delete_task_crud
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["task"])
 
@@ -60,7 +59,7 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
     task = get_task_by_id(db, task_id=task_id)
     if task is None:
         logger.error("Failed to retrieve task with id: %d", task_id)
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
     return task
 
 
@@ -79,7 +78,7 @@ def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
         return create_task_crud(task, db)
     except Exception as e:
         logger.error("Failed to create task: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to create task") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create task") from e
 
 
 @router.post("/step/{step_id}", response_model=TaskWithIdDto)
@@ -117,12 +116,11 @@ def task_inject(
 
     except IntegrityError as e:
         logger.error("Database integrity error: %s", e)
-        raise HTTPException(status_code=400, detail="Database integrity error") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Database integrity error") from e
 
     except Exception as e:
         logger.error("An unexpected error occurred: %s", e)
-        raise HTTPException(status_code=400, detail="An unexpected error occurred") from e
-
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="An unexpected error occurred") from e
 
 @router.patch("/task/{task_id}", response_model=TaskListDto)
 def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(get_db)):
@@ -141,7 +139,7 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
     task = update_data_task_crud(task_id, data, db)
     if task is None:
         logger.error("Failed to update task with id: %d", task_id)
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
     return task
 
 
@@ -164,11 +162,10 @@ def delete_task(task_id: int, db: Session = Depends(get_db),
     retrieved_task = get_task_by_id(db, task_id)
     if retrieved_task is None:
         logger.error("Task with id %d not found", task_id)
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
 
     deleted_task = delete_task_crud(db, retrieved_task)
     if deleted_task is None:
         logger.error("Failed to delete task with id: %d", task_id)
-        raise HTTPException(status_code=500, detail="Failed to delete task")
-
+        raise GroundControlException(ErrorCode.GENERIC_OPERATION_FAILED, action="delete", resource="task", id=task_id)
     return deleted_task
