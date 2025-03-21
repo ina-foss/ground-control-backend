@@ -5,11 +5,8 @@ or the error status if something went wrong.
 """
 
 from typing import Dict, Any
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
-
-from ina_ground_control import logger
 from ina_ground_control.constants.roles import Role
 from ina_ground_control.database import get_db
 from ina_ground_control.models.annotation_model import Annotation
@@ -22,6 +19,8 @@ from ina_ground_control.services.annotation_service import (
     udpate_annotation_result_crud,
     finish_annotation_crud
 )
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
+from ina_ground_control import logger
 
 router = APIRouter(tags=["annotation"])
 
@@ -46,9 +45,7 @@ def create_annotation(
         return create_annotation_crud(db, annotation)
     except Exception as e:
         logger.error("Failed to create annotation: %s", e)
-        raise HTTPException(
-            status_code=400, detail="Failed to create annotation") from e
-
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create annotation") from e
 
 @router.get("/annotation/{id}", response_model=AnnotationDto)
 def get_annotations_by_id(
@@ -59,7 +56,7 @@ def get_annotations_by_id(
     annotation: AnnotationDto = get_annotations_by_id_crud(db, annotation_id)
     if annotation is None:
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
-        raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)
     return annotation
 
 
@@ -95,7 +92,7 @@ def update_annotation_result(
     annotation = udpate_annotation_result_crud(db, result, annotation_id)
     if annotation is None:
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
-        raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation",id=annotation_id)
     return annotation
 
 
@@ -108,5 +105,5 @@ def finish_annotation(
     annotation = finish_annotation_crud(db, result, annotation_id)
     if annotation is None:
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
-        raise HTTPException(status_code=404, detail=ANNOTATION_NOT_FOUND_MESSAGE)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)
     return annotation

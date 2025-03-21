@@ -20,21 +20,22 @@ Configuration:
     `src` module.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+
+from fastapi import APIRouter, Depends, status
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
 from sqlalchemy.orm import Session
-
 from ina_ground_control import logger
-from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepDto, StepCreate
 from ina_ground_control.services.step_service import (get_step_by_id, create_step_crud,
-                                                      update_data_step_crud, delete_step_crud, get_steps)
+                                                      update_data_step_crud,delete_step_crud,get_steps)
+from ina_ground_control.constants.roles import Permission
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["step"])
 
@@ -56,7 +57,7 @@ def read_step(step_id: int, db: Session = Depends(get_db)):
     step = get_step_by_id(db, step_id=step_id)
     if step is None:
         logger.error("Failed to retrieve step with id: %d", step_id)
-        raise HTTPException(status_code=404, detail="Step not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
     return step
 
 
@@ -76,7 +77,7 @@ def create_step(step: StepCreate, db: Session = Depends(get_db)):
         return create_step_crud(step, db)
     except Exception as e:
         logger.error("Failed to create step: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to create step") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create step") from e
 
 
 # update step by id
@@ -97,7 +98,7 @@ def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_d
     updated_step = update_data_step_crud(step_id, step, db)
     if updated_step is None:
         logger.error("Failed to update step with id: %d", step_id)
-        raise HTTPException(status_code=404, detail="step not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
     return updated_step
 
 
@@ -112,7 +113,7 @@ def delete_step(step_id: int, db: Session = Depends(get_db),
     deleted_step = delete_step_crud(db, step_id)
     if deleted_step is None:
         logger.error("Failed to delete step with id: %d", step_id)
-        raise HTTPException(status_code=404, detail="Step not found")
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
     return deleted_step
 
 

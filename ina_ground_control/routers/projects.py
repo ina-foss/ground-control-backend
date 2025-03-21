@@ -16,17 +16,14 @@ Dependencies:
     - Project-related schemas from `src.schemas.project_schemas`.
     - Business logic for project operations in `src.services.project_service`.
 """
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
     AuthorizationResult
 )
 from sqlalchemy.orm import Session
-
 from ina_ground_control import logger
-from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.schemas.project_schemas import (ProjectBaseDto,
@@ -38,10 +35,10 @@ from ina_ground_control.services.project_service import (get_projects,
                                                          get_project_by_id,
                                                          update_project_crud,
                                                          delete_project_crud)
+from ina_ground_control.constants.roles import Permission
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["project"])
-NOT_FOUND_STR = "Project not found"
-
 
 @router.get("/projects", response_model=list[ProjectDetailDto])
 def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
@@ -64,7 +61,7 @@ def create_project(project: ProjectBaseDto,
         return create_project_crud(db, project)
     except Exception as e:
         logger.error("Failed to create project: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to create project") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create project") from e
 
 
 @router.get("/project/{project_id}", response_model=ProjectListDto, response_model_by_alias=False)
@@ -73,7 +70,7 @@ def read_project(project_id: int, db: Session = Depends(get_db)) -> Project:
     project = get_project_by_id(db, project_id=project_id)
     if project is None:
         logger.error("Failed to retrieve project with id: %d", project_id)
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id)
     return project
 
 
@@ -84,7 +81,7 @@ def update_project(project_id: int, project: ProjectBaseDto, db: Session = Depen
     updated_project = update_project_crud(db, project, project_id)
     if updated_project is None:
         logger.error("Failed to update project with id: %d", project_id)
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id)
     return updated_project
 
 
@@ -98,5 +95,5 @@ def delete_project(project_id: int, db: Session = Depends(get_db), _authorizatio
     deleted_project = delete_project_crud(db, project_id)
     if deleted_project is None:
         logger.error("Failed to delete project with id: %d", project_id)
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id)
     return deleted_project
