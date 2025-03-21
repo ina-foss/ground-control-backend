@@ -8,7 +8,7 @@ from importlib.metadata import PackageNotFoundError
 from ina_ground_control.models.user_model import UserInfo
 
 # Load logging configuration from file
-logging.config.fileConfig("logging.conf")
+logging.config.fileConfig("logging.conf") # NOSONAR
 # Get logger
 logger = logging.getLogger("GroundControl")
 logger.setLevel(logging.getLevelName(os.getenv("APP_LOG_LEVEL", "DEBUG").upper()))

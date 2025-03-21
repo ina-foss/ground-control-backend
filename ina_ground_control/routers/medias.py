@@ -20,19 +20,18 @@ Configuration:
     `src` module.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
 from fastapi import status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from ina_ground_control import logger
 from ina_ground_control.database import get_db
 from ina_ground_control.models.media_model import Media
-from ina_ground_control.schemas.media_schemas import MediaDto, MediaCreate
-from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_media_crud, \
-    delete_media_crud, get_medias
+
+from ina_ground_control.schemas.media_schemas import MediaDto , MediaCreate
+from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_media_crud,delete_media_crud,get_medias
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["media"])
-MEDIA_NOT_FOUND_MESSAGE = "Media not found"
 
 
 # get media by id
@@ -52,7 +51,7 @@ def read_media(media_id: int, db: Session = Depends(get_db)):
     media = get_media_by_id(db, media_id=media_id)
     if media is None:
         logger.error("Failed to retrieve media with id: %d", media_id)
-        raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id)
     return media
 
 
@@ -72,7 +71,7 @@ def create_media(media: MediaCreate, db: Session = Depends(get_db)):
         return create_media_crud(media, db)
     except Exception as e:
         logger.error("Failed to create media: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to create media") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create media") from e
 
 
 # update media by id
@@ -93,7 +92,7 @@ s
     media = update_media_crud(media_id, media, db)
     if media is None:
         logger.error("Failed to update media with id: %d", media_id)
-        raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id)
     return media
 
 
@@ -103,7 +102,7 @@ def delete_media(media_id: int, db: Session = Depends(get_db)):
     deleted_media = delete_media_crud(db, media_id)
     if deleted_media is None:
         logger.error("Failed to delete media with id: %d", media_id)
-        raise HTTPException(status_code=404, detail=MEDIA_NOT_FOUND_MESSAGE)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id)
     return deleted_media
 
 
