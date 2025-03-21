@@ -22,6 +22,8 @@ from ina_ground_control.routers import projects, tasks, users, resources, annota
     task_comments, plugins, management
 from ina_ground_control.services.telemetry_service import TelemetryService
 from ina_ground_control.utils.prometheus import PrometheusMiddleware
+from ina_ground_control.exception.handlers import default_exception_handler
+from ina_ground_control.exception.exceptions import GroundControlException, GroundControlRequestValidationError
 
 load_dotenv(".env.local")
 app = FastAPI(
@@ -85,6 +87,9 @@ app.add_middleware(
     expose_headers=settings.cors.expose_headers
 )
 
+
+app.add_exception_handler(GroundControlException, default_exception_handler)
+app.add_exception_handler(GroundControlRequestValidationError, default_exception_handler)
 
 def custom_openapi():
     if app.openapi_schema:
