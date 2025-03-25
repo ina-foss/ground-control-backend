@@ -16,7 +16,8 @@ Dependencies:
     - Project-related schemas from `src.schemas.project_schemas`.
     - Business logic for project operations in `src.services.project_service`.
 """
-from fastapi import APIRouter, Depends, status
+
+from fastapi import APIRouter, Depends, status, Response
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
@@ -40,11 +41,11 @@ from ina_ground_control.exception.exceptions import GroundControlException, Erro
 
 router = APIRouter(tags=["project"])
 
-@router.get("/projects", response_model=list[ProjectDetailDto])
-def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
-        -> list[Project]:
+@router.get("/projects", response_model=list[ProjectDetailDto],)
+def read_projects(response: Response, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) -> list[Project]:
     """Retrieve a list of projects with pagination support."""
     projects = get_projects(db, skip=skip, limit=limit)
+    response.headers["X-Total-Count"] = str(len(get_projects(db,skip=0, limit=1000)))
     return projects
 
 
