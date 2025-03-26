@@ -47,7 +47,6 @@ class StepDetailDto(StepDto):
     Used in `/{project_id}` view
     """
 
-    project: ProjectBaseDto
     tasks: Optional[list["TaskWithIdDto"]]
 
 
@@ -61,5 +60,5 @@ class StepPluginDto(BaseModel):
 
 
 from ina_ground_control.schemas.task_schemas import TaskWithIdDto
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectWithIdDto
+from ina_ground_control.schemas.project_schemas import ProjectWithIdDto
 from ina_ground_control.schemas.plugin_schemas import PluginWithIdDto
