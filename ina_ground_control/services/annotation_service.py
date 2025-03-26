@@ -69,19 +69,17 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int, user_email: str, 
     Returns:
     List[Annotation]: A list of Annotation objects that match the task_id.
     """
+    query = db.query(Annotation).join(
+        AnnotationTask, Annotation.id == AnnotationTask.annotation_id
+    ).filter(
+        AnnotationTask.task_id == task_id,
+        AnnotationTask.direction == direction
+    )
+
     if user_email is not None and user_email != '':
-        return db.query(Annotation).join(AnnotationTask).filter(
-            Annotation.id == AnnotationTask.annotation_id,
-            Annotation.user_email == user_email,
-            AnnotationTask.task_id == task_id,
-            AnnotationTask.direction == direction
-        ).all()
-    else:
-        return db.query(Annotation).join(AnnotationTask).filter(
-            Annotation.id == AnnotationTask.annotation_id,
-            AnnotationTask.task_id == task_id,
-            AnnotationTask.direction == direction
-        ).all()
+        query = query.filter(Annotation.user_email == user_email)
+
+    return query.all()
 
 
 def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
