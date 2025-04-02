@@ -25,6 +25,9 @@ sys.path.append(project_root)
 # Now, import the Base from your database.py file
 from ina_ground_control.database import Base
 
+from ina_ground_control.models import  annotation_model,annotation_task_association,media_model,media_projet_association,plugin_model,project_model,step_model,tag_model,tag_project_association,task_comment_model,task_model,user_model
+
+
 load_dotenv('.env.local')
 
 PG_SERVER = os.getenv('PG_SERVER')

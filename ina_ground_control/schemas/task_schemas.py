@@ -27,7 +27,9 @@ class TaskBaseDto(BaseModel):
     step_id: int
     media_id: int
     documentation: Optional[str] = ""
-
+    expiration_date: Optional[datetime] = None
+    redundancy: int = 1
+    priority: int = 0
 
 class Config:
     from_attributes = True
