@@ -15,7 +15,7 @@ Classes:
 
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import and_
 
@@ -38,18 +38,20 @@ class TaskDataType(PyEnum):
 
 class TaskStatus(PyEnum):
     """
-    Enum representing the different statuses a task can have.
+    Enum representing the different status of a task.
 
     Attributes:
         DRAFT (str): The task is in draft status.
         PENDING (str): The task is pending and awaiting further actions.
-        ENDED (str): The task has ended.
+        IN_PROGRESS (str): Currently being worked on.
+        SKIPPED (str): This task has been ignored.
+        DONE (str): Successfully completed.
     """
-
     DRAFT = "draft"
     PENDING = "pending"
-    ENDED = "ended"
-
+    IN_PROGRESS = "in-progress"
+    SKIPPED = "skipped"
+    DONE = "done"
 
 class Task(Base):
     """
@@ -82,6 +84,9 @@ class Task(Base):
     status = Column(Enum(TaskStatus))
     documentation = Column(String)
     lead_time = Column(Integer)
+    expiration_date = Column(DateTime)
+    redundancy = Column(Integer, nullable=False, default=1)
+    priority = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     step_id = Column(Integer, ForeignKey("step.id"))
@@ -102,4 +107,9 @@ class Task(Base):
 
     task_comments = relationship(
         "TaskComment", backref="task", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        CheckConstraint("redundancy >= 1", name="check_redundancy_min"),  # Min 1 person
+        CheckConstraint("priority BETWEEN 0 AND 100", name="check_priority_range"),  # 0 to 100
     )
