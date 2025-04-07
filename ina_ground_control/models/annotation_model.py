@@ -39,6 +39,7 @@ class AnnotationStatus(PyEnum):
     DONE = "done"
 
 
+
 class Annotation(Base):
     """
     Represents an annotation record in the database.

@@ -33,6 +33,7 @@ class AnnotationType(PyEnum):
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
     SPAN = "span"
+    AUTO_SUMMARY = "auto-summary"
 
 
 class StepStatus(PyEnum):
