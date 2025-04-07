@@ -7,12 +7,19 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 from typing import Any, Dict
 
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import func
 
-from ina_ground_control.models.task_model import Task
+from ina_ground_control import logger
+from ina_ground_control.services.step_service import finish_step
+from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
+from ina_ground_control.models.annotation_model import AnnotationStatus
+from ina_ground_control.models.annotation_task_association import InOutEnum
+from ina_ground_control.models.task_model import Task, TaskStatus
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 
-def get_task_by_id(db: Session, task_id: int):
+def get_task_by_id(db: Session, task_id: int) -> Task:
     """
     Retrieve a task by its ID.
 
@@ -42,6 +49,20 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     db.commit()
     db.refresh(db_task)
     return db_task
+
+def finish_task(db: Session, task_id: int):
+    task = get_task_by_id(db,task_id)
+    if task is None:
+        logger.error("Failed to retrieve task with id: %d", task_id)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
+    if task.step.allow_empty_annotation :
+        print("WIP")
+    else :
+        finished_annotation_from_task = get_annotations_by_task_id_crud(db,task_id,None,InOutEnum.OUT,AnnotationStatus.DONE)
+        if len(finished_annotation_from_task) == task.redundancy :
+            finish_task_crud(db ,task)
+            finish_step(db,task.step_id)
+
 
 
 def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
@@ -78,4 +99,13 @@ def delete_task_crud(db: Session, task: Task):
     if task is not None:
         db.delete(task)
         db.commit()
+    return task
+
+
+def finish_task_crud(db: Session, task: Task) -> Task:
+    task.status = TaskStatus.DONE
+    task.validated_at = func.now()
+    task.updated_at = func.now()
+    db.commit()
+    db.refresh(task)
     return task

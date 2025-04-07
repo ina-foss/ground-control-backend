@@ -58,7 +58,12 @@ def get_annotations_by_id_crud(db: Session, annotation_id: int):
     return db.query(Annotation).filter(Annotation.id == annotation_id).first()
 
 
-def get_annotations_by_task_id_crud(db: Session, task_id: int, user_email: str, direction: InOutEnum):
+def get_annotations_by_task_id_crud(db: Session,
+                                    task_id: int,
+                                    user_email: str | None,
+                                    direction: InOutEnum,
+                                    status: AnnotationStatus | list[AnnotationStatus] | None = None
+                                    ) -> list[Annotation]:
     """
     Return all the annotation objects whose attribute "task_id" matches the argument.
 
@@ -78,6 +83,13 @@ def get_annotations_by_task_id_crud(db: Session, task_id: int, user_email: str, 
 
     if user_email is not None and user_email != '':
         query = query.filter(Annotation.user_email == user_email)
+    if status is not None :
+        if isinstance(status,list):
+            for anno_status in status:
+                query = query.filter(Annotation.annotation_status == anno_status)
+                pass
+        else:
+            query.filter(Annotation.annotation_status == status)
 
     return query.all()
 
@@ -106,7 +118,7 @@ def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: i
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     if db_annotation is not None:
         db_annotation.result = result
-        db_annotation.annotation_status = AnnotationStatus.ENDED
+        db_annotation.annotation_status = AnnotationStatus.DONE
         db_annotation.validated_at = func.now()
         db_annotation.updated_at = func.now()
         db.commit()
