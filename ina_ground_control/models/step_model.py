@@ -73,7 +73,7 @@ class Step(Base):
         project_id (Integer): The foreign key linking to the concerned project.
         tasks (relationship): Relationship to the Task model representing tasks within the step.
         plugins (relationship): Relationship to the Plugin model.
-        redundancy_rate (Float): Redundancy rate, can be between (0-100).
+        redundancy (Integer): Redundancy for each tasks of the step, can be modified inside the task (default: 1)
         completeness_rate (Float): Percentage of completeness (0-100).
         allow_empty_annotation (Boolean): Whether empty annotations are allowed (default: False).
         max_tasks_per_person (Integer): Maximum tasks per person (default: 1, must be at least 1).
@@ -93,12 +93,11 @@ class Step(Base):
     project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
     tasks = relationship("Task", backref="step", cascade="all, delete-orphan")
     plugins = relationship("Plugin", backref="step", cascade="all, delete-orphan")
-    redundancy_rate = Column(Float, nullable=False, default=0.0)
-    completeness_rate = Column(Float, nullable=False, default=0.0)
+    redundancy = Column(Integer, nullable=False, default=1)
+    completeness_rate = Column(Float, nullable=False, default=100.0)
     allow_empty_annotation = Column(Boolean, nullable=False, default=False)
     max_tasks_per_person = Column(Integer, nullable=False, default=1)
     __table_args__ = (
-        CheckConstraint("redundancy_rate BETWEEN 0 AND 100", name="check_redundancy_rate_range"),
         CheckConstraint("completeness_rate BETWEEN 0 AND 100", name="check_completeness_rate_range"),
         CheckConstraint("max_tasks_per_person >= 1", name="check_max_tasks_per_person_minimum"),
     )

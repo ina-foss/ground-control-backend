@@ -22,8 +22,8 @@ class StepCreate(BaseModel):
     pinned_at: Optional[datetime]
     status: StepStatus
     project_id: int
-    redundancy_rate: float = Field(default=0.0, ge=0, le=100, description="Must be between 0 and 100")
-    completeness_rate: float = Field(default=0.0, ge=0, le=100, description="Must be between 0 and 100")
+    redundancy: int = Field(default=1, description="Number of annotations per task")
+    completeness_rate: float = Field(default=100.0, ge=0, le=100, description="Must be between 0 and 100")
     allow_empty_annotation: bool = Field(default=False, description="Allow empty annotations")
     max_tasks_per_person: int = Field(default=1, ge=1, description="Must be at least 1")
 
