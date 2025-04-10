@@ -12,12 +12,13 @@ from ina_ground_control.database import get_db
 from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationDto, AnnotationFullCreate
-from ina_ground_control.services.task_service import finish_task
+from ina_ground_control.services.task_service import finish_task, undone_task
 from ina_ground_control.services.annotation_service import (
     create_annotation_crud,
     get_annotations_by_task_id_crud,
     get_annotations_by_id_crud,
     udpate_annotation_result_crud,
+    skip_annotation_crud,
     finish_annotation_crud
 )
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
@@ -48,16 +49,13 @@ def create_annotation(
         logger.error("Failed to create annotation: %s", e)
         raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create annotation") from e
 
-@router.get("/annotation/{id}", response_model=AnnotationDto)
+@router.get("/annotation/{annotation_id}", response_model=AnnotationDto)
 def get_annotations_by_id(
         annotation_id: int, db: Session = Depends(get_db)) -> AnnotationDto:
     """
     Retrieve a single annotation
     """
     annotation: AnnotationDto = get_annotations_by_id_crud(db, annotation_id)
-    if annotation is None:
-        logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)
     return annotation
 
 
@@ -84,7 +82,7 @@ def get_annotation_by_task_id(
     return annotations
 
 
-@router.patch("/annotation/{id}", response_model=AnnotationDto)
+@router.patch("/annotation/{annotation_id}", response_model=AnnotationDto)
 def update_annotation_result(
         annotation_id: int, result: Dict[str, Any], db: Session = Depends(get_db)) -> AnnotationDto:
     """
@@ -96,8 +94,17 @@ def update_annotation_result(
         raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation",id=annotation_id)
     return annotation
 
+@router.patch("/annotation/skip/{annotation_id}", response_model=AnnotationDto)
+def skip_annotation(
+        annotation_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db) ) -> AnnotationDto:
+    """
+    skip an annotation
+    """
+    annotation = skip_annotation_crud(db, annotation_id)
+    background_tasks.add_task(undone_task,db, annotation.task[0])
+    return annotation
 
-@router.patch("/annotation/finish/{id}", response_model=AnnotationDto)
+@router.patch("/annotation/finish/{annotation_id}", response_model=AnnotationDto)
 def finish_annotation(
         annotation_id: int, result: Dict[str, Any], background_tasks: BackgroundTasks, db: Session = Depends(get_db) ) -> AnnotationDto:
     """

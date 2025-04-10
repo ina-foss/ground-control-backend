@@ -1,3 +1,4 @@
+from ina_ground_control.exception.exceptions import GroundControlException
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -97,8 +98,9 @@ def test_delete_task_crud(db_session: Session):
 
     deleted_task = delete_task_crud(db_session, created_task)
 
-    retrieved_task = get_task_by_id(db_session, created_task.id)
+
 
     assert created_task is not None
     assert created_task == deleted_task
-    assert retrieved_task is None
+    with pytest.raises(GroundControlException):
+        retrieved_task = get_task_by_id(db_session, created_task.id)

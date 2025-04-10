@@ -30,7 +30,11 @@ def get_task_by_id(db: Session, task_id: int) -> Task:
     Returns:
         Task: The Task object if found, otherwise None.
     """
-    return db.query(Task).filter(Task.id == task_id).first()
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if task is None:
+        logger.error("Failed to retrieve task with id: %d", task_id)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
+    return task
 
 
 def create_task_crud(task: TaskCreateDto, db: Session):
@@ -52,17 +56,18 @@ def create_task_crud(task: TaskCreateDto, db: Session):
 
 def finish_task(db: Session, task_id: int):
     task = get_task_by_id(db,task_id)
-    if task is None:
-        logger.error("Failed to retrieve task with id: %d", task_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
     if task.step.allow_empty_annotation :
         print("WIP")
     else :
         finished_annotation_from_task = get_annotations_by_task_id_crud(db,task_id,None,InOutEnum.OUT,AnnotationStatus.DONE)
         if len(finished_annotation_from_task) == task.redundancy :
-            finish_task_crud(db ,task)
+            update_task_status_crud(db ,task.id,TaskStatus.DONE)
             finish_step(db,task.step_id)
 
+def undone_task(db, task: Task ):
+    finished_annotation_from_task = get_annotations_by_task_id_crud(db,task.id,None,InOutEnum.OUT,AnnotationStatus.DONE)
+    if len(finished_annotation_from_task) < task.redundancy :
+        update_task_status_crud(db ,task.id,TaskStatus.PENDING)
 
 
 def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
@@ -102,9 +107,11 @@ def delete_task_crud(db: Session, task: Task):
     return task
 
 
-def finish_task_crud(db: Session, task: Task) -> Task:
-    task.status = TaskStatus.DONE
-    task.validated_at = func.now()
+def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> Task:
+    task = get_task_by_id(db, task_id)
+    task.status = status
+    if status == TaskStatus.DONE:
+        task.validated_at = func.now()
     task.updated_at = func.now()
     db.commit()
     db.refresh(task)
