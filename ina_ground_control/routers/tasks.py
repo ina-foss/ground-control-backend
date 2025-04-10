@@ -57,9 +57,6 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
         HTTPException: If the task is not found.
     """
     task = get_task_by_id(db, task_id=task_id)
-    if task is None:
-        logger.error("Failed to retrieve task with id: %d", task_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
     return task
 
 
