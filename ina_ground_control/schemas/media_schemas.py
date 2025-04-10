@@ -17,8 +17,10 @@ class PlayerParameters(BaseModel):
 
    """
     thumbnail_base_url: str = ""
-    wave_form: str = ""
+    download_base_url: str = ""
+    waveform_base_url: str = ""
     tc_offset: int = 0
+    headers:dict[str,str]=[]
     # Use ConfigDict for configuration
     model_config = ConfigDict(
         from_attributes=True,
