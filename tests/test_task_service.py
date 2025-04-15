@@ -7,15 +7,13 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-
-from ina_ground_control.exception.exceptions import GroundControlException
 from ina_ground_control.database import Base
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate, AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
-from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus
+from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus, TaskListDto
 from ina_ground_control.services.task_service import finish_task, get_task_by_id, create_task_crud, undone_task, update_data_task_crud, \
-    delete_task_crud, update_task_status_crud
-
+    delete_task_crud, update_task_status_crud, get_tasks_by_step_id_crud
+from ina_ground_control.exception.exceptions import GroundControlException
 
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing
@@ -212,9 +210,28 @@ def test_update_task_status_crud(db_session: Session):
 
     assert task.status == TaskStatus.DONE, "Task should be DONE now"
 
+def test_get_tasks_by_step_id_crud(db_session: Session):
+    # 1. Create a project and step
+    create_project_crud(db_session, ProjectBaseDto(**project_data))
+    step = create_step_crud(StepCreate(**step_data_1), db_session)
 
+    # 2. Create two tasks for that step
+    task_data_copy1 = task_data.copy()
+    task_data_copy1["step_id"] = step.id
+    task1 = create_task_crud(TaskCreateDto(**task_data_copy1), db_session)
 
+    task_data_copy2 = task_data.copy()
+    task_data_copy2["step_id"] = step.id
+    task_data_copy2["status"] = TaskStatus.IN_PROGRESS
+    task2 = create_task_crud(TaskCreateDto(**task_data_copy2), db_session)
 
+    # 3. Call the service function
+    tasks, total = get_tasks_by_step_id_crud(db_session, step_id=step.id, page=0, size=10)
 
+    # 4. Assertions
+    assert total == 2
+    assert isinstance(tasks[0], TaskListDto)
+    assert {t.id for t in tasks} == {task2.id}
+    assert all(t.status in [TaskStatus.IN_PROGRESS, TaskStatus.PENDING] for t in tasks)
 
 

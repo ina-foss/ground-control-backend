@@ -5,14 +5,13 @@ Defines Data Transfer Object (DTO) classes for task-related data structures.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
 from ina_ground_control.models.task_model import TaskStatus, TaskDataType
 from .annotation_schemas import AnnotationWithIdDto
 from .task_comment_schemas import TaskCommentDto
-
 
 class TaskBaseDto(BaseModel):
     """
@@ -70,3 +69,11 @@ class TaskListDto(TaskCreateDto):
 
 from .step_schemas import StepProjectDto
 from .media_schemas import MediaDto
+
+class PaginatedTasksDTO(BaseModel):
+    """
+    DTO for handling paginated task request results.
+    Contains a list of task requests and the total number of records available.
+    """
+    task_requests: List[TaskListDto]
+    total_records: int

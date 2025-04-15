@@ -5,19 +5,17 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 """
 
 from typing import Any, Dict
-
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import func
-
+from sqlalchemy import case, func
+from ina_ground_control.models.step_model import Step
 from ina_ground_control import logger
 from ina_ground_control.services.step_service import finish_step
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
-from ina_ground_control.schemas.task_schemas import TaskCreateDto
+from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
 from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.models.task_model import Task, TaskStatus
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
-
 
 def get_task_by_id(db: Session, task_id: int) -> Task:
     """
@@ -112,7 +110,6 @@ def delete_task_crud(db: Session, task: Task):
         db.commit()
     return task
 
-
 def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> Task:
     task = get_task_by_id(db, task_id)
     task.status = status
@@ -120,3 +117,56 @@ def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> T
     db.commit()
     db.refresh(task)
     return task
+
+
+def get_tasks_by_step_id_crud(
+        db: Session,
+        step_id: int,
+        page: int = 0,
+        size: int = 10
+):
+    """
+    Get paginated list of tasks by step_id.
+
+    Args:
+        db (Session): SQLAlchemy session.
+        step_id (int): The step ID to filter tasks by.
+        page (int): Page number (0-indexed).
+        size (int): Number of items per page.
+    """
+    try:
+        found_step = db.query(Step).filter(Step.id == step_id).first()
+        if found_step is None:
+            logger.error("Failed to retrieve step with id: %d", step_id)
+            raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step")
+        else:
+            offset = page * size
+
+            # Count total records
+            total_records = db.query(func.count(Task.id)).filter(Task.step_id == step_id).scalar()
+
+            # Get paginated tasks
+            status_order = case(
+                (Task.status == TaskStatus.IN_PROGRESS, 0),
+                (Task.status == TaskStatus.PENDING, 1),
+                else_=2
+            )
+            task_result_data = (db.query(Task)
+                                .filter(Task.step_id == step_id)
+                                .filter(Task.status.in_([TaskStatus.IN_PROGRESS, TaskStatus.PENDING]))
+                                .order_by(status_order, Task.created_at)
+                                .offset(offset)
+                                .limit(size)
+                                .all())
+
+            #tasks = [TaskListDto.model_validate(task) for task in task_result_data]
+            tasks = [TaskListDto.model_validate(task, from_attributes=True) for task in task_result_data]
+
+            return tasks, total_records
+
+    except Exception as e:
+        logger.error("Failed to retrieve all tasks of step: %s", e)
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Unexpected error while getting tasks") from e
+
+
+
