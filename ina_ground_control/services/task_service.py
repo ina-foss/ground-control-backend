@@ -55,20 +55,26 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     return db_task
 
 def finish_task(db: Session, task_id: int):
+    finished_task = None
     task = get_task_by_id(db,task_id)
     if task.step.allow_empty_annotation :
         print("WIP")
     else :
         finished_annotation_from_task = get_annotations_by_task_id_crud(db,task_id,None,InOutEnum.OUT,AnnotationStatus.DONE)
         if len(finished_annotation_from_task) == task.redundancy :
-            update_task_status_crud(db ,task.id,TaskStatus.DONE)
+            finished_task = update_task_status_crud(db ,task.id,TaskStatus.DONE)
             finish_step(db,task.step_id)
 
-def undone_task(db, task: Task ):
-    finished_annotation_from_task = get_annotations_by_task_id_crud(db,task.id,None,InOutEnum.OUT,AnnotationStatus.DONE)
-    if len(finished_annotation_from_task) < task.redundancy :
-        update_task_status_crud(db ,task.id,TaskStatus.PENDING)
+    return finished_task
 
+
+def undone_task(db, task_id: int ):
+    updated_task = None
+    task = get_task_by_id(db,task_id)
+    finished_annotation_from_task = get_annotations_by_task_id_crud(db,task_id,None,InOutEnum.OUT,AnnotationStatus.DONE)
+    if len(finished_annotation_from_task) < task.redundancy :
+        updated_task = update_task_status_crud(db ,task.id,TaskStatus.PENDING)
+    return updated_task
 
 def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
     """
@@ -110,8 +116,6 @@ def delete_task_crud(db: Session, task: Task):
 def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> Task:
     task = get_task_by_id(db, task_id)
     task.status = status
-    if status == TaskStatus.DONE:
-        task.validated_at = func.now()
     task.updated_at = func.now()
     db.commit()
     db.refresh(task)
