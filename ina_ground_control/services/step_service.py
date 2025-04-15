@@ -25,7 +25,11 @@ def get_step_by_id(db: Session, step_id: int) -> Step:
     Returns:
         Step: The step object if found, otherwise None.
     """
-    return db.query(Step).filter(Step.id == step_id).first()
+    step = db.query(Step).filter(Step.id == step_id).first()
+    if step is None:
+        logger.error("Failed to retrieve step with id: %d", step_id)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
+    return step
 
 
 def create_step_crud(step: StepCreate, db: Session):
@@ -48,9 +52,6 @@ def create_step_crud(step: StepCreate, db: Session):
 
 def finish_step(db: Session, step_id: int):
     step = get_step_by_id(db,step_id)
-    if step is None:
-        logger.error("Failed to retrieve step with id: %d", step_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
     tasks_finished = list(filter(lambda task : task.status == TaskStatus.DONE, step.tasks))
     if ( len(tasks_finished) / len(step.tasks) ) * 100 >= step.completeness_rate :
         finish_step_crud(db ,step)
@@ -68,11 +69,10 @@ def update_data_step_crud(step_id: int, step: StepCreate, db: Session):
         Step: The updated Step object if the step exists, otherwise None.
     """
     db_step = get_step_by_id(db, step_id=step_id)
-    if db_step is not None:
-        for key, value in step.model_dump().items():
-            setattr(db_step, key, value)
-        db.commit()
-        db.refresh(db_step)
+    for key, value in step.model_dump().items():
+        setattr(db_step, key, value)
+    db.commit()
+    db.refresh(db_step)
     return db_step
 
 
@@ -87,10 +87,9 @@ def delete_step_crud(db: Session, step_id: int):
     Returns:
     Step: The deleted Step object if the step exists, otherwise None.
     """
-    db_step = db.query(Step).filter(Step.id == step_id).first()
-    if db_step is not None:
-        db.delete(db_step)
-        db.commit()
+    db_step = get_step_by_id(db, step_id)
+    db.delete(db_step)
+    db.commit()
     return db_step
 
 

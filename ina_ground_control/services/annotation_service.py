@@ -93,9 +93,7 @@ def get_annotations_by_task_id_crud(db: Session,
         query = query.filter(Annotation.user_email == user_email)
     if status is not None :
         if isinstance(status,list):
-            for anno_status in status:
-                query = query.filter(Annotation.annotation_status == anno_status)
-                pass
+            query = query.filter(Annotation.annotation_status.in_(status))
         else:
             query = query.filter(Annotation.annotation_status == status)
 
