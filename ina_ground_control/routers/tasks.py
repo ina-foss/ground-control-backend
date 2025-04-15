@@ -33,11 +33,11 @@ from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.media_schemas import MediaCreate
-from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto
+from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto, PaginatedTasksDTO
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
-    delete_task_crud
+    delete_task_crud, get_tasks_by_step_id_crud
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["task"])
@@ -166,3 +166,17 @@ def delete_task(task_id: int, db: Session = Depends(get_db),
         logger.error("Failed to delete task with id: %d", task_id)
         raise GroundControlException(ErrorCode.GENERIC_OPERATION_FAILED, action="delete", resource="task", id=task_id)
     return deleted_task
+
+@router.get("/tasks/by-step", response_model=PaginatedTasksDTO)
+def get_tasks_by_step_id(
+        step_id: int,
+        page: int,
+        size: int,
+        db: Session = Depends(get_db)
+):
+    """
+    Retrieve a paginated list of tasks filtered by step_id.
+    """
+    tasks, total = get_tasks_by_step_id_crud(db, step_id, page, size)
+    return PaginatedTasksDTO(task_requests=tasks, total_records=total)
+
