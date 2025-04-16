@@ -63,12 +63,14 @@ class TaskListDto(TaskCreateDto):
     step: Optional[StepProjectDto]
     media: Optional[MediaDto]
 
+
     class Config:
         orm_mode: True
 
 
 from .step_schemas import StepProjectDto
 from .media_schemas import MediaDto
+
 
 class PaginatedTasksDTO(BaseModel):
     """
@@ -77,3 +79,6 @@ class PaginatedTasksDTO(BaseModel):
     """
     task_requests: List[TaskListDto]
     total_records: int
+
+class ExpirationDateUpdateDto(BaseModel):
+    expiration_date: datetime
