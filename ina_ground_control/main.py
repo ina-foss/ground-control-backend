@@ -95,7 +95,10 @@ async def log_user(request: Request, call_next):
     # Add user email to the log record
     response = await call_next(request)
     user = request.scope.get("user", {})
-    user_email = user.email
+    if isinstance(user,dict) :
+        user_email = user.get("email","Unknown")
+    else:
+        user_email = user.email
     user_logger = logging.getLogger("uvicorn.debug")
     user_logger.info("User: %s",user_email)
     return response
