@@ -7,11 +7,12 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 from typing import Any, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import case, func
+from datetime import datetime
 from ina_ground_control.models.step_model import Step
 from ina_ground_control import logger
+from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
 from ina_ground_control.services.step_service import finish_step
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
-from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
 from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.models.task_model import Task, TaskStatus
@@ -167,6 +168,28 @@ def get_tasks_by_step_id_crud(
     except Exception as e:
         logger.error("Failed to retrieve all tasks of step: %s", e)
         raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Unexpected error while getting tasks") from e
+
+
+def update_expiration_date_task_crud(task_id: int, date: datetime, db: Session):
+    """
+    Update the expiration date of an existing task in the database.
+
+    Attributes:
+        task_id (int): The unique identifier of the task to update.
+        date (datetime): The new expiration date.
+        db (Session): The database session used for querying.
+
+    Returns:
+        Task: The updated Task object.
+
+    Raises:
+        ValueError: If the task is not found.
+    """
+    found_task = get_task_by_id(db, task_id=task_id)
+    found_task.expiration_date = date
+    db.commit()
+    db.refresh(found_task)
+    return found_task
 
 
 

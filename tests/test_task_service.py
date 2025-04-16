@@ -7,13 +7,14 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timezone, timedelta
+from ina_ground_control.exception.exceptions import GroundControlException
 from ina_ground_control.database import Base
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate, AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus, TaskListDto
 from ina_ground_control.services.task_service import finish_task, get_task_by_id, create_task_crud, undone_task, update_data_task_crud, \
-    delete_task_crud, update_task_status_crud, get_tasks_by_step_id_crud
-from ina_ground_control.exception.exceptions import GroundControlException
+    delete_task_crud, update_task_status_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud
 
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing
@@ -233,5 +234,20 @@ def test_get_tasks_by_step_id_crud(db_session: Session):
     assert isinstance(tasks[0], TaskListDto)
     assert {t.id for t in tasks} == {task2.id}
     assert all(t.status in [TaskStatus.IN_PROGRESS, TaskStatus.PENDING] for t in tasks)
+
+def test_update_expiration_date_task_crud(db_session: Session):
+    # Step 1: Create a new task with an initial expiration date
+    initial_expiration_date = datetime.now(timezone.utc)
+    updated_task = {
+        **task_data,
+        "expiration_date": initial_expiration_date,
+        "status": TaskStatus.PENDING
+    }
+    created_task = create_task_crud(TaskCreateDto(**updated_task), db_session)
+    new_expiration_date = datetime.now(timezone.utc) + timedelta(days=5)
+    updated_task = update_expiration_date_task_crud(created_task.id, new_expiration_date, db_session)
+    assert updated_task.expiration_date.astimezone(timezone.utc) == new_expiration_date
+    assert updated_task.id == created_task.id
+
 
 
