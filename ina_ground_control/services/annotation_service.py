@@ -64,7 +64,6 @@ def get_annotations_by_id_crud(db: Session, annotation_id: int):
         raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)
     return annotation
 
-
 def get_annotations_by_task_id_crud(db: Session,
                                     task_id: int,
                                     user_email: str | None,

@@ -14,7 +14,7 @@ config = context.config
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name) # NOSONAR
 
 # Adjust the system path to include the parent directory of the current script
 # This allows us to import modules from the project root
