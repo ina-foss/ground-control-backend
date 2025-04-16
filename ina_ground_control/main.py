@@ -1,11 +1,12 @@
 """
 Ground control application, including routes, middleware, and configuration.
 """
+import logging
 import os
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi_keycloak_middleware import (
@@ -86,6 +87,18 @@ app.add_middleware(
     allow_headers=settings.cors.allow_headers,
     expose_headers=settings.cors.expose_headers
 )
+
+
+
+@app.middleware("http")
+async def log_user(request: Request, call_next):
+    # Add user email to the log record
+    response = await call_next(request)
+    user = request.scope.get("user", {})
+    user_email = user.email
+    user_logger = logging.getLogger("uvicorn.debug")
+    user_logger.info("User: %s",user_email)
+    return response
 
 
 app.add_exception_handler(GroundControlException, default_exception_handler)
