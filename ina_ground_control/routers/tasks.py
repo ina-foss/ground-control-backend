@@ -37,7 +37,7 @@ from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, Ta
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
-    delete_task_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud
+    delete_task_crud, skip_expired_task_crud, activate_task_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["task"])
@@ -202,4 +202,28 @@ def update_task_expiration(
     """
     updated_task = update_expiration_date_task_crud(task_id, expiration_date, db)
     return updated_task
+
+@router.put("/tasks/{task_id}/skip-if-expired", response_model=TaskWithIdDto)
+def skip_expired_task(task_id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint to mark a task and its annotations as 'SKIPPED' if it is expired.
+    """
+    task = skip_expired_task_crud(db, task_id)
+    return task
+
+@router.post("/task/{task_id}/activate", response_model=TaskListDto)
+def activate_task(task_id: int, db: Session = Depends(get_db)):
+    """
+    Activate a task by updating its status from 'DRAFT' to 'PENDING'.
+
+    Args:
+        task_id (int): The unique identifier of the task to activate.
+        db (Session): SQLAlchemy database session.
+
+    Returns:
+        TaskListDto: The updated task object.
+    """
+    task = activate_task_crud(db, task_id)
+    return task
+
 

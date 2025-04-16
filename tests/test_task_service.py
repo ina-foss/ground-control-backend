@@ -14,7 +14,10 @@ from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate, 
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus, TaskListDto
 from ina_ground_control.services.task_service import finish_task, get_task_by_id, create_task_crud, undone_task, update_data_task_crud, \
-    delete_task_crud, update_task_status_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud
+    delete_task_crud, update_task_status_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud, \
+    skip_expired_task_crud, activate_task_crud
+from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
+
 
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing
@@ -211,6 +214,7 @@ def test_update_task_status_crud(db_session: Session):
 
     assert task.status == TaskStatus.DONE, "Task should be DONE now"
 
+
 def test_get_tasks_by_step_id_crud(db_session: Session):
     # 1. Create a project and step
     create_project_crud(db_session, ProjectBaseDto(**project_data))
@@ -251,3 +255,23 @@ def test_update_expiration_date_task_crud(db_session: Session):
 
 
 
+def test_skip_expired_task_crud(db_session: Session):
+    expired_task_data = {
+        **task_data,
+        "expiration_date": datetime.now(timezone.utc) - timedelta(days=1),
+        "status": TaskStatus.PENDING
+    }
+    created_task = create_task_crud(TaskCreateDto(**expired_task_data), db_session)
+    updated_task = skip_expired_task_crud(db_session, created_task.id)
+    assert updated_task is not None
+    assert updated_task.status == TaskStatus.SKIPPED
+    for direction in [InOutEnum.IN, InOutEnum.OUT]:
+        annotations = get_annotations_by_task_id_crud(db_session, created_task.id, None, direction, None)
+    for annotation in annotations:
+        assert annotation.annotation_status == AnnotationStatus.SKIPPED
+
+def test_activate_task_crud_success(db_session: Session):
+    created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
+    updated_task = activate_task_crud(db_session, task_id=created_task.id)
+    assert updated_task is not None
+    assert updated_task.status == TaskStatus.PENDING

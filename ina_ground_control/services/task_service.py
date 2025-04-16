@@ -7,7 +7,7 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 from typing import Any, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import case, func
-from datetime import datetime
+from datetime import datetime, timezone
 from ina_ground_control.models.step_model import Step
 from ina_ground_control import logger
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
@@ -119,7 +119,6 @@ def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> T
     db.refresh(task)
     return task
 
-
 def get_tasks_by_step_id_crud(
         db: Session,
         step_id: int,
@@ -191,5 +190,50 @@ def update_expiration_date_task_crud(task_id: int, date: datetime, db: Session):
     db.refresh(found_task)
     return found_task
 
+def skip_expired_task_crud(db: Session, task_id: int) -> Task:
+    """
+    Mark a task and its annotations as 'SKIPPED' if the task's expiration date is in the past.
 
+    Args:
+        db (Session): SQLAlchemy database session.
+        task_id (int): ID of the task to check and update.
+
+    Returns:
+        Task: The updated task object.
+    """
+    task = get_task_by_id(db, task_id=task_id)
+
+    if task.expiration_date and task.expiration_date.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        task.status = TaskStatus.SKIPPED
+        task.updated_at = func.now()
+        # Get both IN and OUT annotations
+        for direction in [InOutEnum.IN, InOutEnum.OUT]:
+            annotations = get_annotations_by_task_id_crud(db, task_id, None, direction, None)
+            for annotation in annotations:
+                annotation.annotation_status = AnnotationStatus.SKIPPED
+                annotation.updated_at = func.now()
+                db.commit()
+        db.commit()
+        db.refresh(task)
+    return task
+
+def activate_task_crud(db: Session, task_id: int) -> Task:
+    """
+    Transition a task's status from 'DRAFT' to 'PENDING'.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+        task_id (int): The ID of the task to activate.
+
+    Returns:
+        Task: The updated task object with status set to 'PENDING'.
+
+    Raises:
+        GroundControlException: If the task is not found.
+    """
+    task = get_task_by_id(db, task_id=task_id)
+    task.status = TaskStatus.PENDING
+    task.updated_at = func.now()
+    db.commit()
+    return task
 

@@ -18,7 +18,7 @@ from enum import Enum as PyEnum
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import and_
-
+from sqlalchemy.sql.expression import func
 from ina_ground_control.database import Base
 from ina_ground_control.models.annotation_task_association import AnnotationTask
 
@@ -87,8 +87,8 @@ class Task(Base):
     expiration_date = Column(DateTime)
     redundancy = Column(Integer, nullable=False, default=1)
     priority = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     step_id = Column(Integer, ForeignKey("step.id"))
     media_id = Column(Integer, ForeignKey("media.id"))
 
