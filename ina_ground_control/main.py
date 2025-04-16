@@ -128,16 +128,18 @@ def custom_openapi():
         if "securitySchemes" not in openapi_schema["components"]:
             openapi_schema["components"]["securitySchemes"] = {}
 
-        # Add custom OAuth2 security scheme
-        openapi_schema["components"]["securitySchemes"]["OAuth2ClientCredentials"] = {
-            "type": "oauth2",
-            "flows": {
-                "clientCredentials": {
-                    "tokenUrl": f"{settings.sso.url}realms/{settings.sso.realm}/protocol/openid-connect/token",
-                    "scopes": {}
-                }
-            }
+        # Add custom openId security scheme
+        openapi_schema["components"]["securitySchemes"]["openid"] = {
+            "type": "openIdConnect",
+            "openIdConnectUrl": "http://localhost:9080/realms/ground-control/.well-known/openid-configuration"
         }
+
+        # Apply openId securitySchemes on every routes
+        openapi_schema["security"] = [
+            {
+                "openid": ["admin"]
+            }
+        ]
 
         app.openapi_schema = openapi_schema  # Cache the schema
         return app.openapi_schema
