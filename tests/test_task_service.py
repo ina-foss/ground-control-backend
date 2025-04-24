@@ -8,17 +8,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timezone, timedelta
-from ina_ground_control.exception.exceptions import GroundControlException
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 from ina_ground_control.database import Base
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate, AnnotationStatus
-from ina_ground_control.models.annotation_task_association import InOutEnum
+from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
+from ina_ground_control.models.task_model import Task
+from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus, TaskListDto
 from ina_ground_control.services.task_service import finish_task, get_task_by_id, create_task_crud, undone_task, update_data_task_crud, \
     delete_task_crud, update_task_status_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud, \
     skip_expired_task_crud, activate_task_crud
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
-
-
+from unittest.mock import MagicMock
 # Fixture to create an SQLite in-memory database for testing
 # Create an in-memory SQLite database for testing
 
@@ -239,6 +240,27 @@ def test_get_tasks_by_step_id_crud(db_session: Session):
     assert {t.id for t in tasks} == {task2.id}
     assert all(t.status in [TaskStatus.IN_PROGRESS, TaskStatus.PENDING] for t in tasks)
 
+def test_get_tasks_by_step_id_crud_unexpected_error():
+    mock_db = MagicMock()
+    mock_db.query.side_effect = Exception("DB error")
+
+    with pytest.raises(GroundControlException) as exc_info:
+        get_tasks_by_step_id_crud(mock_db, step_id=1)
+
+    assert exc_info.value.code == ErrorCode.GENERIC_CLIENT_ERROR.code
+    assert "Unexpected error while getting tasks" in exc_info.value.message
+
+def test_get_tasks_by_step_id_crud_is_none():
+    mock_db = MagicMock()
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+
+    with pytest.raises(GroundControlException) as exc_info:
+        get_tasks_by_step_id_crud(mock_db, step_id=5)
+
+    assert exc_info.value.code == ErrorCode.RESOURCE_NOT_FOUND.code
+    print("test",exc_info.value.message)
+    assert "Step" in exc_info.value.message
+
 def test_update_expiration_date_task_crud(db_session: Session):
     # Step 1: Create a new task with an initial expiration date
     initial_expiration_date = datetime.now(timezone.utc)
@@ -275,3 +297,48 @@ def test_activate_task_crud_success(db_session: Session):
     updated_task = activate_task_crud(db_session, task_id=created_task.id)
     assert updated_task is not None
     assert updated_task.status == TaskStatus.PENDING
+
+def create_task_with_annotations(db: Session, expired: bool = True):
+    expiration_date = datetime.now(timezone.utc) - timedelta(days=1) if expired else datetime.now(timezone.utc) + timedelta(days=1)
+    task = Task(name="test",expiration_date=expiration_date, status=TaskStatus.PENDING)
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+
+    # Ajout des annotations IN et OUT
+    for direction in [InOutEnum.IN, InOutEnum.OUT]:
+        annotation = Annotation(
+            annotation_status=AnnotationStatus.PENDING,
+            user_email= "test@test.fr"
+        )
+        db.add(annotation)
+        db.commit()
+        db.refresh(annotation)
+        annotation_task = AnnotationTask(
+            annotation_id=annotation.id,
+            task_id=task.id,
+            direction=direction
+        )
+        db.add(annotation_task)
+
+    db.commit()
+    return task
+def test_skip_expired_task_crud_marks_task_and_annotations_as_skipped(db_session: Session):
+    # Setup : créer une tâche expirée avec deux annotations
+    task = create_task_with_annotations(db_session, expired=True)
+
+    # Act : exécuter la fonction à tester
+    updated_task = skip_expired_task_crud(db_session, task.id)
+
+    # Assert : vérifier que la tâche est passée à SKIPPED
+    assert updated_task.status == TaskStatus.SKIPPED
+
+
+    # Vérifier que toutes les annotations sont passées à SKIPPED
+    annotations = db_session.query(Annotation).join(
+        AnnotationTask, Annotation.id == AnnotationTask.annotation_id
+    ).filter_by(task_id=task.id).all()
+    for annotation in annotations:
+        assert annotation.annotation_status == AnnotationStatus.SKIPPED
+
+

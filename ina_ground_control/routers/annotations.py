@@ -6,6 +6,7 @@ or the error status if something went wrong.
 
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, Query, Request, BackgroundTasks
+from datetime import datetime
 from sqlalchemy.orm import Session
 from ina_ground_control.constants.roles import Role
 from ina_ground_control.database import get_db
@@ -19,10 +20,13 @@ from ina_ground_control.services.annotation_service import (
     get_annotations_by_id_crud,
     udpate_annotation_result_crud,
     skip_annotation_crud,
-    finish_annotation_crud
+    finish_annotation_crud,
+    get_all_annotations_crud
 )
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 from ina_ground_control import logger
+from ina_ground_control.models.annotation_model import AnnotationStatus
+
 
 router = APIRouter(tags=["annotation"])
 
@@ -116,3 +120,23 @@ def finish_annotation(
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
         raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)
     return annotation
+
+@router.get("/annotations", response_model=list[AnnotationDto])
+def get_all_annotations( user_email: str = Query(None, description="user_email"),
+                         status: AnnotationStatus = Query(None, description="annotation_status"),
+                         project_id: int  = Query(None, description="project id"),
+                         step_id: int  = Query(None, description="step id"),
+                         start_created_at :datetime= Query(None, description="start create date"),
+                         end_created_at :datetime= Query(None, description="end create date"),
+                         start_updated_at :datetime= Query(None, description="start update date"),
+                         end_updated_at :datetime= Query(None, description="end update date"),
+                         start_validated_at :datetime= Query(None, description="start validation date"),
+                         end_validated_at :datetime= Query(None, description="end validation date"),
+                         skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) -> list[Annotation]:
+    """Get a list of annotations that match the search params"""
+    annotations = get_all_annotations_crud(db,user_email=user_email, status=status, project_id=project_id,step_id=step_id,
+                                           start_created_at=start_created_at, end_created_at=end_created_at,
+                                           start_updated_at=start_updated_at,end_updated_at=end_updated_at,
+                                           start_validated_at=start_validated_at,end_validated_at=end_validated_at, skip=skip, limit=limit)
+    return annotations
+
