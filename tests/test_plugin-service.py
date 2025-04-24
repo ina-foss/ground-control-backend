@@ -7,7 +7,7 @@ from ina_ground_control.database import Base
 from ina_ground_control.models.plugin_model import TypePlugin, DisplayZone
 from ina_ground_control.schemas.plugin_schemas import PluginCreate
 from ina_ground_control.services.plugin_service import get_plugins_search, create_plugin_crud, delete_plugin_crud, \
-    get_plugin_by_id
+    get_plugin_by_id,get_plugins_crud
 
 
 @pytest.fixture(scope="session")
@@ -138,6 +138,9 @@ def test_delete_plugin_crud(db_session: Session):
                         "data_type": "test"}
     }
     created_plugin = create_plugin_crud(PluginCreate(**plugin_1), db_session)
+
+    getted_plugin= get_plugins_crud(db_session, created_plugin.id, created_plugin.type, created_plugin.display_zone)
+    assert getted_plugin is not None
 
     delete_plugin_crud(db_session, created_plugin.id)
 

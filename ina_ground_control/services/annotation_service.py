@@ -10,12 +10,15 @@ Functions:
 """
 
 from typing import Any, Dict
-
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
-
+from typing import Optional
+from datetime import datetime
 from ina_ground_control import logger
 from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
+from ina_ground_control.models.task_model import Task
+from ina_ground_control.models.step_model import Step
 from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
@@ -113,6 +116,7 @@ def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotatio
     """
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     db_annotation.result = result
+    db_annotation.updated_at = func.now()
     db.commit()
     db.refresh(db_annotation)
     return db_annotation
@@ -150,3 +154,73 @@ def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: i
     db.commit()
     db.refresh(db_annotation)
     return db_annotation
+
+def get_all_annotations_crud(db: Session,
+                             user_email: Optional[str] = None,
+                             status: Optional[AnnotationStatus] = None,
+                             project_id: Optional[int] = None,
+                             step_id: Optional[int] = None,
+                             start_created_at: Optional[datetime] = None,
+                             end_created_at: Optional[datetime] = None,
+                             start_updated_at: Optional[datetime] = None,
+                             end_updated_at: Optional[datetime] = None,
+                             start_validated_at: Optional[datetime] = None,
+                             end_validated_at: Optional[datetime] = None,
+                             skip: int = 0, limit: int = 100):
+    """
+    Returns annotations filtered according to the provided parameters.
+    If no parameters are given, all annotations are returned.
+
+    Parameters:
+    db (Session): The database session used for querying.
+    skip (int): The number of records to skip for pagination. Default is 0.
+    limit (int): The maximum number of records to return. Default is 100.
+
+    Returns:
+    List[Annotation]: A list of Annotation objects.
+    """
+    query = db.query(Annotation)
+
+    if step_id or project_id:
+        query = query.join(AnnotationTask, Annotation.id == AnnotationTask.annotation_id)
+        query = query.join(Task, Task.id == AnnotationTask.task_id)
+        query = query.join(Step, Step.id == Task.step_id)
+
+    filters = []
+
+    if user_email:
+        filters.append(Annotation.user_email == user_email)
+    if status:
+        filters.append(Annotation.annotation_status == status)
+
+
+    if step_id:
+        filters.append(Step.id == step_id)
+    if project_id:
+        filters.append(Step.project_id == project_id)
+
+    if start_created_at and end_created_at:
+        filters.append(Annotation.created_at.between(start_created_at, end_created_at))
+    elif start_created_at:
+        filters.append(Annotation.created_at >= start_created_at)
+    elif end_created_at:
+        filters.append(Annotation.created_at <= end_created_at)
+
+    if start_updated_at and end_updated_at:
+        filters.append(Annotation.updated_at.between(start_updated_at, end_updated_at))
+    elif start_updated_at:
+        filters.append(Annotation.updated_at >= start_updated_at)
+    elif end_updated_at:
+        filters.append(Annotation.updated_at <= end_updated_at)
+
+    if start_validated_at and end_validated_at:
+        filters.append(Annotation.validated_at.between(start_validated_at, end_validated_at))
+    elif start_validated_at:
+        filters.append(Annotation.validated_at >= start_validated_at)
+    elif end_validated_at:
+        filters.append(Annotation.validated_at <= end_validated_at)
+
+    if filters:
+        query = query.filter(and_(*filters))
+
+    return query.offset(skip).limit(limit).all()

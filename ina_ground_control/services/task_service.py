@@ -138,7 +138,7 @@ def get_tasks_by_step_id_crud(
         found_step = db.query(Step).filter(Step.id == step_id).first()
         if found_step is None:
             logger.error("Failed to retrieve step with id: %d", step_id)
-            raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step")
+            raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
         else:
             offset = page * size
 
@@ -164,6 +164,8 @@ def get_tasks_by_step_id_crud(
 
             return tasks, total_records
 
+    except GroundControlException:
+        raise
     except Exception as e:
         logger.error("Failed to retrieve all tasks of step: %s", e)
         raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Unexpected error while getting tasks") from e

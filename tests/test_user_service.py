@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from ina_ground_control.database import Base
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
-from ina_ground_control.services.user_service import create_user_crud, get_user_by_email_crud
+from ina_ground_control.services.user_service import create_user_crud, get_user_by_email_crud,get_users
 
 
 @pytest.fixture(scope="session")
@@ -62,3 +62,13 @@ def test_get_user_by_email(db: Session):
 
     assert retrieved_user.email == test_user["email"]
     assert retrieved_user.role == test_user["role"]
+
+def test_get_users(db: Session):
+    """
+    Retrieve the User object created before and check if it corresponds to the initial data
+    """
+
+    retrieved_users = get_users(db,skip=0, limit=10)
+    assert len(retrieved_users) == 1
+    assert retrieved_users[0].email == test_user["email"]
+    assert retrieved_users[0].role == test_user["role"]
