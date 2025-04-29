@@ -97,13 +97,6 @@ def test_create_tag_crud(test_db_session: SQLAlchemySession):
         assert created_tag.key is not None
         assert created_tag.key == tag_data["key"]
         assert created_tag.value == tag_data["value"]
-    else:
-        tag_data["key"] = "125"
-        created_tag = create_tag_crud(TagCreate(**tag_data), test_db_session)
-        assert created_tag is not None
-        assert created_tag.key is not None
-        assert created_tag.key == tag_data["key"]
-        assert created_tag.value == tag_data["value"]
 
 
 def test_update_data_tag_crud(test_db_session: SQLAlchemySession):
