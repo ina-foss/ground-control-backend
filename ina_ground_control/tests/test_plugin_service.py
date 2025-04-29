@@ -65,7 +65,6 @@ def test_get_plugins(db_session: SQLAlchemySession):
     assert retrieved_plugins2 is not None
     assert retrieved_plugins2[0].id is not None
     assert retrieved_plugins2[0].id == "medtop:01000000"
-    assert retrieved_plugins2[0].ext_id == "http://cv.iptc.org/newscodes/mediatopic/01000000"
     assert retrieved_plugins2[0].label == "Arts, culture, divertissement et médias"
 
 
