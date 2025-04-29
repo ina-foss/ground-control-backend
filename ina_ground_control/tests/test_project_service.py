@@ -1,42 +1,9 @@
 """Unit tests for Project services"""
 # pylint: disable=redefined-outer-name
-import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as SQLAlchemySession
-from sqlalchemy.orm import sessionmaker
-
-from ina_ground_control.database import Base
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 from ina_ground_control.services.project_service import create_project_crud, get_projects, get_project_by_id, \
     update_project_crud, delete_project_crud
-
-
-@pytest.fixture(scope="session")
-def db_engine():
-    """
-        Mock the databalse using sqlite
-    """
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    Base.metadata.drop_all(bind=engine)
-    engine.dispose()
-
-
-@pytest.fixture(scope="session")
-def db(db_engine):
-    """
-        Create the connection session to interract with sqlite
-    """
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = session_factory()
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
-
 
 project_data = {
     "title": "Test Project 1",
@@ -52,7 +19,7 @@ project_data = {
 }
 
 
-def test_get_projects(db: SQLAlchemySession):
+def test_get_projects(db_session: SQLAlchemySession):
     """
         Test to retrieve all the project in the database
     """
@@ -82,30 +49,30 @@ def test_get_projects(db: SQLAlchemySession):
     }
 
     created_project_1 = create_project_crud(
-        db, ProjectBaseDto(**project_data_1))
+        db_session, ProjectBaseDto(**project_data_1))
     created_project_2 = create_project_crud(
-        db, ProjectBaseDto(**project_data_2))
+        db_session, ProjectBaseDto(**project_data_2))
 
-    retrieved_projects = get_projects(db)
+    retrieved_projects = get_projects(db_session)
 
     assert retrieved_projects is not None
-    assert retrieved_projects[0].id == created_project_1.id
-    assert retrieved_projects[0].description == project_data_1["description"]
-    assert retrieved_projects[0].created_by == project_data_1["created_by"]
-    assert retrieved_projects[0].title == project_data_1["title"]
-    assert retrieved_projects[1].title == project_data_2["title"]
-    assert retrieved_projects[1].description == project_data_2["description"]
-    assert retrieved_projects[1].created_by == project_data_2["created_by"]
-    assert retrieved_projects[1].id == created_project_2.id
+    assert retrieved_projects[2].id == created_project_1.id
+    assert retrieved_projects[2].description == project_data_1["description"]
+    assert retrieved_projects[2].created_by == project_data_1["created_by"]
+    assert retrieved_projects[2].title == project_data_1["title"]
+    assert retrieved_projects[3].title == project_data_2["title"]
+    assert retrieved_projects[3].description == project_data_2["description"]
+    assert retrieved_projects[3].created_by == project_data_2["created_by"]
+    assert retrieved_projects[3].id == created_project_2.id
 
 
-def test_get_project_by_id(db: SQLAlchemySession):
+def test_get_project_by_id(db_session: SQLAlchemySession):
     """
         Test to get a singualr project given its id.
     """
-    created_project = create_project_crud(db, ProjectBaseDto(**project_data))
+    created_project = create_project_crud(db_session, ProjectBaseDto(**project_data))
 
-    retrieved_project = get_project_by_id(db, created_project.id)
+    retrieved_project = get_project_by_id(db_session, created_project.id)
 
     assert retrieved_project is not None
     assert retrieved_project.id == created_project.id
@@ -114,11 +81,11 @@ def test_get_project_by_id(db: SQLAlchemySession):
     assert retrieved_project.created_by == project_data["created_by"]
 
 
-def test_create_project_crud(db: SQLAlchemySession):
+def test_create_project_crud(db_session: SQLAlchemySession):
     """
         Test the creation of a project
     """
-    created_project = create_project_crud(db, ProjectBaseDto(**project_data))
+    created_project = create_project_crud(db_session, ProjectBaseDto(**project_data))
 
     assert created_project is not None
     assert created_project.id is not None
@@ -127,11 +94,11 @@ def test_create_project_crud(db: SQLAlchemySession):
     assert created_project.created_by == project_data["created_by"]
 
 
-def test_update_project_crud(db: SQLAlchemySession):
+def test_update_project_crud(db_session: SQLAlchemySession):
     """
         Test update a project attributes (title, description and author)
     """
-    created_project = create_project_crud(db, ProjectBaseDto(**project_data))
+    created_project = create_project_crud(db_session, ProjectBaseDto(**project_data))
 
     updated_task_data = {
         "title": "Test Project 2",
@@ -145,10 +112,10 @@ def test_update_project_crud(db: SQLAlchemySession):
         "pinned_at": "2022-12-27 08:26:49.219717",
         "created_by": "jane@example.com",
     }
-    update_project_crud(db, ProjectBaseDto(
+    update_project_crud(db_session, ProjectBaseDto(
         **updated_task_data), created_project.id)
 
-    retrieved_updated_project = get_project_by_id(db, created_project.id)
+    retrieved_updated_project = get_project_by_id(db_session, created_project.id)
 
     assert retrieved_updated_project is not None
     assert retrieved_updated_project.title == updated_task_data["title"]
@@ -156,15 +123,15 @@ def test_update_project_crud(db: SQLAlchemySession):
     assert retrieved_updated_project.created_by == updated_task_data["created_by"]
 
 
-def test_delete_project_crud(db: SQLAlchemySession):
+def test_delete_project_crud(db_session: SQLAlchemySession):
     """
         Test the deletion of a project given its id
     """
-    created_project = create_project_crud(db, ProjectBaseDto(**project_data))
+    created_project = create_project_crud(db_session, ProjectBaseDto(**project_data))
 
-    delete_project_crud(db, created_project.id)
+    delete_project_crud(db_session, created_project.id)
 
-    retrieved_project = get_project_by_id(db, created_project.id)
+    retrieved_project = get_project_by_id(db_session, created_project.id)
 
     assert created_project is not None
     assert retrieved_project is None

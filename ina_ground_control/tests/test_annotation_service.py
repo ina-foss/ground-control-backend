@@ -1,11 +1,8 @@
 """Unit tests for Annotation services"""
 # pylint: disable=redefined-outer-name
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
-from ina_ground_control.database import Base
 from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
@@ -18,33 +15,36 @@ from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 from ina_ground_control.services.project_service import create_project_crud, update_project_crud
 
-
-@pytest.fixture(scope="session")
-def db_engine():
-    """
-        Mock the databalse using sqlite
-    """
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    Base.metadata.drop_all(bind=engine)
-    engine.dispose()
-
-
-@pytest.fixture(scope="session")
-def db_session(db_engine):
-    """
-        Create the connection session to interract with sqlite
-    """
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = session_factory()
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
-
+step_data_1 = {
+    "title": "step 1",
+    "description": "la premiere step",
+    "annotation_type": "segmentation",
+    "status": "draft",
+    "pinned_at": "2022-12-27 08:26:49.219717",
+    "project_id": 1,
+}
+task_data = {
+    "name": "Test Task",
+    "instruction": "Test instruction",
+    "data": {"key": "value"},
+    "data_type": "ldd",
+    "status": "draft",
+    "lead_time": 1,
+    "step_id": 1,
+    "media_id": 1,
+}
+project_data = {
+    "title": "Test Project 1",
+    "description": "Test description 2",
+    "status": "draft",
+    "annotation_type": "segmentation",
+    "is_published": True,
+    "allow_skip": True,
+    "control_weights": 10,
+    "empty_annotations": True,
+    "pinned_at": "2022-12-27 08:26:49.219717",
+    "created_by": "john@example.com",
+}
 
 annotation_data = {
     "annotation": {
@@ -178,38 +178,6 @@ def test_update_annotation_result_crud(db_session:Session):
 
 
 def test_skip_annotation_crud(db_session: Session):
-    step_data_1 = {
-        "title": "step 1",
-        "description": "la premiere step",
-        "annotation_type": "segmentation",
-        "status": "draft",
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "project_id": 1,
-    }
-    task_data = {
-        "name": "Test Task",
-        "instruction": "Test instruction",
-        "data": {"key": "value"},
-        "data_type": "ldd",
-        "status": "draft",
-        "lead_time": 1,
-        "step_id": 1,
-        "media_id": 1,
-    }
-    project_data = {
-        "title": "Test Project 1",
-        "description": "Test description 2",
-        "status": "draft",
-        "annotation_type": "segmentation",
-        "is_published": True,
-        "allow_skip": True,
-        "control_weights": 10,
-        "empty_annotations": True,
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "created_by": "john@example.com",
-    }
-
-
 
     created_project = create_project_crud(db_session,ProjectBaseDto(**project_data))
     create_step_crud(StepCreate(**step_data_1), db_session)
@@ -267,39 +235,6 @@ def test_get_all_annotations_crud_filters(db_session: Session):
         db_session, AnnotationFullCreate(**annotation_data_2))
     created_annotation_3 = create_annotation_crud(
         db_session, AnnotationFullCreate(**annotation_data_3))
-
-    step_data_1 = {
-        "title": "step 1",
-        "description": "la premiere step",
-        "annotation_type": "segmentation",
-        "status": "draft",
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "project_id": 1,
-    }
-    task_data = {
-        "name": "Test Task",
-        "instruction": "Test instruction",
-        "data": {"key": "value"},
-        "data_type": "ldd",
-        "status": "draft",
-        "lead_time": 1,
-        "step_id": 1,
-        "media_id": 1,
-    }
-    project_data = {
-        "title": "Test Project 1",
-        "description": "Test description 2",
-        "status": "draft",
-        "annotation_type": "segmentation",
-        "is_published": True,
-        "allow_skip": True,
-        "control_weights": 10,
-        "empty_annotations": True,
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "created_by": "john@example.com",
-    }
-
-
 
     created_project = create_project_crud(db_session,ProjectBaseDto(**project_data))
     created_step_1 = create_step_crud(StepCreate(**step_data_1), db_session)

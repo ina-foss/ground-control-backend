@@ -1,42 +1,9 @@
 """Unit tests for Task Comment services"""
 # pylint: disable=redefined-outer-name
-import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker
-
-from ina_ground_control.database import Base
 from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate
 from ina_ground_control.services.task_comment_service import get_task_comment_by_id, create_task_comment_crud, \
     update_task_comment_crud, delete_task_comment_crud, get_task_comments, get_task_comment_by_task_id
-
-
-@pytest.fixture(scope="session")
-def db_engine():
-    """
-        Mock the databalse using sqlite
-    """
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    Base.metadata.drop_all(bind=engine)
-    engine.dispose()
-
-
-@pytest.fixture(scope="session")
-def db_session(db_engine):
-    """
-        Create the connection session to interract with sqlite
-    """
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = session_factory()
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
-
 
 def test_get_task_comments(db_session: Session):
     task_comment_data_1 = {
