@@ -59,6 +59,3 @@ class TestPluginConfigDTO(unittest.TestCase):
         for _, target_class in TYPE_MAPPING.items():
             self.assertTrue(issubclass(target_class, PluginConfigBase))
 
-
-if __name__ == "__main__":
-    unittest.main()

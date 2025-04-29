@@ -18,15 +18,8 @@ def test_plugin_config_base_valid_type():
         "response_label_key": "$.conceptSet[:1].prefLabel.fr"
     }
 
-    try:
-        config = PluginConfigDTO.build(data1)
-        assert isinstance(config, PluginConfigAutoComplete)
-    except ValidationError as e:
-        print("Validation error occurred:")
-        for error in e.errors():
-            print(f"Field: {error['loc']}")
-            print(f"Error: {error['msg']}")
-            print(f"Type: {error['type']}")
+    config = PluginConfigDTO.build(data1)
+    assert isinstance(config, PluginConfigAutoComplete)
 
     assert isinstance(config, PluginConfigAutoComplete)
     assert config.type == "plugin_autocomplete"

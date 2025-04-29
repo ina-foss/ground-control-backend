@@ -13,11 +13,11 @@ from ina_ground_control.services.plugins.plugin_service_autocomplete import Plug
 mock_autocomplete_response=json.dumps({
     "@context": "https://www.iptc.org/std/IKOS/IKOS.jsonld",
     "uri": "https://cv.iptc.org/newscodes/mediatopic/",
-    "type": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+    "type": "https://www.w3.org/2004/02/skos/core#ConceptScheme",
     "prefSchemeAlias": "medtop",
-    "authority": "http://www.iptc.org",
+    "authority": "https://www.iptc.org",
     "copyrightHolder": "IPTC, International Press Telecommunications Council - https://iptc.org",
-    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "licenceLink": "https://creativecommons.org/licenses/by/4.0/",
     "dateReleased": "2024-11-05T12:00:00+00:00",
     "prefLabel": {
     },
@@ -26,33 +26,33 @@ mock_autocomplete_response=json.dumps({
     "note": {
     },
     "hasTopConcept": [
-        "http://cv.iptc.org/newscodes/mediatopic/01000000",
-        "http://cv.iptc.org/newscodes/mediatopic/02000000",
-        "http://cv.iptc.org/newscodes/mediatopic/03000000",
-        "http://cv.iptc.org/newscodes/mediatopic/04000000",
-        "http://cv.iptc.org/newscodes/mediatopic/05000000",
-        "http://cv.iptc.org/newscodes/mediatopic/06000000",
-        "http://cv.iptc.org/newscodes/mediatopic/07000000",
-        "http://cv.iptc.org/newscodes/mediatopic/08000000",
-        "http://cv.iptc.org/newscodes/mediatopic/09000000",
-        "http://cv.iptc.org/newscodes/mediatopic/10000000",
-        "http://cv.iptc.org/newscodes/mediatopic/11000000",
-        "http://cv.iptc.org/newscodes/mediatopic/12000000",
-        "http://cv.iptc.org/newscodes/mediatopic/13000000",
-        "http://cv.iptc.org/newscodes/mediatopic/14000000",
-        "http://cv.iptc.org/newscodes/mediatopic/15000000",
-        "http://cv.iptc.org/newscodes/mediatopic/16000000",
-        "http://cv.iptc.org/newscodes/mediatopic/17000000"
+        "https://cv.iptc.org/newscodes/mediatopic/01000000",
+        "https://cv.iptc.org/newscodes/mediatopic/02000000",
+        "https://cv.iptc.org/newscodes/mediatopic/03000000",
+        "https://cv.iptc.org/newscodes/mediatopic/04000000",
+        "https://cv.iptc.org/newscodes/mediatopic/05000000",
+        "https://cv.iptc.org/newscodes/mediatopic/06000000",
+        "https://cv.iptc.org/newscodes/mediatopic/07000000",
+        "https://cv.iptc.org/newscodes/mediatopic/08000000",
+        "https://cv.iptc.org/newscodes/mediatopic/09000000",
+        "https://cv.iptc.org/newscodes/mediatopic/10000000",
+        "https://cv.iptc.org/newscodes/mediatopic/11000000",
+        "https://cv.iptc.org/newscodes/mediatopic/12000000",
+        "https://cv.iptc.org/newscodes/mediatopic/13000000",
+        "https://cv.iptc.org/newscodes/mediatopic/14000000",
+        "https://cv.iptc.org/newscodes/mediatopic/15000000",
+        "https://cv.iptc.org/newscodes/mediatopic/16000000",
+        "https://cv.iptc.org/newscodes/mediatopic/17000000"
     ],
     "conceptSet": [
         {
-            "uri": "http://cv.iptc.org/newscodes/mediatopic/01000000",
+            "uri": "https://cv.iptc.org/newscodes/mediatopic/01000000",
             "qcode": "medtop:01000000",
             "type": [
-                "http://www.w3.org/2004/02/skos/core#Concept"
+                "https://www.w3.org/2004/02/skos/core#Concept"
             ],
             "inScheme": [
-                "http://cv.iptc.org/newscodes/mediatopic/"
+                "https://cv.iptc.org/newscodes/mediatopic/"
             ],
             "modified": "2021-02-18T12:00:00+00:00",
             "prefLabel": {
@@ -67,18 +67,18 @@ mock_autocomplete_response=json.dumps({
                 "medtop:20000045"
             ],
             "exactMatch": [
-                "http://cv.iptc.org/newscodes/subjectcode/01000000"
+                "https://cv.iptc.org/newscodes/subjectcode/01000000"
             ],
             "created": "2009-10-22T02:00:00+00:00"
         },
         {
-            "uri": "http://cv.iptc.org/newscodes/mediatopic/02000000",
+            "uri": "https://cv.iptc.org/newscodes/mediatopic/02000000",
             "qcode": "medtop:02000000",
             "type": [
-                "http://www.w3.org/2004/02/skos/core#Concept"
+                "https://www.w3.org/2004/02/skos/core#Concept"
             ],
             "inScheme": [
-                "http://cv.iptc.org/newscodes/mediatopic/"
+                "https://cv.iptc.org/newscodes/mediatopic/"
             ],
             "modified": "2021-05-05T12:00:00+00:00",
             "prefLabel": {
@@ -94,8 +94,8 @@ mock_autocomplete_response=json.dumps({
                 "medtop:20000129"
             ],
             "exactMatch": [
-                "http://cv.iptc.org/newscodes/subjectcode/02000000",
-                "http://www.wikidata.org/entity/Q146491"
+                "https://cv.iptc.org/newscodes/subjectcode/02000000",
+                "https://www.wikidata.org/entity/Q146491"
             ],
             "created": "2009-10-22T02:00:00+00:00"
         }
@@ -127,9 +127,9 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
 
         # Expected result
         expected_result = [
-            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000",
+            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="https://cv.iptc.org/newscodes/mediatopic/01000000",
                                        label="Arts, culture, divertissement et médias"),
-            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/02000000",
+            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="https://cv.iptc.org/newscodes/mediatopic/02000000",
                                        label="Criminalité, droit et justice")
         ]
 
@@ -181,9 +181,9 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         mock_response.content = mock_autocomplete_response
         # Expected result
         expected_result = [
-            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000",
+            PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="https://cv.iptc.org/newscodes/mediatopic/01000000",
                                        label="Arts, culture, divertissement et médias"),
-            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/02000000",
+            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="https://cv.iptc.org/newscodes/mediatopic/02000000",
                                        label="Criminalité, droit et justice")
         ]
 
@@ -207,6 +207,3 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.service.parse(mock_response)
 
-
-if __name__ == "__main__":
-    unittest.main()
