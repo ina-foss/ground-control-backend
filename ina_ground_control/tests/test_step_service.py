@@ -2,7 +2,7 @@
 # pylint: disable=redefined-outer-name
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session as SQLAlchemySession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
 from ina_ground_control.models.step_model import StepStatus
@@ -15,7 +15,7 @@ from ina_ground_control.schemas.step_schemas import StepCreate
 
 
 @pytest.fixture(scope="session")
-def db_engine():
+def test_db_engine():
     """
         Mock the databalse using sqlite
     """
@@ -27,21 +27,20 @@ def db_engine():
 
 
 @pytest.fixture(scope="session")
-def db_session(db_engine):
+def db_session(test_db_engine):
     """
         Create the connection session to interract with sqlite
     """
-    connection = db_engine.connect()
+    connection = test_db_engine.connect()
     transaction = connection.begin()
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
     session = session_factory()
     yield session
     session.close()
     transaction.rollback()
     connection.close()
 
-
-def test_get_steps(db_session: SQLAlchemySession):
+def test_get_steps(db_session: Session):
     step_data_1 = {
         "title": "step 1",
         "description": "la premiere step",
@@ -89,7 +88,7 @@ step_data = {
 }
 
 
-def test_create_step_crud(db_session: SQLAlchemySession):
+def test_create_step_crud(db_session: Session):
     """
         Testing step creation service
     """
@@ -103,7 +102,7 @@ def test_create_step_crud(db_session: SQLAlchemySession):
     assert created_step.project_id == step_data["project_id"]
 
 
-def test_get_step_by_id(db_session: SQLAlchemySession):
+def test_get_step_by_id(db_session: Session):
     created_step = create_step_crud(StepCreate(**step_data), db_session)
     retrieved_step = get_step_by_id(db_session, created_step.id)
     assert retrieved_step is not None
@@ -115,12 +114,12 @@ def test_get_step_by_id(db_session: SQLAlchemySession):
     assert retrieved_step.project_id == step_data["project_id"]
 
 
-def test_get_step_by_inexistant_id(db_session: SQLAlchemySession):
+def test_get_step_by_inexistant_id(db_session: Session):
     with pytest.raises(GroundControlException):
         get_step_by_id(db_session, 999)
 
 
-def test_update_step_crud(db_session: SQLAlchemySession):
+def test_update_step_crud(db_session: Session):
     """
         Test update a step attributes (title, description and author)
     """
@@ -145,7 +144,7 @@ def test_update_step_crud(db_session: SQLAlchemySession):
     assert retrieved_updated_step.status.value == updated_step_data["status"]
     assert retrieved_updated_step.project_id == updated_step_data["project_id"]
 
-def test_finish_step(db_session: SQLAlchemySession):
+def test_finish_step(db_session: Session):
     task_data = {
         "name": "Test Task",
         "instruction": "Test instruction",
@@ -179,7 +178,7 @@ def test_finish_step(db_session: SQLAlchemySession):
 
 
 
-def test_delete_step_crud(db_session: SQLAlchemySession):
+def test_delete_step_crud(db_session: Session):
     created_step = create_step_crud(StepCreate(**step_data), db_session)
 
     step = get_step_by_id(db_session,created_step.id)

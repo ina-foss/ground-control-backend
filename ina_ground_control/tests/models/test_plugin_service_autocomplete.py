@@ -10,6 +10,96 @@ from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAut
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
 
+mock_autocomplete_response=json.dumps({
+    "@context": "https://www.iptc.org/std/IKOS/IKOS.jsonld",
+    "uri": "https://cv.iptc.org/newscodes/mediatopic/",
+    "type": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+    "prefSchemeAlias": "medtop",
+    "authority": "http://www.iptc.org",
+    "copyrightHolder": "IPTC, International Press Telecommunications Council - https://iptc.org",
+    "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
+    "dateReleased": "2024-11-05T12:00:00+00:00",
+    "prefLabel": {
+    },
+    "definition": {
+    },
+    "note": {
+    },
+    "hasTopConcept": [
+        "http://cv.iptc.org/newscodes/mediatopic/01000000",
+        "http://cv.iptc.org/newscodes/mediatopic/02000000",
+        "http://cv.iptc.org/newscodes/mediatopic/03000000",
+        "http://cv.iptc.org/newscodes/mediatopic/04000000",
+        "http://cv.iptc.org/newscodes/mediatopic/05000000",
+        "http://cv.iptc.org/newscodes/mediatopic/06000000",
+        "http://cv.iptc.org/newscodes/mediatopic/07000000",
+        "http://cv.iptc.org/newscodes/mediatopic/08000000",
+        "http://cv.iptc.org/newscodes/mediatopic/09000000",
+        "http://cv.iptc.org/newscodes/mediatopic/10000000",
+        "http://cv.iptc.org/newscodes/mediatopic/11000000",
+        "http://cv.iptc.org/newscodes/mediatopic/12000000",
+        "http://cv.iptc.org/newscodes/mediatopic/13000000",
+        "http://cv.iptc.org/newscodes/mediatopic/14000000",
+        "http://cv.iptc.org/newscodes/mediatopic/15000000",
+        "http://cv.iptc.org/newscodes/mediatopic/16000000",
+        "http://cv.iptc.org/newscodes/mediatopic/17000000"
+    ],
+    "conceptSet": [
+        {
+            "uri": "http://cv.iptc.org/newscodes/mediatopic/01000000",
+            "qcode": "medtop:01000000",
+            "type": [
+                "http://www.w3.org/2004/02/skos/core#Concept"
+            ],
+            "inScheme": [
+                "http://cv.iptc.org/newscodes/mediatopic/"
+            ],
+            "modified": "2021-02-18T12:00:00+00:00",
+            "prefLabel": {
+                "fr": "Arts, culture, divertissement et médias"
+            },
+            "definition": {
+                "fr": "Toutes les formes d'arts, de divertissement, de culture et de médias"
+            },
+            "narrower": [
+                "medtop:20000002",
+                "medtop:20000038",
+                "medtop:20000045"
+            ],
+            "exactMatch": [
+                "http://cv.iptc.org/newscodes/subjectcode/01000000"
+            ],
+            "created": "2009-10-22T02:00:00+00:00"
+        },
+        {
+            "uri": "http://cv.iptc.org/newscodes/mediatopic/02000000",
+            "qcode": "medtop:02000000",
+            "type": [
+                "http://www.w3.org/2004/02/skos/core#Concept"
+            ],
+            "inScheme": [
+                "http://cv.iptc.org/newscodes/mediatopic/"
+            ],
+            "modified": "2021-05-05T12:00:00+00:00",
+            "prefLabel": {
+                "fr": "Criminalité, droit et justice"
+            },
+            "definition": {
+            },
+            "narrower": [
+                "medtop:20000082",
+                "medtop:20000106",
+                "medtop:20000119",
+                "medtop:20000121",
+                "medtop:20000129"
+            ],
+            "exactMatch": [
+                "http://cv.iptc.org/newscodes/subjectcode/02000000",
+                "http://www.wikidata.org/entity/Q146491"
+            ],
+            "created": "2009-10-22T02:00:00+00:00"
+        }
+    ]}).encode("utf-8")
 class TestPluginServiceAutoComplete(unittest.TestCase):
     """Unit tests for the PluginServiceAutoComplete class."""
 
@@ -31,96 +121,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         # Mock response
         mock_response = Mock(spec=Response)
         mock_response.status_code = 200
-        mock_response.content = json.dumps({
-            "@context": "https://www.iptc.org/std/IKOS/IKOS.jsonld",
-            "uri": "http://cv.iptc.org/newscodes/mediatopic/",
-            "type": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
-            "prefSchemeAlias": "medtop",
-            "authority": "http://www.iptc.org",
-            "copyrightHolder": "IPTC, International Press Telecommunications Council - https://iptc.org",
-            "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
-            "dateReleased": "2024-11-05T12:00:00+00:00",
-            "prefLabel": {
-            },
-            "definition": {
-            },
-            "note": {
-            },
-            "hasTopConcept": [
-                "http://cv.iptc.org/newscodes/mediatopic/01000000",
-                "http://cv.iptc.org/newscodes/mediatopic/02000000",
-                "http://cv.iptc.org/newscodes/mediatopic/03000000",
-                "http://cv.iptc.org/newscodes/mediatopic/04000000",
-                "http://cv.iptc.org/newscodes/mediatopic/05000000",
-                "http://cv.iptc.org/newscodes/mediatopic/06000000",
-                "http://cv.iptc.org/newscodes/mediatopic/07000000",
-                "http://cv.iptc.org/newscodes/mediatopic/08000000",
-                "http://cv.iptc.org/newscodes/mediatopic/09000000",
-                "http://cv.iptc.org/newscodes/mediatopic/10000000",
-                "http://cv.iptc.org/newscodes/mediatopic/11000000",
-                "http://cv.iptc.org/newscodes/mediatopic/12000000",
-                "http://cv.iptc.org/newscodes/mediatopic/13000000",
-                "http://cv.iptc.org/newscodes/mediatopic/14000000",
-                "http://cv.iptc.org/newscodes/mediatopic/15000000",
-                "http://cv.iptc.org/newscodes/mediatopic/16000000",
-                "http://cv.iptc.org/newscodes/mediatopic/17000000"
-            ],
-            "conceptSet": [
-                {
-                    "uri": "http://cv.iptc.org/newscodes/mediatopic/01000000",
-                    "qcode": "medtop:01000000",
-                    "type": [
-                        "http://www.w3.org/2004/02/skos/core#Concept"
-                    ],
-                    "inScheme": [
-                        "http://cv.iptc.org/newscodes/mediatopic/"
-                    ],
-                    "modified": "2021-02-18T12:00:00+00:00",
-                    "prefLabel": {
-                        "fr": "Arts, culture, divertissement et médias"
-                    },
-                    "definition": {
-                        "fr": "Toutes les formes d'arts, de divertissement, de culture et de médias"
-                    },
-                    "narrower": [
-                        "medtop:20000002",
-                        "medtop:20000038",
-                        "medtop:20000045"
-                    ],
-                    "exactMatch": [
-                        "http://cv.iptc.org/newscodes/subjectcode/01000000"
-                    ],
-                    "created": "2009-10-22T02:00:00+00:00"
-                },
-                {
-                    "uri": "http://cv.iptc.org/newscodes/mediatopic/02000000",
-                    "qcode": "medtop:02000000",
-                    "type": [
-                        "http://www.w3.org/2004/02/skos/core#Concept"
-                    ],
-                    "inScheme": [
-                        "http://cv.iptc.org/newscodes/mediatopic/"
-                    ],
-                    "modified": "2021-05-05T12:00:00+00:00",
-                    "prefLabel": {
-                        "fr": "Criminalité, droit et justice"
-                    },
-                    "definition": {
-                    },
-                    "narrower": [
-                        "medtop:20000082",
-                        "medtop:20000106",
-                        "medtop:20000119",
-                        "medtop:20000121",
-                        "medtop:20000129"
-                    ],
-                    "exactMatch": [
-                        "http://cv.iptc.org/newscodes/subjectcode/02000000",
-                        "http://www.wikidata.org/entity/Q146491"
-                    ],
-                    "created": "2009-10-22T02:00:00+00:00"
-                }
-            ]}).encode("utf-8")
+        mock_response.content =mock_autocomplete_response
 
         mock_get.return_value = mock_response
 
@@ -177,96 +178,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
     def test_parse_valid_json(self):
         # Test the `parse` method with a valid JSON response.
         mock_response = Mock()
-        mock_response.content = json.dumps({
-            "@context": "https://www.iptc.org/std/IKOS/IKOS.jsonld",
-            "uri": "http://cv.iptc.org/newscodes/mediatopic/",
-            "type": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
-            "prefSchemeAlias": "medtop",
-            "authority": "http://www.iptc.org",
-            "copyrightHolder": "IPTC, International Press Telecommunications Council - https://iptc.org",
-            "licenceLink": "http://creativecommons.org/licenses/by/4.0/",
-            "dateReleased": "2024-11-05T12:00:00+00:00",
-            "prefLabel": {
-            },
-            "definition": {
-            },
-            "note": {
-            },
-            "hasTopConcept": [
-                "http://cv.iptc.org/newscodes/mediatopic/01000000",
-                "http://cv.iptc.org/newscodes/mediatopic/02000000",
-                "http://cv.iptc.org/newscodes/mediatopic/03000000",
-                "http://cv.iptc.org/newscodes/mediatopic/04000000",
-                "http://cv.iptc.org/newscodes/mediatopic/05000000",
-                "http://cv.iptc.org/newscodes/mediatopic/06000000",
-                "http://cv.iptc.org/newscodes/mediatopic/07000000",
-                "http://cv.iptc.org/newscodes/mediatopic/08000000",
-                "http://cv.iptc.org/newscodes/mediatopic/09000000",
-                "http://cv.iptc.org/newscodes/mediatopic/10000000",
-                "http://cv.iptc.org/newscodes/mediatopic/11000000",
-                "http://cv.iptc.org/newscodes/mediatopic/12000000",
-                "http://cv.iptc.org/newscodes/mediatopic/13000000",
-                "http://cv.iptc.org/newscodes/mediatopic/14000000",
-                "http://cv.iptc.org/newscodes/mediatopic/15000000",
-                "http://cv.iptc.org/newscodes/mediatopic/16000000",
-                "http://cv.iptc.org/newscodes/mediatopic/17000000"
-            ],
-            "conceptSet": [
-                {
-                    "uri": "http://cv.iptc.org/newscodes/mediatopic/01000000",
-                    "qcode": "medtop:01000000",
-                    "type": [
-                        "http://www.w3.org/2004/02/skos/core#Concept"
-                    ],
-                    "inScheme": [
-                        "http://cv.iptc.org/newscodes/mediatopic/"
-                    ],
-                    "modified": "2021-02-18T12:00:00+00:00",
-                    "prefLabel": {
-                        "fr": "Arts, culture, divertissement et médias"
-                    },
-                    "definition": {
-                        "fr": "Toutes les formes d'arts, de divertissement, de culture et de médias"
-                    },
-                    "narrower": [
-                        "medtop:20000002",
-                        "medtop:20000038",
-                        "medtop:20000045"
-                    ],
-                    "exactMatch": [
-                        "http://cv.iptc.org/newscodes/subjectcode/01000000"
-                    ],
-                    "created": "2009-10-22T02:00:00+00:00"
-                },
-                {
-                    "uri": "http://cv.iptc.org/newscodes/mediatopic/02000000",
-                    "qcode": "medtop:02000000",
-                    "type": [
-                        "http://www.w3.org/2004/02/skos/core#Concept"
-                    ],
-                    "inScheme": [
-                        "http://cv.iptc.org/newscodes/mediatopic/"
-                    ],
-                    "modified": "2021-05-05T12:00:00+00:00",
-                    "prefLabel": {
-                        "fr": "Criminalité, droit et justice"
-                    },
-                    "definition": {
-                    },
-                    "narrower": [
-                        "medtop:20000082",
-                        "medtop:20000106",
-                        "medtop:20000119",
-                        "medtop:20000121",
-                        "medtop:20000129"
-                    ],
-                    "exactMatch": [
-                        "http://cv.iptc.org/newscodes/subjectcode/02000000",
-                        "http://www.wikidata.org/entity/Q146491"
-                    ],
-                    "created": "2009-10-22T02:00:00+00:00"
-                }
-            ]}).encode("utf-8")
+        mock_response.content = mock_autocomplete_response
         # Expected result
         expected_result = [
             PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="http://cv.iptc.org/newscodes/mediatopic/01000000",

@@ -1,42 +1,9 @@
 """Unit tests for Media services"""
 # pylint: disable=redefined-outer-name
-import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as SQLAlchemySession
-from sqlalchemy.orm import sessionmaker
-
-from ina_ground_control.database import Base
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.services.media_service import create_media_crud, get_media_by_id, update_media_crud, \
     delete_media_crud, get_medias
-
-
-@pytest.fixture(scope="session")
-def db_engine():
-    """
-        Mock the databalse using sqlite
-    """
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    Base.metadata.drop_all(bind=engine)
-    engine.dispose()
-
-
-@pytest.fixture(scope="session")
-def db_session(db_engine):
-    """
-        Create the connection session to interract with sqlite
-    """
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = session_factory()
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
-
 
 def test_get_medias(db_session: SQLAlchemySession):
     media_data_1 = {
