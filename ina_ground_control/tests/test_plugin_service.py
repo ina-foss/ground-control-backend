@@ -1,6 +1,8 @@
+"""Unit tests for Plugin services"""
+# pylint: disable=redefined-outer-name
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import sessionmaker
 
 from ina_ground_control.database import Base
@@ -29,15 +31,15 @@ def db_session(db_engine):
     """
     connection = db_engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = Session()
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session = session_factory()
     yield session
     session.close()
     transaction.rollback()
     connection.close()
 
 
-def test_get_plugins(db_session: Session):
+def test_get_plugins(db_session: SQLAlchemySession):
     plugin_1 = {
         "name": "name_test",
         "type": TypePlugin.AUTOCOMPLETE,
@@ -78,26 +80,26 @@ def test_get_plugins(db_session: Session):
     db_session.commit()
     db_session.refresh(created_plugin_1)
     db_session.refresh(created_plugin_2)
-    givenPlugin = get_plugin_by_id(db_session, 1)
-    assert givenPlugin is not None
-    assert givenPlugin.id is not None
-    assert givenPlugin.id == 1
-    givenPlugin2 = get_plugin_by_id(db_session, 2)
-    assert givenPlugin2 is not None
-    assert givenPlugin2.id is not None
-    assert givenPlugin2.id == 2
+    given_plugin = get_plugin_by_id(db_session, 1)
+    assert given_plugin is not None
+    assert given_plugin.id is not None
+    assert given_plugin.id == 1
+    given_plugin2 = get_plugin_by_id(db_session, 2)
+    assert given_plugin2 is not None
+    assert given_plugin2.id is not None
+    assert given_plugin2.id == 2
     retrieved_plugins = get_plugins_search(db_session, 1, "name_test")
     retrieved_plugins2 = get_plugins_search(db_session, 2, "name_test2")
     assert retrieved_plugins is not None
     assert retrieved_plugins[0].id is not None
-    assert retrieved_plugins[0].id == 'ALAMAIS'
-    assert retrieved_plugins[0].ext_id == 'ALA'
-    assert retrieved_plugins[0].label == '#Alamaison'
+    assert retrieved_plugins[0].id == "ALAMAIS"
+    assert retrieved_plugins[0].ext_id == "ALA"
+    assert retrieved_plugins[0].label == "#Alamaison"
     assert retrieved_plugins2 is not None
     assert retrieved_plugins2[0].id is not None
-    assert retrieved_plugins2[0].id == 'medtop:01000000'
-    assert retrieved_plugins2[0].ext_id == 'http://cv.iptc.org/newscodes/mediatopic/01000000'
-    assert retrieved_plugins2[0].label == 'Arts, culture, divertissement et médias'
+    assert retrieved_plugins2[0].id == "medtop:01000000"
+    assert retrieved_plugins2[0].ext_id == "http://cv.iptc.org/newscodes/mediatopic/01000000"
+    assert retrieved_plugins2[0].label == "Arts, culture, divertissement et médias"
 
 
 plugin_data = {
@@ -107,12 +109,12 @@ plugin_data = {
     "display_zone": DisplayZone.BLOC,
     "step_id": 1,
     "config_data": {"type": "plugin_autocomplete",
-                    "data_source": 'test data',
+                    "data_source": "test data",
                     "data_type": "test"}
 }
 
 
-def test_create_plugin_crud(db_session: Session):
+def test_create_plugin_crud(db_session: SQLAlchemySession):
     created_plugin = create_plugin_crud(PluginCreate(**plugin_data), db_session)
     assert created_plugin is not None
     assert created_plugin.id is not None
@@ -123,7 +125,7 @@ def test_create_plugin_crud(db_session: Session):
     assert created_plugin.step_id == plugin_data["step_id"]
 
 
-def test_delete_plugin_crud(db_session: Session):
+def test_delete_plugin_crud(db_session: SQLAlchemySession):
     """
         Test the deletion of a plugin given its id
     """
@@ -134,7 +136,7 @@ def test_delete_plugin_crud(db_session: Session):
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {"type": "plugin_autocomplete",
-                        "data_source": 'test data',
+                        "data_source": "test data",
                         "data_type": "test"}
     }
     created_plugin = create_plugin_crud(PluginCreate(**plugin_1), db_session)

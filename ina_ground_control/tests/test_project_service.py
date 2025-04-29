@@ -1,6 +1,8 @@
+"""Unit tests for Project services"""
+# pylint: disable=redefined-outer-name
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import sessionmaker
 
 from ina_ground_control.database import Base
@@ -28,8 +30,8 @@ def db(db_engine):
     """
     connection = db_engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = Session()
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session = session_factory()
     yield session
     session.close()
     transaction.rollback()
@@ -50,7 +52,7 @@ project_data = {
 }
 
 
-def test_get_projects(db: Session):
+def test_get_projects(db: SQLAlchemySession):
     """
         Test to retrieve all the project in the database
     """
@@ -97,7 +99,7 @@ def test_get_projects(db: Session):
     assert retrieved_projects[1].id == created_project_2.id
 
 
-def test_get_project_by_id(db: Session):
+def test_get_project_by_id(db: SQLAlchemySession):
     """
         Test to get a singualr project given its id.
     """
@@ -112,7 +114,7 @@ def test_get_project_by_id(db: Session):
     assert retrieved_project.created_by == project_data["created_by"]
 
 
-def test_create_project_crud(db: Session):
+def test_create_project_crud(db: SQLAlchemySession):
     """
         Test the creation of a project
     """
@@ -125,7 +127,7 @@ def test_create_project_crud(db: Session):
     assert created_project.created_by == project_data["created_by"]
 
 
-def test_update_project_crud(db: Session):
+def test_update_project_crud(db: SQLAlchemySession):
     """
         Test update a project attributes (title, description and author)
     """
@@ -154,7 +156,7 @@ def test_update_project_crud(db: Session):
     assert retrieved_updated_project.created_by == updated_task_data["created_by"]
 
 
-def test_delete_project_crud(db: Session):
+def test_delete_project_crud(db: SQLAlchemySession):
     """
         Test the deletion of a project given its id
     """

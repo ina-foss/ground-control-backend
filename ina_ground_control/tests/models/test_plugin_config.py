@@ -1,13 +1,14 @@
+"""Unit tests for plugin config """
+# pylint: disable=redefined-outer-name
 import unittest
-
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO, TYPE_MAPPING
 
 
 class TestPluginConfigDTO(unittest.TestCase):
+    """Set up test data."""
     def setUp(self):
-        """Set up test data."""
         self.valid_data = {
             "type": "plugin_autocomplete",
             "search_attr": "title",
@@ -55,7 +56,7 @@ class TestPluginConfigDTO(unittest.TestCase):
 
     def test_type_mapping_consistency(self):
         """Ensure TYPE_MAPPING contains valid targets."""
-        for plugin_type, target_class in TYPE_MAPPING.items():
+        for _, target_class in TYPE_MAPPING.items():
             self.assertTrue(issubclass(target_class, PluginConfigBase))
 
 

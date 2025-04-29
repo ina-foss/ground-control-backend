@@ -1,3 +1,5 @@
+"""Unit tests for Annotation services"""
+# pylint: disable=redefined-outer-name
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -36,8 +38,8 @@ def db_session(db_engine):
     """
     connection = db_engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = Session()
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session = session_factory()
     yield session
     session.close()
     transaction.rollback()
@@ -100,7 +102,6 @@ def test_create_annotation_crud(db_session: Session):
     Testing annotation creation service
     """
     created_annotation = create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data_3))
-    
     assert created_annotation is not None
     assert created_annotation.id is not None
     assert created_annotation.user_email == annotation_data_3["annotation"]["user_email"]
@@ -115,7 +116,6 @@ def test_create_annotation_crud(db_session: Session):
 def test_get_annotation_by_id_crud(db_session: Session):
     created_annotation = create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data_3))
     retrieved_annotation = get_annotations_by_id_crud(db_session, created_annotation.id)
-    
     assert retrieved_annotation is not None
     assert retrieved_annotation.id == created_annotation.id
     assert retrieved_annotation.user_email == created_annotation.user_email
@@ -142,9 +142,11 @@ def test_get_annotations_by_task_id_crud(db_session: Session):
     db_session.commit()
     db_session.flush()
 
-    all_satus_annotations_in = get_annotations_by_task_id_crud(db_session, 1, "user.email@ina.fr", InOutEnum.IN,[AnnotationStatus.IN_PROGRESS,AnnotationStatus.DRAFT] )
+    all_satus_annotations_in = get_annotations_by_task_id_crud(
+        db_session, 1, "user.email@ina.fr", InOutEnum.IN,[AnnotationStatus.IN_PROGRESS,AnnotationStatus.DRAFT] )
     retrieved_annotations_out = get_annotations_by_task_id_crud(db_session, 2, "user2.email@ina.fr", InOutEnum.OUT)
-    draft_annotation_in = get_annotations_by_task_id_crud(db_session, 1, "user.email@ina.fr", InOutEnum.IN, AnnotationStatus.DRAFT)
+    draft_annotation_in = get_annotations_by_task_id_crud(
+        db_session, 1, "user.email@ina.fr", InOutEnum.IN, AnnotationStatus.DRAFT)
 
     assert all_satus_annotations_in is not None
     assert len(all_satus_annotations_in) == 4
@@ -164,7 +166,7 @@ def test_update_annotation_result_crud(db_session:Session):
     retrieved_annotation = get_annotations_by_id_crud(db_session,1)
 
     assert retrieved_annotation is not None
-    assert retrieved_annotation.result == annotation_data_3['annotation']['result']
+    assert retrieved_annotation.result == annotation_data_3["annotation"]["result"]
 
     udpate_annotation_result_crud(db_session,test_result,1)
 
@@ -210,13 +212,13 @@ def test_skip_annotation_crud(db_session: Session):
 
 
     created_project = create_project_crud(db_session,ProjectBaseDto(**project_data))
-    created_step_1 = create_step_crud(StepCreate(**step_data_1), db_session)
+    create_step_crud(StepCreate(**step_data_1), db_session)
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
     annotation_data = {
         "annotation": {
             "user_email": "user.email@ina.fr",
- "annotation_status": "draft",
+            "annotation_status": "draft",
             "version": 1,
             "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
         },
@@ -235,10 +237,8 @@ def test_skip_annotation_crud(db_session: Session):
     skip_annotation_crud(db_session,created_annotation.id)
 
     skipped_annotation = get_annotations_by_id_crud(db_session, created_annotation.id)
-    
     assert skipped_annotation.annotation_status == AnnotationStatus.SKIPPED
-
-    project_data['allow_skip'] = False
+    project_data["allow_skip"] = False
 
     update_project_crud(db_session,ProjectBaseDto(**project_data),created_project.id)
 
@@ -259,7 +259,7 @@ def test_finish_annotation_crud(db_session: Session):
 
     assert finished_annotation.annotation_status == AnnotationStatus.DONE
 
-def test_get_all_annotations_crud_filters(db_session: Session, skip=0, limit=100):
+def test_get_all_annotations_crud_filters(db_session: Session):
     """
     Test get_all_annotations_crud filtered according to the provided parameters.
     """
@@ -318,7 +318,7 @@ def test_get_all_annotations_crud_filters(db_session: Session, skip=0, limit=100
             "direction": InOutEnum.OUT
         }
     }
-    created_annotation = create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data))
+    create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data))
 
     db_session.commit()
     db_session.flush()

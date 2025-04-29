@@ -1,3 +1,5 @@
+"""Unit tests for Plugin autocomplete services"""
+# pylint: disable=redefined-outer-name
 import json
 import unittest
 from unittest.mock import Mock, patch
@@ -8,19 +10,8 @@ from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAut
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
 
-"""{"type": "plugin_autocomplete",
- "data_source": '"https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json"',
- "data_type": "json",
- "search_attr": "",
- "search_query_param": "q",
- "search_item_sort": "title,asc",
- "response_id_key": "id",
- "response_ext_id_key": "ext_id",
- "response_label_key": "label",
- }"""
-
-
 class TestPluginServiceAutoComplete(unittest.TestCase):
+    """Unit tests for the PluginServiceAutoComplete class."""
 
     def setUp(self):
         self.config = PluginConfigAutoComplete(
