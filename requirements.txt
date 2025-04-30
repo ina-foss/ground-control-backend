@@ -1,9 +1,10 @@
+h11==0.16.0
 fastapi==0.110.2
 pydantic~=2.6.2
 pydantic_core==2.16.3
 pydantic[email]
 SQLAlchemy==2.0.29
-uvicorn[standard]>=0.29.1
+uvicorn[standard]==0.34.2
 dynaconf==3.2.4
 dynaconf[yaml]==3.2.4
 psycopg2-binary
