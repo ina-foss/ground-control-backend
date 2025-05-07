@@ -20,7 +20,7 @@ Configuration:
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi_keycloak_middleware import (
     MatchStrategy,
     CheckPermissions,
@@ -33,11 +33,11 @@ from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.media_schemas import MediaCreate
-from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto, PaginatedTasksDTO, ExpirationDateUpdateDto
+from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto, PaginatedTasksDTO, TaskStatus
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
-    delete_task_crud, skip_expired_task_crud, activate_task_crud, get_tasks_by_step_id_crud, update_expiration_date_task_crud
+    delete_task_crud, update_task_status_crud, get_tasks_by_annotated_by_crud
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 router = APIRouter(tags=["task"])
@@ -167,63 +167,25 @@ def delete_task(task_id: int, db: Session = Depends(get_db),
         raise GroundControlException(ErrorCode.GENERIC_OPERATION_FAILED, action="delete", resource="task", id=task_id)
     return deleted_task
 
-@router.get("/tasks/by-step", response_model=PaginatedTasksDTO)
-def get_tasks_by_step_id(
-        step_id: int,
-        page: int,
-        size: int,
+@router.post("/task/{task_id}/status", response_model=TaskListDto)
+def update_task_status(task_id: int, status: TaskStatus ,db: Session = Depends(get_db)):
+    task = update_task_status_crud(db, task_id, status )
+    return task
+
+@router.get("/tasks/annotated_by/{email}", response_model=PaginatedTasksDTO)
+def get_tasks_by_annotated_by(
+        email: str,
+        page: int = 0,
+        size: int = 10,
+        task_limit_on: bool = Query(
+            False,
+            description="Toggle to enforce the max tasks per person limit"
+        ),
         db: Session = Depends(get_db)
 ):
     """
-    Retrieve a paginated list of tasks filtered by step_id.
+    Retrieve tasks filtered by annotated_by user (email), with priority rules.
     """
-    tasks, total = get_tasks_by_step_id_crud(db, step_id, page, size)
+    tasks, total = get_tasks_by_annotated_by_crud(db, email, page, size, task_limit_on)
     return PaginatedTasksDTO(task_requests=tasks, total_records=total)
-
-@router.patch("/task/{task_id}/expiration", response_model=TaskListDto)
-def update_task_expiration(
-        task_id: int,
-        expiration_date: ExpirationDateUpdateDto,
-        db: Session = Depends(get_db),
-):
-    """
-    Update the expiration date of a task.
-
-    Args:
-        task_id (int): The ID of the task.
-        expiration_date (datetime): The new expiration date.
-        db (Session): Database session.
-
-    Returns:
-        TaskListDto: The updated task object.
-
-    Raises:
-        HTTPException: If the task is not found.
-    """
-    updated_task = update_expiration_date_task_crud(task_id, expiration_date, db)
-    return updated_task
-
-@router.put("/tasks/{task_id}/skip-if-expired", response_model=TaskWithIdDto)
-def skip_expired_task(task_id: int, db: Session = Depends(get_db)):
-    """
-    Endpoint to mark a task and its annotations as 'SKIPPED' if it is expired.
-    """
-    task = skip_expired_task_crud(db, task_id)
-    return task
-
-@router.post("/task/{task_id}/activate", response_model=TaskListDto)
-def activate_task(task_id: int, db: Session = Depends(get_db)):
-    """
-    Activate a task by updating its status from 'DRAFT' to 'PENDING'.
-
-    Args:
-        task_id (int): The unique identifier of the task to activate.
-        db (Session): SQLAlchemy database session.
-
-    Returns:
-        TaskListDto: The updated task object.
-    """
-    task = activate_task_crud(db, task_id)
-    return task
-
 

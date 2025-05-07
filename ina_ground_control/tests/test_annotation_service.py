@@ -32,6 +32,7 @@ task_data = {
     "lead_time": 1,
     "step_id": 1,
     "media_id": 1,
+    "created_at": "2025-04-27T21:05:01.328292"
 }
 project_data = {
     "title": "Test Project 1",

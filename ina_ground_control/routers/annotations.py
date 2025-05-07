@@ -5,15 +5,15 @@ or the error status if something went wrong.
 """
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, Query, Request, BackgroundTasks
 from datetime import datetime
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from ina_ground_control.constants.roles import Role
 from ina_ground_control.database import get_db
 from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationDto, AnnotationFullCreate
-from ina_ground_control.services.task_service import finish_task, undone_task
+from ina_ground_control.services.task_service import recalculate_task_status
 from ina_ground_control.services.annotation_service import (
     create_annotation_crud,
     get_annotations_by_task_id_crud,
@@ -100,22 +100,22 @@ def update_annotation_result(
 
 @router.patch("/annotation/skip/{annotation_id}", response_model=AnnotationDto)
 def skip_annotation(
-        annotation_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db) ) -> AnnotationDto:
+        annotation_id: int, db: Session = Depends(get_db) ) -> AnnotationDto:
     """
     skip an annotation
     """
     annotation = skip_annotation_crud(db, annotation_id)
-    background_tasks.add_task(undone_task,db, annotation.task[0])
+    recalculate_task_status(db, annotation.task[0].id)
     return annotation
 
 @router.patch("/annotation/finish/{annotation_id}", response_model=AnnotationDto)
 def finish_annotation(
-        annotation_id: int, result: Dict[str, Any], background_tasks: BackgroundTasks, db: Session = Depends(get_db) ) -> AnnotationDto:
+        annotation_id: int, result: Dict[str, Any], db: Session = Depends(get_db) ) -> AnnotationDto:
     """
     finish an annotation
     """
     annotation = finish_annotation_crud(db, result, annotation_id)
-    background_tasks.add_task(finish_task,db, annotation.task[0].id)
+    recalculate_task_status(db, annotation.task[0].id)
     if annotation is None:
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
         raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)

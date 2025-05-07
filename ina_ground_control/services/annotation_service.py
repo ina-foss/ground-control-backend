@@ -11,10 +11,10 @@ Functions:
 
 from typing import Any, Dict
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import func
 from typing import Optional
 from datetime import datetime
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import func
 from ina_ground_control import logger
 from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
 from ina_ground_control.models.task_model import Task
