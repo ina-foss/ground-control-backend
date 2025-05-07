@@ -5,12 +5,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
-from ina_ground_control.models.step_model import StepStatus
-from ina_ground_control.services.step_service import create_step_crud, finish_step, get_step_by_id, update_data_step_crud, \
+from ina_ground_control.services.step_service import create_step_crud, get_step_by_id, update_data_step_crud, \
     delete_step_crud, get_steps
-from ina_ground_control.services.task_service import create_task_crud, update_task_status_crud
 from ina_ground_control.exception.exceptions import GroundControlException
-from ina_ground_control.schemas.task_schemas import TaskCreateDto,TaskStatus
 from ina_ground_control.schemas.step_schemas import StepCreate
 
 
@@ -143,39 +140,6 @@ def test_update_step_crud(db_session: Session):
     assert retrieved_updated_step.annotation_type.value == updated_step_data["annotation_type"]
     assert retrieved_updated_step.status.value == updated_step_data["status"]
     assert retrieved_updated_step.project_id == updated_step_data["project_id"]
-
-def test_finish_step(db_session: Session):
-    task_data = {
-        "name": "Test Task",
-        "instruction": "Test instruction",
-        "data": {"key": "value"},
-        "data_type": "ldd",
-        "status": TaskStatus.DRAFT,
-        "redundancy": 1,
-        "lead_time": 1,
-        "step_id": 1,
-        "media_id": 1,
-    }
-
-    create_task_crud(TaskCreateDto(**task_data),db_session)
-
-    step = get_step_by_id(db_session,1)
-
-    assert step.status != StepStatus.DONE, "Step should not be DONE yet"
-
-    finish_step(db_session,1)
-
-    step = get_step_by_id(db_session,1)
-
-    assert step.status != StepStatus.DONE, "Step should still not be DONE because step's task isn't DONE"
-
-    update_task_status_crud(db_session,1,TaskStatus.DONE)
-    finish_step(db_session,1)
-
-    step = get_step_by_id(db_session,1)
-
-    assert step.status == StepStatus.DONE, "Step should be DONE because step's task is DONE"
-
 
 
 def test_delete_step_crud(db_session: Session):

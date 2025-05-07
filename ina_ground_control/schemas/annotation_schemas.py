@@ -27,7 +27,7 @@ class AnnotationWithIdDto(AnnotationBase):
     DTO base infos + its ID
     """
     id: int
-
+    created_at: Optional[datetime]
 
 class AnnotationCreate(AnnotationBase):
     """

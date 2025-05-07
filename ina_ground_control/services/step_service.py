@@ -6,9 +6,7 @@ It includes functions to retrieve a step by ID, create a new step, and update an
 
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
-
 from ina_ground_control import logger
-from ina_ground_control.models.task_model import TaskStatus
 from ina_ground_control.models.step_model import Step, StepStatus
 from ina_ground_control.schemas.step_schemas import StepCreate
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
@@ -48,13 +46,6 @@ def create_step_crud(step: StepCreate, db: Session):
     db.commit()
     db.refresh(db_step)
     return db_step
-
-
-def finish_step(db: Session, step_id: int):
-    step = get_step_by_id(db,step_id)
-    tasks_finished = list(filter(lambda task : task.status == TaskStatus.DONE, step.tasks))
-    if ( len(tasks_finished) / len(step.tasks) ) * 100 >= step.completeness_rate :
-        finish_step_crud(db ,step)
 
 def update_data_step_crud(step_id: int, step: StepCreate, db: Session):
     """
@@ -114,3 +105,11 @@ def finish_step_crud(db: Session, step: Step) -> Step:
     db.commit()
     db.refresh(step)
     return step
+
+def update_step_status_crud(db: Session, step: Step, status: StepStatus ) -> Step:
+    step.status = status
+    step.updated_at = func.now()
+    db.commit()
+    db.refresh(step)
+    return step
+

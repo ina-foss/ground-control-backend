@@ -95,7 +95,7 @@ class Step(Base):
     plugins = relationship("Plugin", backref="step", cascade="all, delete-orphan")
     redundancy = Column(Integer, nullable=False, default=1)
     completeness_rate = Column(Float, nullable=False, default=100.0)
-    allow_empty_annotation = Column(Boolean, nullable=False, default=False)
+    allow_empty_annotation = Column(Boolean, nullable=False, default=True)
     max_tasks_per_person = Column(Integer, nullable=False, default=1)
     __table_args__ = (
         CheckConstraint("completeness_rate BETWEEN 0 AND 100", name="check_completeness_rate_range"),

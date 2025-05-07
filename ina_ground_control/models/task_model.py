@@ -14,7 +14,6 @@ Classes:
 """
 
 from enum import Enum as PyEnum
-
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import and_
@@ -84,7 +83,7 @@ class Task(Base):
     status = Column(Enum(TaskStatus))
     documentation = Column(String)
     lead_time = Column(Integer)
-    expiration_date = Column(DateTime)
+    expiration_date = Column(DateTime, nullable=True, default=None)
     redundancy = Column(Integer, nullable=False, default=1)
     priority = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, default=func.now())

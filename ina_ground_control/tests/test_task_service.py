@@ -1,47 +1,34 @@
 """Unit tests for Task services"""
 # pylint: disable=redefined-outer-name
 from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock
-
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session as SQLAlchemySession
-
 from ina_ground_control.database import Base
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
-
+from ina_ground_control.exception.exceptions import GroundControlException
 from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
 from ina_ground_control.models.task_model import Task
-
-from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate, AnnotationStatus
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.models.step_model import StepStatus
+from ina_ground_control.schemas.annotation_schemas import AnnotationStatus
 from ina_ground_control.schemas.step_schemas import StepCreate
-from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus, TaskListDto
-
-from ina_ground_control.services.annotation_service import (
-    create_annotation_crud,
-    finish_annotation_crud,
-    skip_annotation_crud,
-    get_annotations_by_task_id_crud,
-)
-from ina_ground_control.services.project_service import create_project_crud
-from ina_ground_control.services.step_service import create_step_crud, update_data_step_crud
+from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus
+from ina_ground_control.services.step_service import create_step_crud, get_step_by_id
 from ina_ground_control.services.task_service import (
-    finish_task,
     get_task_by_id,
     create_task_crud,
-    undone_task,
     update_data_task_crud,
     delete_task_crud,
     update_task_status_crud,
-    get_tasks_by_step_id_crud,
-    update_expiration_date_task_crud,
-    skip_expired_task_crud,
-    activate_task_crud,
+    get_tasks_by_annotated_by_crud,
+    recalculate_task_status,
+    recalculate_step_status
 )
-
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.services.project_service import create_project_crud
+from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
+from ina_ground_control.services.annotation_service import create_annotation_crud, finish_annotation_crud
 
 @pytest.fixture(scope="session")
 def test_db_engine():
@@ -74,6 +61,7 @@ project_data = {
     "empty_annotations": True,
     "pinned_at": "2022-12-27 08:26:49.219717",
     "created_by": "john@example.com",
+    "id": 1
 }
 
 task_data = {
@@ -86,22 +74,27 @@ task_data = {
     "lead_time": 1,
     "step_id": 1,
     "media_id": 1,
+    "created_at": "2025-04-27T21:05:01.328292"
 }
 
 step_data_1 = {
     "title": "step 1",
     "description": "la premiere step",
     "annotation_type": "segmentation",
-    "status": "draft",
+    "status": StepStatus.DRAFT,
     "pinned_at": "2022-12-27 08:26:49.219717",
     "project_id": 1,
-    "allow_empty_annotation": True
+    "allow_empty_annotation": True,
+    "id": 1,
+    "redundancy": 1,
+    "max_tasks_per_person": 1,
+    "completeness_rate": 100.0
 }
 
 annotation_data = {
     "annotation": {
         "user_email": "user.email@ina.fr",
-"annotation_status": AnnotationStatus.IN_PROGRESS,
+        "annotation_status": AnnotationStatus.IN_PROGRESS,
         "version": 1,
         "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
     },
@@ -113,6 +106,7 @@ annotation_data = {
 }
 
 def test_get_task_by_id(db_session: SQLAlchemySession):
+    create_step_crud(StepCreate(**step_data_1),db_session)
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
     retrieved_task = get_task_by_id(db_session, created_task.id)
     assert retrieved_task is not None
@@ -127,6 +121,7 @@ def test_get_task_by_id(db_session: SQLAlchemySession):
 
 
 def test_create_task_crud(db_session: SQLAlchemySession):
+    create_step_crud(StepCreate(**step_data_1),db_session)
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
     assert created_task is not None
     assert created_task.id is not None
@@ -138,52 +133,19 @@ def test_create_task_crud(db_session: SQLAlchemySession):
     assert created_task.step_id == task_data["step_id"]
     assert created_task.media_id == task_data["media_id"]
 
-def test_finish_task_crud(db_session: SQLAlchemySession):
-    create_project_crud(db_session,ProjectBaseDto(**project_data))
-    create_step_crud(StepCreate(**step_data_1),db_session)
-    create_annotation_crud(db_session,AnnotationFullCreate(**annotation_data))
-
-    finished_task = finish_task(db_session,1)
-    assert finished_task is None, "Step allow_empty_annotation is True, not implemented yet so it should return None"
-
-    step_data_1["allow_empty_annotation"] = False
-    update_data_step_crud(1,StepCreate(**step_data_1),db_session)
-    finished_task = finish_task(db_session,1)
-    task = get_task_by_id(db_session,1)
-    assert finished_task is None
-    assert task.status == TaskStatus.DRAFT, "Task should not be finished because annotation is not DONE"
-
-    finish_annotation_crud(db_session, {"test":"value"},1)
-
-    finished_task = finish_task(db_session,1)
-    task = get_task_by_id(db_session,1)
-    assert finished_task.status is not None
-    assert task.status == TaskStatus.DONE, "Task should be finished because annotation is now DONE"
-
-def test_undone_task(db_session: SQLAlchemySession):
-    task = get_task_by_id(db_session,1)
-    assert task.status != TaskStatus.PENDING, "Task is not waiting for annotation"
-    undone_task(db_session,1)
-    task = get_task_by_id(db_session,1)
-    assert task.status != TaskStatus.PENDING, "Should not change anything because task's annotaton are still DONE"
-
-    skip_annotation_crud(db_session,1)
-    undone_task(db_session,1)
-    task = get_task_by_id(db_session,1)
-    assert task.status == TaskStatus.PENDING, "Should have change task's status becaue task's annotation has been skip"
-
-
 def test_update_data_task_crud(db_session: SQLAlchemySession):
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
-
-    updated_data = {"key": "value updated"}
-
-    update_data_task_crud(
-        created_task.id, updated_data, db_session)
-
-    retrieved_updated_task = get_task_by_id(db_session, created_task.id)
-    assert retrieved_updated_task is not None
-    assert retrieved_updated_task.data == updated_data
+    update_payload = {
+        "name": "Updated Task",
+        "instruction": "Updated instruction",
+        "lead_time": 5,
+    }
+    updated_task = update_data_task_crud(created_task.id, update_payload, db_session)
+    assert updated_task is not None
+    assert updated_task.id == created_task.id
+    assert updated_task.name == "Updated Task"
+    assert updated_task.instruction == "Updated instruction"
+    assert updated_task.lead_time == 5
 
 
 def test_delete_task_crud(db_session: SQLAlchemySession):
@@ -211,86 +173,6 @@ def test_update_task_status_crud(db_session: SQLAlchemySession):
     task = get_task_by_id(db_session,created_task.id)
     assert task.status == TaskStatus.DONE, "Task should be DONE now"
 
-
-def test_get_tasks_by_step_id_crud(db_session: SQLAlchemySession):
-    # 1. Create a project and step
-    create_project_crud(db_session, ProjectBaseDto(**project_data))
-    step = create_step_crud(StepCreate(**step_data_1), db_session)
-
-    # 2. Create two tasks for that step
-    task_data_copy1 = task_data.copy()
-    task_data_copy1["step_id"] = step.id
-    create_task_crud(TaskCreateDto(**task_data_copy1), db_session)
-
-    task_data_copy2 = task_data.copy()
-    task_data_copy2["step_id"] = step.id
-    task_data_copy2["status"] = TaskStatus.IN_PROGRESS
-    task2 = create_task_crud(TaskCreateDto(**task_data_copy2), db_session)
-
-    # 3. Call the service function
-    tasks, total = get_tasks_by_step_id_crud(db_session, step_id=step.id, page=0, size=10)
-    # 4. Assertions
-    assert total == 2
-    assert isinstance(tasks[0], TaskListDto)
-    assert {t.id for t in tasks} == {task2.id}
-    assert all(t.status in [TaskStatus.IN_PROGRESS, TaskStatus.PENDING] for t in tasks)
-
-def test_get_tasks_by_step_id_crud_unexpected_error():
-    mock_db = MagicMock()
-    mock_db.query.side_effect = Exception("DB error")
-
-    with pytest.raises(GroundControlException) as exc_info:
-        get_tasks_by_step_id_crud(mock_db, step_id=1)
-    assert exc_info.value.code == ErrorCode.GENERIC_CLIENT_ERROR.code
-    assert "Unexpected error while getting tasks" in exc_info.value.message
-
-def test_get_tasks_by_step_id_crud_is_none():
-    mock_db = MagicMock()
-    mock_db.query.return_value.filter.return_value.first.return_value = None
-
-    with pytest.raises(GroundControlException) as exc_info:
-        get_tasks_by_step_id_crud(mock_db, step_id=5)
-    assert exc_info.value.code == ErrorCode.RESOURCE_NOT_FOUND.code
-    print("test",exc_info.value.message)
-    assert "Step" in exc_info.value.message
-
-def test_update_expiration_date_task_crud(db_session: SQLAlchemySession):
-    # Step 1: Create a new task with an initial expiration date
-    initial_expiration_date = datetime.now(timezone.utc)
-    updated_task = {
-        **task_data,
-        "expiration_date": initial_expiration_date,
-        "status": TaskStatus.PENDING
-    }
-    created_task = create_task_crud(TaskCreateDto(**updated_task), db_session)
-    new_expiration_date = datetime.now(timezone.utc) + timedelta(days=5)
-    updated_task = update_expiration_date_task_crud(created_task.id, new_expiration_date, db_session)
-    assert updated_task.expiration_date.astimezone(timezone.utc) == new_expiration_date
-    assert updated_task.id == created_task.id
-
-
-
-def test_skip_expired_task_crud(db_session: SQLAlchemySession):
-    expired_task_data = {
-        **task_data,
-        "expiration_date": datetime.now(timezone.utc) - timedelta(days=1),
-        "status": TaskStatus.PENDING
-    }
-    created_task = create_task_crud(TaskCreateDto(**expired_task_data), db_session)
-    updated_task = skip_expired_task_crud(db_session, created_task.id)
-    assert updated_task is not None
-    assert updated_task.status == TaskStatus.SKIPPED
-    for direction in [InOutEnum.IN, InOutEnum.OUT]:
-        annotations = get_annotations_by_task_id_crud(db_session, created_task.id, None, direction, None)
-    for annotation in annotations:
-        assert annotation.annotation_status == AnnotationStatus.SKIPPED
-
-def test_activate_task_crud_success(db_session: SQLAlchemySession):
-    created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
-    updated_task = activate_task_crud(db_session, task_id=created_task.id)
-    assert updated_task is not None
-    assert updated_task.status == TaskStatus.PENDING
-
 def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
     expiration_date = datetime.now(timezone.utc) - timedelta(days=1) if expired else datetime.now(timezone.utc) + timedelta(days=1)
     task = Task(name="test",expiration_date=expiration_date, status=TaskStatus.PENDING)
@@ -316,21 +198,127 @@ def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
 
     db.commit()
     return task
-def test_skip_expired_task_crud_marks_task_and_annotations_as_skipped(db_session: SQLAlchemySession):
-    # Setup : créer une tâche expirée avec deux annotations
-    task = create_task_with_annotations(db_session, expired=True)
 
-    # Act : exécuter la fonction à tester
-    updated_task = skip_expired_task_crud(db_session, task.id)
-    # Assert : vérifier que la tâche est passée à SKIPPED
-    assert updated_task.status == TaskStatus.SKIPPED
+def test_get_tasks_by_annotated_by_crud(db_session: SQLAlchemySession):
+    create_project_crud(
+        db_session, ProjectBaseDto(**project_data))
+    step = create_step_crud(StepCreate(**step_data_1),db_session)
 
+    # --- Create Tasks ---
+    task_data_1 = {
+        "name": "task 1",
+        "status": TaskStatus.IN_PROGRESS,
+        "step_id": step.id,
+        "redundancy": 2,
+        "media_id": 1,
+        "data_type": "ldd",
+        "lead_time": 1,
+        "created_at": "2025-04-27T21:05:01.328292"
+    }
 
-    # Vérifier que toutes les annotations sont passées à SKIPPED
-    annotations = db_session.query(Annotation).join(
-        AnnotationTask, Annotation.id == AnnotationTask.annotation_id
-    ).filter_by(task_id=task.id).all()
-    for annotation in annotations:
-        assert annotation.annotation_status == AnnotationStatus.SKIPPED
+    task_data_2 = {
+        "name": "task 1",
+        "status": TaskStatus.IN_PROGRESS,
+        "step_id": step.id,
+        "redundancy": 2,
+        "media_id": 1,
+        "data_type": "ldd",
+        "lead_time": 1,
+        "created_at": "2025-04-27T21:05:01.328292"
+    }
 
+    task_data_3 = {
+        "name": "task 1",
+        "status": TaskStatus.PENDING,
+        "step_id": step.id,
+        "redundancy": 2,
+        "media_id": 1,
+        "data_type": "ldd",
+        "lead_time": 1,
+        "created_at": "2025-04-27T21:05:01.328292"
+    }
 
+    task_1 = create_task_crud(TaskCreateDto(**task_data_1), db_session)
+    create_task_crud(TaskCreateDto(**task_data_2), db_session)
+    create_task_crud(TaskCreateDto(**task_data_3), db_session)
+
+    # --- Add Annotations ---
+    ann_1 = Annotation(user_email="user1@example.com", annotation_status=AnnotationStatus.IN_PROGRESS)
+    db_session.add(ann_1)
+    db_session.commit()
+    db_session.refresh(ann_1)
+    annotation_task = AnnotationTask(
+        annotation_id=ann_1.id,
+        task_id=task_1.id,
+        direction=InOutEnum.OUT
+    )
+    db_session.add(annotation_task)
+
+    # --- Test: Get tasks for user1 without task_limit ---
+    tasks, total = get_tasks_by_annotated_by_crud(
+        db=db_session,
+        email="user1@example.com",
+        page=0,
+        size=10,
+        task_limit_on=False
+    )
+    assert total == 3, "Expected 3 total tasks (IN_PROGRESS by user, others IN_PROGRESS or PENDING)"
+
+    # --- Test: Get tasks for user1 with task_limit_on ---
+    tasks, total = get_tasks_by_annotated_by_crud(
+        db=db_session,
+        email="user1@example.com",
+        page=0,
+        size=10,
+        task_limit_on=True
+    )
+    assert total == 1, "Expected only 1 task due to max_tasks_per_person=1"
+
+    # --- Assert expected task is returned ---
+    task_ids = [t.id for t in tasks]
+    assert task_1.id in task_ids, "Expected task_1 to be in result"
+
+def test_recalculate_task_status(db_session: SQLAlchemySession):
+    # Case 1: Task is DRAFT → should skip
+    task = create_task_crud(TaskCreateDto(**task_data), db_session)
+    recalculate_task_status(db_session, task.id)
+    assert get_task_by_id(db_session, task.id).status == TaskStatus.DRAFT
+    # Case 2. PENDING => PENDING
+    task_2 = create_task_crud(TaskCreateDto(**{**task_data, "status": TaskStatus.PENDING}), db_session)
+    recalculate_task_status(db_session, task_2.id)
+    assert get_task_by_id(db_session, task_2.id).status == TaskStatus.PENDING
+    # 3. IN_PROGRESS => DONE
+    task_3 = create_task_crud(TaskCreateDto(**{**task_data, "status": TaskStatus.IN_PROGRESS}), db_session)
+    annotation_data = {
+        "annotation": {
+            "user_email": "user.email@ina.fr",
+            "annotation_status": AnnotationStatus.IN_PROGRESS,
+            "version": 1,
+            "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
+        },
+        "association": {
+            "annotation_id": 1,
+            "task_id": task_3.id,
+            "direction": InOutEnum.OUT
+        }
+    }
+    annotation = create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data))
+    finish_annotation_crud(db_session, annotation.result,annotation.id)
+    recalculate_task_status(db_session, task_3.id)
+    assert get_task_by_id(db_session, task_3.id).status == TaskStatus.DONE
+
+def test_recalculate_step_status(db_session):
+    create_project_crud(
+        db_session, ProjectBaseDto(**project_data))
+    step = create_step_crud(StepCreate(**step_data_1),db_session)
+
+    # 1. All tasks PENDING -> Step should be PENDING
+    create_task_crud(TaskCreateDto(**{**task_data, "status":TaskStatus.PENDING, "step_id":step.id}), db_session)
+    create_task_crud(TaskCreateDto(**{**task_data, "name": "task2", "status":TaskStatus.PENDING, "step_id":step.id}), db_session)
+    recalculate_step_status(db_session, step.id)
+    assert get_step_by_id(db_session, step.id).status == StepStatus.PENDING
+
+    # 2. Some tasks DONE, some PENDING -> Step should be IN_PROGRESS
+    create_task_crud(TaskCreateDto(**{**task_data, "status":TaskStatus.DONE, "step_id":step.id}), db_session)
+    recalculate_step_status(db_session, step.id)
+    assert get_step_by_id(db_session, step.id).status == StepStatus.IN_PROGRESS

@@ -29,6 +29,7 @@ class TaskBaseDto(BaseModel):
     expiration_date: Optional[datetime] = None
     redundancy: int = 1
     priority: int = 0
+    created_at: datetime
 
 class Config:
     from_attributes = True
@@ -62,6 +63,7 @@ class TaskListDto(TaskCreateDto):
     task_comments: list[TaskCommentDto] = []
     step: Optional[StepProjectDto]
     media: Optional[MediaDto]
+    annotations: list[AnnotationWithIdDto]
 
 
     class Config:

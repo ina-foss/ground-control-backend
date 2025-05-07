@@ -6,17 +6,18 @@ It includes functions to retrieve a task by ID, create a new task, and update an
 
 from typing import Any, Dict
 from sqlalchemy.orm import Session
-from sqlalchemy import case, func
-from datetime import datetime, timezone
-from ina_ground_control.models.step_model import Step
+from sqlalchemy.orm import joinedload
+from sqlalchemy import select, func
 from ina_ground_control import logger
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
-from ina_ground_control.services.step_service import finish_step
+from ina_ground_control.schemas.step_schemas import StepStatus
 from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
-from ina_ground_control.models.annotation_model import AnnotationStatus
-from ina_ground_control.models.annotation_task_association import InOutEnum
+from ina_ground_control.services.step_service import get_step_by_id, update_step_status_crud
+from ina_ground_control.models.annotation_model import AnnotationStatus, Annotation
 from ina_ground_control.models.task_model import Task, TaskStatus
 from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
+from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
+from collections import defaultdict
 
 def get_task_by_id(db: Session, task_id: int) -> Task:
     """
@@ -51,29 +52,8 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
+    recalculate_step_status(db, db_task.step_id)
     return db_task
-
-def finish_task(db: Session, task_id: int):
-    finished_task = None
-    task = get_task_by_id(db,task_id)
-    if task.step.allow_empty_annotation :
-        print("WIP")
-    else :
-        finished_annotation_from_task = get_annotations_by_task_id_crud(db,task_id,None,InOutEnum.OUT,AnnotationStatus.DONE)
-        if len(finished_annotation_from_task) == task.redundancy :
-            finished_task = update_task_status_crud(db ,task.id,TaskStatus.DONE)
-            finish_step(db,task.step_id)
-
-    return finished_task
-
-
-def undone_task(db, task_id: int ):
-    updated_task = None
-    task = get_task_by_id(db,task_id)
-    finished_annotation_from_task = get_annotations_by_task_id_crud(db,task_id,None,InOutEnum.OUT,AnnotationStatus.DONE)
-    if len(finished_annotation_from_task) < task.redundancy :
-        updated_task = update_task_status_crud(db ,task.id,TaskStatus.PENDING)
-    return updated_task
 
 def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
     """
@@ -89,7 +69,9 @@ def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
     """
     db_task = get_task_by_id(db, task_id=task_id)
     if db_task is not None:
-        db_task.data = data
+        for key, value in data.items():
+            if hasattr(db_task, key):
+                setattr(db_task, key, value)
         db.commit()
         db.refresh(db_task)
     return db_task
@@ -109,6 +91,7 @@ def delete_task_crud(db: Session, task: Task):
     if task is not None:
         db.delete(task)
         db.commit()
+        recalculate_step_status(db, task.step_id)
     return task
 
 def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> Task:
@@ -117,125 +100,159 @@ def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> T
     task.updated_at = func.now()
     db.commit()
     db.refresh(task)
+    recalculate_step_status(db, task.step_id)
     return task
 
-def get_tasks_by_step_id_crud(
+def get_tasks_by_annotated_by_crud(
         db: Session,
-        step_id: int,
+        email: str,
         page: int = 0,
-        size: int = 10
+        size: int = 10,
+        task_limit_on: bool = False,
 ):
     """
-    Get paginated list of tasks by step_id.
-
-    Args:
-        db (Session): SQLAlchemy session.
-        step_id (int): The step ID to filter tasks by.
-        page (int): Page number (0-indexed).
-        size (int): Number of items per page.
+    Get prioritized and paginated tasks based on:
+    1. IN_PROGRESS tasks where user is in annotated_by array.
+    2. IN_PROGRESS tasks where redundancy is not met and expiration is near.
+    3. PENDING tasks with high priority and expiration is near.
     """
     try:
-        found_step = db.query(Step).filter(Step.id == step_id).first()
-        if found_step is None:
-            logger.error("Failed to retrieve step with id: %d", step_id)
-            raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
-        else:
-            offset = page * size
+        offset = page * size
+        eager_options = [joinedload(Task.annotations), joinedload(Task.step)]
 
-            # Count total records
-            total_records = db.query(func.count(Task.id)).filter(Task.step_id == step_id).scalar()
-
-            # Get paginated tasks
-            status_order = case(
-                (Task.status == TaskStatus.IN_PROGRESS, 0),
-                (Task.status == TaskStatus.PENDING, 1),
-                else_=2
+        # --- Condition 1: IN_PROGRESS tasks annotated by user ---
+        tasks_1 = (
+            db.query(Task)
+            .join(Task.annotations)  # Join to Annotation via relationship
+            .filter(
+                Task.status == TaskStatus.IN_PROGRESS,
+                Annotation.user_email == email, # Filter based on email
+                Annotation.annotation_status == AnnotationStatus.IN_PROGRESS
             )
-            task_result_data = (db.query(Task)
-                                .filter(Task.step_id == step_id)
-                                .filter(Task.status.in_([TaskStatus.IN_PROGRESS, TaskStatus.PENDING]))
-                                .order_by(status_order, Task.created_at)
-                                .offset(offset)
-                                .limit(size)
-                                .all())
+            .options(*eager_options)
+            .all()
+        )
+        # --- Condition 2: Get IN_PROGRESS tasks that haven't yet reached the required redundancy ---
+        # and where the current user hasn't already annotated them.
+        subquery = (
+            select(func.count(Annotation.id))
+            .select_from(AnnotationTask.__table__.join(Annotation, AnnotationTask.annotation_id == Annotation.id))
+            .where(
+                AnnotationTask.task_id == Task.id,
+                Annotation.annotation_status == AnnotationStatus.IN_PROGRESS,
+                Annotation.user_email != email,
+            )
+            .correlate(Task)
+            .scalar_subquery()
+        )
 
-            #tasks = [TaskListDto.model_validate(task) for task in task_result_data]
-            tasks = [TaskListDto.model_validate(task, from_attributes=True) for task in task_result_data]
+        tasks_2 = (
+            db.query(Task)
+            .filter(
+                Task.status == TaskStatus.IN_PROGRESS,
+                subquery < Task.redundancy
+            )
+            .options(*eager_options)
+            .all()
+        )
 
-            return tasks, total_records
+        # --- Condition 3: Get PENDING tasks that are due soon and have high priority ---
+        tasks_3 = db.query(Task).filter(
+            Task.status == TaskStatus.PENDING,
+            #Task.expiration_date <= today
+        ).order_by(Task.priority.desc()).all()
 
-    except GroundControlException:
-        raise
+        # Combine in order of priority: tasks_1 → tasks_2 → tasks_3
+        combined = tasks_1 + tasks_2 + tasks_3
+        # Deduplicate by ID
+        seen = set()
+        unique_tasks = []
+        for task in combined:
+            if task.id not in seen:
+                unique_tasks.append(task)
+                seen.add(task.id)
+
+        # Group and apply max_task_per_person limit
+        if task_limit_on:
+            grouped = defaultdict(list)
+            for task in unique_tasks:
+                if task.step:
+                    grouped[task.step.id].append(task)
+
+            # Apply max_task_per_person limit from each step
+            limited_tasks = []
+            for _, tasks in grouped.items():
+                step = tasks[0].step  # All tasks share the same step
+                limit = step.max_tasks_per_person or len(tasks)
+                limited_tasks.extend(tasks[:limit])
+        else:
+            limited_tasks = unique_tasks
+
+        # Paginate
+        paginated = limited_tasks[offset:offset + size]
+        tasks = [TaskListDto.model_validate(task, from_attributes=True) for task in paginated]
+        total_records = len(limited_tasks)
+        return tasks, total_records
+
     except Exception as e:
-        logger.error("Failed to retrieve all tasks of step: %s", e)
+        logger.error("Failed to retrieve tasks by annotated_by: %s", e)
         raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Unexpected error while getting tasks") from e
 
+def recalculate_task_status(db: Session, task_id: int):
+    task = get_task_by_id(db, task_id)
 
-def update_expiration_date_task_crud(task_id: int, date: datetime, db: Session):
-    """
-    Update the expiration date of an existing task in the database.
+    if task.status == TaskStatus.DRAFT:
+        print(f"⏩ Task {task.id} is in DRAFT. Skipping status update.")
+        return
 
-    Attributes:
-        task_id (int): The unique identifier of the task to update.
-        date (datetime): The new expiration date.
-        db (Session): The database session used for querying.
+    if task.redundancy == 0:
+        print(f"⚠️ Task {task_id} has redundancy = 0. Skipping status update.")
+        return
 
-    Returns:
-        Task: The updated Task object.
+    annotations = get_annotations_by_task_id_crud(
+        db, task_id, None, InOutEnum.OUT, AnnotationStatus.DONE
+    )
+    done_count = len(annotations)
 
-    Raises:
-        ValueError: If the task is not found.
-    """
-    found_task = get_task_by_id(db, task_id=task_id)
-    found_task.expiration_date = date
-    db.commit()
-    db.refresh(found_task)
-    return found_task
+    if done_count == 0:
+        new_status = TaskStatus.PENDING
+    elif done_count < task.redundancy:
+        new_status = TaskStatus.IN_PROGRESS
+    else:
+        new_status = TaskStatus.DONE
 
-def skip_expired_task_crud(db: Session, task_id: int) -> Task:
-    """
-    Mark a task and its annotations as 'SKIPPED' if the task's expiration date is in the past.
+    if task.status != new_status:
+        print(f"🔄 Updating Task {task.id} status: {task.status} → {new_status}")
+        update_task_status_crud(db, task.id, new_status)
 
-    Args:
-        db (Session): SQLAlchemy database session.
-        task_id (int): ID of the task to check and update.
 
-    Returns:
-        Task: The updated task object.
-    """
-    task = get_task_by_id(db, task_id=task_id)
+def recalculate_step_status(db: Session, step_id: int):
+    step = get_step_by_id(db, step_id)
+    total_tasks = len([task for task in step.tasks if task.status != TaskStatus.SKIPPED and task.status != TaskStatus.DRAFT])
+    done_tasks = len([task for task in step.tasks if task.status == TaskStatus.DONE])
+    pending_tasks = len([task for task in step.tasks if task.status == TaskStatus.PENDING])
 
-    if task.expiration_date and task.expiration_date.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        task.status = TaskStatus.SKIPPED
-        task.updated_at = func.now()
-        # Get both IN and OUT annotations
-        for direction in [InOutEnum.IN, InOutEnum.OUT]:
-            annotations = get_annotations_by_task_id_crud(db, task_id, None, direction, None)
-            for annotation in annotations:
-                annotation.annotation_status = AnnotationStatus.SKIPPED
-                annotation.updated_at = func.now()
-                db.commit()
-        db.commit()
-        db.refresh(task)
-    return task
+    completion_rate = (done_tasks / total_tasks) * 100 if total_tasks else 0
 
-def activate_task_crud(db: Session, task_id: int) -> Task:
-    """
-    Transition a task's status from 'DRAFT' to 'PENDING'.
+    # Check if all tasks are PENDING, if so set the step to PENDING
+    if pending_tasks == total_tasks:
+        if step.status != StepStatus.PENDING:
+            print(f"🔄 Updating Step {step.id} status: {step.status} → PENDING (due to all tasks being PENDING)")
+            update_step_status_crud(db, step, StepStatus.PENDING)
+    # Some tasks are PENDING and others are DONE or IN_PROGRESS
+    elif pending_tasks > 0 and pending_tasks < total_tasks:
+        if step.status != StepStatus.IN_PROGRESS:
+            print(f"🔄 Updating Step {step.id} status: {step.status} → IN_PROGRESS (some tasks are PENDING)")
+            update_step_status_crud(db, step, StepStatus.IN_PROGRESS)
+    # Check if any task is IN_PROGRESS, if so set the step to IN_PROGRESS
+    elif any(task.status == TaskStatus.IN_PROGRESS for task in step.tasks):
+        if step.status != StepStatus.IN_PROGRESS:
+            print(f"🔄 Updating Step {step.id} status: {step.status} → IN_PROGRESS (due to PENDING task)")
+            update_step_status_crud(db, step, StepStatus.IN_PROGRESS)
+    # If completion rate is enough, mark step as DONE
+    elif completion_rate >= step.completeness_rate:
+        if step.status != StepStatus.DONE:
+            print(f"✅ Marking Step {step.id} as DONE ({completion_rate:.2f}%)")
+            update_step_status_crud(db, step, StepStatus.DONE)
 
-    Args:
-        db (Session): SQLAlchemy database session.
-        task_id (int): The ID of the task to activate.
-
-    Returns:
-        Task: The updated task object with status set to 'PENDING'.
-
-    Raises:
-        GroundControlException: If the task is not found.
-    """
-    task = get_task_by_id(db, task_id=task_id)
-    task.status = TaskStatus.PENDING
-    task.updated_at = func.now()
-    db.commit()
-    return task
 

@@ -2459,7 +2459,7 @@
       "emailVerified": true,
       "firstName": "",
       "lastName": "User",
-      "email": "user@localhost",
+      "email": "user@localhost.com",
       "credentials": [
         {
           "id": "7821832b-1e82-45a2-b8d3-f1a6ad909e64",
