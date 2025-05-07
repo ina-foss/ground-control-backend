@@ -29,7 +29,6 @@ class TaskBaseDto(BaseModel):
     expiration_date: Optional[datetime] = None
     redundancy: int = 1
     priority: int = 0
-    created_at: datetime
 
 class Config:
     from_attributes = True
@@ -40,6 +39,7 @@ class TaskWithIdDto(TaskBaseDto):
     Extends TaskBaseDto with an additional id field.
     """
     id: int
+    created_at: datetime
     annotations: list[AnnotationWithIdDto]
 
 
@@ -49,7 +49,6 @@ class TaskCreateDto(TaskBaseDto):
     Includes all fields from TaskBaseDto plus an optional
      data field for additional task-specific data.
     """
-
 
 class TaskListDto(TaskCreateDto):
     """
