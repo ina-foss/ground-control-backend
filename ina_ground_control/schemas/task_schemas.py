@@ -39,7 +39,7 @@ class TaskWithIdDto(TaskBaseDto):
     Extends TaskBaseDto with an additional id field.
     """
     id: int
-    created_at: datetime
+    created_at: Optional[datetime]
     annotations: list[AnnotationWithIdDto]
 
 
