@@ -14,7 +14,7 @@ from ina_ground_control.models.step_model import StepStatus
 from ina_ground_control.schemas.annotation_schemas import AnnotationStatus
 from ina_ground_control.schemas.step_schemas import StepCreate
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus
-from ina_ground_control.services.step_service import create_step_crud, get_step_by_id
+from ina_ground_control.services.step_service import create_step_crud, get_step_by_id, update_step_status_crud
 from ina_ground_control.services.task_service import (
     get_task_by_id,
     create_task_crud,
@@ -23,10 +23,11 @@ from ina_ground_control.services.task_service import (
     update_task_status_crud,
     get_tasks_by_annotated_by_crud,
     recalculate_task_status,
-    recalculate_step_status
+    recalculate_step_status,
+    recalculate_project_status
 )
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto
-from ina_ground_control.services.project_service import create_project_crud
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectStatus
+from ina_ground_control.services.project_service import create_project_crud, get_project_by_id
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.services.annotation_service import create_annotation_crud, finish_annotation_crud
 
@@ -106,6 +107,8 @@ annotation_data = {
 }
 
 def test_get_task_by_id(db_session: SQLAlchemySession):
+    create_project_crud(
+        db_session, ProjectBaseDto(**project_data))
     create_step_crud(StepCreate(**step_data_1),db_session)
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
     retrieved_task = get_task_by_id(db_session, created_task.id)
@@ -121,6 +124,8 @@ def test_get_task_by_id(db_session: SQLAlchemySession):
 
 
 def test_create_task_crud(db_session: SQLAlchemySession):
+    create_project_crud(
+        db_session, ProjectBaseDto(**project_data))
     create_step_crud(StepCreate(**step_data_1),db_session)
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
     assert created_task is not None
@@ -322,3 +327,33 @@ def test_recalculate_step_status(db_session):
     create_task_crud(TaskCreateDto(**{**task_data, "status":TaskStatus.DONE, "step_id":step.id}), db_session)
     recalculate_step_status(db_session, step.id)
     assert get_step_by_id(db_session, step.id).status == StepStatus.IN_PROGRESS
+
+def test_recalculate_project_status(db_session):
+    # Create project
+    project = create_project_crud(
+        db_session, ProjectBaseDto(**project_data)
+    )
+
+    # STEP 1: All steps are PENDING → project should be PENDING
+    step1 = create_step_crud(StepCreate(**{**step_data_1, "project_id": project.id, "status": StepStatus.PENDING}), db_session)
+    step2 = create_step_crud(StepCreate(**{**step_data_1, "name": "Step 2", "project_id": project.id, "status": StepStatus.PENDING}),
+                             db_session)
+
+    recalculate_project_status(db_session, project.id)
+    assert get_project_by_id(db_session, project.id).status == ProjectStatus.PENDING
+
+    # STEP 2: One step is DONE, one is PENDING → project should be IN_PROGRESS
+    update_step_status_crud(db_session, step1, StepStatus.DONE)
+    recalculate_project_status(db_session, project.id)
+    assert get_project_by_id(db_session, project.id).status == ProjectStatus.IN_PROGRESS
+
+    # STEP 3: All steps are DONE → project should be DONE
+    update_step_status_crud(db_session, step2, StepStatus.DONE)
+    recalculate_project_status(db_session, project.id)
+    assert get_project_by_id(db_session, project.id).status == ProjectStatus.DONE
+
+    # STEP 4: All steps are SKIPPED or DRAFT → project should be PENDING
+    update_step_status_crud(db_session, step1, StepStatus.SKIPPED)
+    update_step_status_crud(db_session, step2, StepStatus.DRAFT)
+    recalculate_project_status(db_session, project.id)
+    assert get_project_by_id(db_session, project.id).status == ProjectStatus.PENDING

@@ -42,11 +42,15 @@ class ProjectStatus(PyEnum):
     Attributes:
         DRAFT (str): The project is in draft status.
         PENDING (str): The project is pending and awaiting further actions.
-        ENDED (str): The project has ended.
+        IN_PROGRESS (str): Currently being worked on.
+        SKIPPED (str): This project has been ignored.
+        DONE (str): Successfully completed.
     """
     DRAFT = "draft"
     PENDING = "pending"
-    ENDED = "ended"
+    IN_PROGRESS = "in-progress"
+    SKIPPED = "skipped"
+    DONE = "done"
 
 
 class Project(Base):
