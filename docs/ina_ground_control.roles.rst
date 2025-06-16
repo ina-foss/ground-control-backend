@@ -6,17 +6,11 @@ This guide provides an overview of how roles and permissions function within the
 Overview
 --------
 
-The system implements **Role-Based Access Control (RBAC)** with two key components:
+The system implements **Role-Based Access Control (RBAC)**:
 
-1. **Global Roles**: Define a user’s general level of access. The primary roles include:
+1. **Permissions**: Determine specific actions a user can perform within the system.
 
-   - ``GC_ADMIN``
-   - ``GC_PROJECT_OWNER``
-   - ``GC_ANNOTATOR``
-
-2. **Permissions**: Determine specific actions a user can perform within the system.
-
-Both **roles and permissions** are stored in the **roles claim** within the authentication token.
+**permissions** is stored in the **roles claim** within the authentication token.
 
 Understanding Permissions
 -------------------------
@@ -24,6 +18,12 @@ Understanding Permissions
 Permissions specify which actions a user is allowed to perform. They are assigned based on the user's **global role** and follow a structured naming convention:
 
 ``<project_name>:<resource_name>:<action_name>``
+
+Permission Evolution in Progress(To do)
+To enhance permission granularity and management, the system is evolving to introduce :admin suffixes on action names specifically for administrative actions.
+
+For example, new permissions will have the format:
+``<project_name>:<resource_name>:<action_name>:admin``
 
 Example:
 ~~~~~~~~
