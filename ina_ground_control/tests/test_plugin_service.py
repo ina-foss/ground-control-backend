@@ -55,8 +55,8 @@ def test_get_plugins(db_session: SQLAlchemySession):
     assert given_plugin2 is not None
     assert given_plugin2.id is not None
     assert given_plugin2.id == 2
-    retrieved_plugins = get_plugins_search(db_session, 1, "name_test")
-    retrieved_plugins2 = get_plugins_search(db_session, 2, "name_test2")
+    retrieved_plugins = get_plugins_search(db_session, 1, " ")
+    retrieved_plugins2 = get_plugins_search(db_session, 2, " ")
     assert retrieved_plugins is not None
     assert retrieved_plugins[0].id is not None
     assert retrieved_plugins[0].id == "ALAMAIS"

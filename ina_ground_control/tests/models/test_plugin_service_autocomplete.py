@@ -106,7 +106,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
     def setUp(self):
         self.config = PluginConfigAutoComplete(
             data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
-            search_attr="query",
+            search_attr="id",
             data_type="json",
             type="plugin_autocomplete",
             response_id_key="$.conceptSet[*].qcode",
@@ -128,12 +128,10 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         # Expected result
         expected_result = [
             PluginAutocompleteValueDTO(id="medtop:01000000", ext_id="https://cv.iptc.org/newscodes/mediatopic/01000000",
-                                       label="Arts, culture, divertissement et médias"),
-            PluginAutocompleteValueDTO(id="medtop:02000000", ext_id="https://cv.iptc.org/newscodes/mediatopic/02000000",
-                                       label="Criminalité, droit et justice")
+                                       label="Arts, culture, divertissement et médias")
         ]
 
-        result = self.service.search("test-query")
+        result = self.service.search("medtop:01000000")
         self.assertEqual(result, expected_result)
 
     @patch("ina_ground_control.services.plugins.plugin_service_autocomplete.requests.get")
@@ -172,7 +170,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             PluginAutocompleteValueDTO(id="2", ext_id="B456", label="Item 2")
         ]
 
-        result = self.service.parse(mock_response)
+        result = self.service.parse(mock_response, " ")
         self.assertEqual(result, expected_result)
 
     def test_parse_valid_json(self):
@@ -187,7 +185,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
                                        label="Criminalité, droit et justice")
         ]
 
-        result = self.service.parse(mock_response)
+        result = self.service.parse(mock_response," ")
         self.assertEqual(result, expected_result)
 
     def test_parse_empty_json(self):
@@ -195,7 +193,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         mock_response = Mock()
         mock_response.content = json.dumps([]).encode("utf-8")
 
-        result = self.service.parse(mock_response)
+        result = self.service.parse(mock_response," ")
         self.assertEqual(result, [])
 
     def test_parse_unknown_data_type(self):
@@ -205,5 +203,5 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         mock_response = Mock()
 
         with self.assertRaises(ValueError):
-            self.service.parse(mock_response)
+            self.service.parse(mock_response," ")
 

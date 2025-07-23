@@ -75,7 +75,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             # Check if the HTTP response status is OK
             if response.status_code == 200:
                 logger.info("Received successful response from data source.")
-                data = self.parse(response)
+                data = self.parse(response,query)
 
                 if not data:
                     logger.warning("Parsed response is empty for query: %s", query)
@@ -118,12 +118,13 @@ class PluginServiceAutoComplete(PluginServiceBase):
        """
         pass
 
-    def parse(self, response) -> list[PluginAutocompleteValueDTO]:
+    def parse(self, response,query) -> list[PluginAutocompleteValueDTO]:
         """
        Parses the HTTP response into a list of `PluginAutocompleteValueDTO` objects.
 
        Args:
            response: The HTTP response object.
+           query: search string
 
        Returns:
            list[PluginAutocompleteValueDTO]: A list of transformed autocomplete value objects.
@@ -155,6 +156,12 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     )
                     for id_match, ext_id_match, label_match in zip(ids, ext_ids, labels)
                 ]
+                if query !=" ":
+                    filtred_transformed_data = [
+                        item for item in transformed_data
+                        if (getattr(item, self.config.search_attr, "") or "").lower().startswith(query.lower())
+                    ]
+                    transformed_data=filtred_transformed_data
                 return transformed_data
             else:
                 logger.warning("JSON response is empty.")
