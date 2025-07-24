@@ -156,12 +156,20 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     )
                     for id_match, ext_id_match, label_match in zip(ids, ext_ids, labels)
                 ]
-                if query !=" ":
+                # filter only if the search attribute is defined and a string, else return the unfiltered array
+                if (query and query.strip() and self.config.search_attr
+                    and isinstance(getattr(transformed_data[0],self.config.search_attr),str) ) :
+                    def get_query_position(item):
+                        attr_value = getattr(item,self.config.search_attr, "")
+                        if isinstance(attr_value, str):
+                            return attr_value.lower().find(query.lower())
+                        return -1
+
                     filtred_transformed_data = [
                         item for item in transformed_data
-                        if (getattr(item, self.config.search_attr, "") or "").lower().startswith(query.lower())
+                        if get_query_position(item) != -1
                     ]
-                    transformed_data=filtred_transformed_data
+                    transformed_data=sorted(filtred_transformed_data, key=get_query_position)
                 return transformed_data
             else:
                 logger.warning("JSON response is empty.")
