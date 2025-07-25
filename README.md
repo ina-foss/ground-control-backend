@@ -1,7 +1,6 @@
 # Ground Control Backend
 
 
-
 ### Création du virtualenv
 
 Si vous souhaitez lancer l'api sans le reste de la stack, exécutez les commandes suivantes depuis la racine de ce dépôt :
