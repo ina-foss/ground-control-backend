@@ -20,3 +20,4 @@ opentelemetry-exporter-prometheus==0.52b0
 opentelemetry-instrumentation-fastapi==0.52b0
 opentelemetry-instrumentation-sqlalchemy==0.52b0
 httpx<1.0
+requests_oauth2client==1.7.0

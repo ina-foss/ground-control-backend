@@ -5,6 +5,7 @@ from ina_ground_control.models.plugin_model import TypePlugin, DisplayZone
 from ina_ground_control.schemas.plugin_schemas import PluginCreate
 from ina_ground_control.services.plugin_service import get_plugins_search, create_plugin_crud, delete_plugin_crud, \
     get_plugin_by_id,get_plugins_crud
+from ina_ground_control.models.plugin.plugin_base import PluginConfigType, DataTypeEnum
 
 def test_get_plugins(db_session: SQLAlchemySession):
     plugin_1 = {
@@ -14,10 +15,10 @@ def test_get_plugins(db_session: SQLAlchemySession):
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {
-            "type": "plugin_autocomplete",
-            "data_type": "json",
+            "type": PluginConfigType.GET_PLUGIN,
+            "data_type": DataTypeEnum.JSON,
             "data_source": "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
-            "search_attr": "title",
+            "search_query": "label",
             "response_id_key": "$[*].id",
             "response_ext_id_key": "$[*].code",
             "response_label_key": "$[*].label"
@@ -31,10 +32,10 @@ def test_get_plugins(db_session: SQLAlchemySession):
         "display_zone": DisplayZone.BLOC,
         "step_id": 2,
         "config_data": {
-            "type": "plugin_autocomplete",
-            "data_type": "json",
+            "type": PluginConfigType.GET_PLUGIN,
+            "data_type": DataTypeEnum.JSON,
             "data_source": "https://ground-control.2ia.d.sas.ina/cptall-fr.json",
-            "search_attr": "title",
+            "search_query": "label",
             "response_id_key": "$.conceptSet[*].qcode",
             "response_ext_id_key": "$.conceptSet[*].uri",
             "response_label_key": "$.conceptSet[*].prefLabel.fr"
@@ -74,9 +75,11 @@ plugin_data = {
     "data_categories": "data_categories test",
     "display_zone": DisplayZone.BLOC,
     "step_id": 1,
-    "config_data": {"type": "plugin_autocomplete",
-                    "data_source": "test data",
-                    "data_type": "test"}
+    "config_data": {
+            "type": PluginConfigType.GET_PLUGIN,
+            "data_type": DataTypeEnum.JSON,
+            "data_source": "test data"
+    }
 }
 
 
@@ -101,9 +104,11 @@ def test_delete_plugin_crud(db_session: SQLAlchemySession):
         "data_categories": "data_categories test",
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
-        "config_data": {"type": "plugin_autocomplete",
-                        "data_source": "test data",
-                        "data_type": "test"}
+        "config_data": {
+            "data_source": "test data",
+            "type": PluginConfigType.GET_PLUGIN,
+            "data_type": DataTypeEnum.JSON,
+        }
     }
     created_plugin = create_plugin_crud(PluginCreate(**plugin_1), db_session)
 

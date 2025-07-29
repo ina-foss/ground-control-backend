@@ -9,6 +9,7 @@ from requests.models import Response
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import PluginAutocompleteValueDTO
 from ina_ground_control.services.plugins.plugin_service_autocomplete import PluginServiceAutoComplete
+from ina_ground_control.models.plugin.plugin_base import PluginConfigType, DataTypeEnum
 
 mock_autocomplete_response=json.dumps({
     "@context": "https://www.iptc.org/std/IKOS/IKOS.jsonld",
@@ -106,9 +107,9 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
     def setUp(self):
         self.config = PluginConfigAutoComplete(
             data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
-            search_attr="id",
-            data_type="json",
-            type="plugin_autocomplete",
+            search_query="id",
+            data_type=DataTypeEnum.JSON,
+            type=PluginConfigType.GET_PLUGIN,
             response_id_key="$.conceptSet[*].qcode",
             response_ext_id_key="$.conceptSet[*].uri",
             response_label_key="$.conceptSet[*].prefLabel.fr",
@@ -149,9 +150,9 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         # Test the `parse` method with a valid JSON response.
         self.config = PluginConfigAutoComplete(
             data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
-            search_attr="query",
-            data_type="json",
-            type="plugin_autocomplete",
+            search_query="query",
+            data_type=DataTypeEnum.JSON,
+            type=PluginConfigType.GET_PLUGIN,
             response_id_key="$[*].id",
             response_ext_id_key="$[*].code",
             response_label_key="$[*].label"
