@@ -21,3 +21,6 @@ class PluginAutocompleteValueDTO(BaseModel):
     id: Optional[str]
     ext_id: Optional[str]
     label: Optional[str]
+    image: Optional[str] = None
+    description: Optional[str] = None
+
