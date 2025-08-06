@@ -1,16 +1,17 @@
+"""Unit tests for plugin config """
+# pylint: disable=redefined-outer-name
 import unittest
-
 from ina_ground_control.models.plugin.plugin_autocomplete import PluginConfigAutoComplete
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO, TYPE_MAPPING
-
+from ina_ground_control.models.plugin.plugin_base import PluginConfigType
 
 class TestPluginConfigDTO(unittest.TestCase):
+    """Set up test data."""
     def setUp(self):
-        """Set up test data."""
         self.valid_data = {
-            "type": "plugin_autocomplete",
-            "search_attr": "title",
+            "type": PluginConfigType.GET_PLUGIN,
+            "search_query": "title",
             "search_query_param": "q",
             "search_item_sort": "title,asc",
             "response_id_key": "id",  # Add this
@@ -18,7 +19,7 @@ class TestPluginConfigDTO(unittest.TestCase):
             "response_label_key": "label",  # Add this
         }
         self.invalid_data = {
-            "search_attr": "title",  # Missing "type" field
+            "search_query": "title",  # Missing "type" field
         }
         self.unknown_type_data = {
             "type": "unknown_plugin",
@@ -34,7 +35,7 @@ class TestPluginConfigDTO(unittest.TestCase):
         self.assertIsInstance(result, PluginConfigAutoComplete)
 
         # Check that attributes are parsed correctly
-        self.assertEqual(result.search_attr, self.valid_data["search_attr"])
+        self.assertEqual(result.search_query, self.valid_data["search_query"])
         self.assertEqual(result.response_id_key, self.valid_data["response_id_key"])
 
     def test_build_with_missing_type_field(self):
@@ -55,9 +56,6 @@ class TestPluginConfigDTO(unittest.TestCase):
 
     def test_type_mapping_consistency(self):
         """Ensure TYPE_MAPPING contains valid targets."""
-        for plugin_type, target_class in TYPE_MAPPING.items():
+        for _, target_class in TYPE_MAPPING.items():
             self.assertTrue(issubclass(target_class, PluginConfigBase))
 
-
-if __name__ == "__main__":
-    unittest.main()

@@ -9,11 +9,12 @@ Functions:
 - delete_project_crud
 """
 
-from sqlalchemy.orm import Session
-
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
+from ina_ground_control.models.step_model import Step
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
-
+from ina_ground_control.models.project_model import ProjectStatus
 
 def get_projects(db: Session, skip: int = 0, limit: int = 100):
     """
@@ -41,7 +42,7 @@ def get_project_by_id(db: Session, project_id: int):
     Returns:
     Project: The Project object if found, otherwise None.
     """
-    return db.query(Project).filter(Project.id == project_id).first()
+    return db.query(Project).options(joinedload(Project.steps).joinedload(Step.tasks)).filter(Project.id == project_id).first()
 
 
 def create_project_crud(db: Session, project: ProjectBaseDto):
@@ -99,3 +100,12 @@ def delete_project_crud(db: Session, project_id: int):
         db.delete(db_project)
         db.commit()
     return db_project
+
+def update_project_status_crud(db: Session, project_id: int, status: ProjectStatus ):
+    project = get_project_by_id(db, project_id)
+    project.status = status
+    project.updated_at = func.now()
+    db.commit()
+    db.refresh(project)
+    return project
+

@@ -14,14 +14,15 @@ from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 
 # Ensure TYPE_MAPPING remains consistent
 TYPE_MAPPING = {
-    "plugin_autocomplete": PluginConfigAutoComplete,
+    "get plugin": PluginConfigAutoComplete,
+    "post plugin": PluginConfigAutoComplete,
 }
-
 
 class PluginConfigDTO():
     """
     Represents the Data Transfer Object (DTO) for Plugin Configuration.
     """
+
     @staticmethod
     def build(values):
         type_field = values.get("type")

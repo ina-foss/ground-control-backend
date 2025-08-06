@@ -2,10 +2,11 @@
 Defines Data Transfer Object (DTO) classes for step-related data structures.
 """
 from __future__ import annotations
-from typing import Optional
-from pydantic import BaseModel
-from datetime import datetime
 
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field
 
 from ina_ground_control.models.step_model import AnnotationType, StepStatus
 
@@ -20,7 +21,11 @@ class StepCreate(BaseModel):
     annotation_type: AnnotationType
     pinned_at: Optional[datetime]
     status: StepStatus
-    project_id : int
+    project_id: int
+    redundancy: int = Field(default=1, description="Number of annotations per task")
+    completeness_rate: float = Field(default=100.0, ge=0, le=100, description="Must be between 0 and 100")
+    allow_empty_annotation: bool = Field(default=False, description="Allow empty annotations")
+    max_tasks_per_person: int = Field(default=1, ge=1, description="Must be at least 1")
 
 
 class StepDto(StepCreate):
@@ -38,6 +43,7 @@ class StepDto(StepCreate):
             Config for reading attributes from other class.
         """
 
+
 class StepDetailDto(StepDto):
     """
     DTO representing the step object with its related tasks objects.
@@ -45,19 +51,18 @@ class StepDetailDto(StepDto):
     Used in `/{project_id}` view
     """
 
-    project: ProjectBaseDto
     tasks: Optional[list["TaskWithIdDto"]]
-
 
 
 class StepProjectDto(BaseModel):
     annotation_type: AnnotationType
     project: ProjectWithIdDto
 
-class StepPluginDto(BaseModel):
 
+class StepPluginDto(BaseModel):
     plugins: PluginWithIdDto
 
-from ina_ground_control.schemas.task_schemas import  TaskWithIdDto
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectWithIdDto
+
+from ina_ground_control.schemas.task_schemas import TaskWithIdDto
+from ina_ground_control.schemas.project_schemas import ProjectWithIdDto
 from ina_ground_control.schemas.plugin_schemas import PluginWithIdDto

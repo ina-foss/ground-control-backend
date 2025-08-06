@@ -4,12 +4,11 @@ It includes routes for retrieving user data, utilizing the Keycloak middleware f
 authentication and permission checks.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status
-from latios.log import get_logger
+from fastapi import APIRouter, Depends, status
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
+from ina_ground_control import logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.database import get_db
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
@@ -19,10 +18,9 @@ from ina_ground_control.services.user_service import (
     get_user_by_email_crud,
     get_users,
 )
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
-logger = get_logger()
 router = APIRouter(tags=["user"])
-NOT_FOUND_STR_USER = "User not found"
 
 
 @router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
@@ -42,8 +40,7 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
         return users
     except Exception as e:
         logger.error("Failed to retrieve users: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to retrieve users") from e
-
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to retrieve users") from e
 
 @router.post("/user", response_model=UserDto, response_model_by_alias=False)
 def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
@@ -54,7 +51,7 @@ def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
         return create_user_crud(db, user)
     except Exception as e:
         logger.error("Failed to create user: %s", e)
-        raise HTTPException(status_code=400, detail="Failed to create user") from e
+        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create user") from e
 
 
 @router.get("/user/roles", response_model=Permission)
@@ -71,4 +68,4 @@ def get_user_by_email(email: EmailStr, db: Session = Depends(get_db)):
             return status.HTTP_200_OK
     except Exception as e:
         logger.error("Failed to retrieve user: %s", e)
-        raise HTTPException(status_code=404, detail=NOT_FOUND_STR_USER) from e
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="User", id=email) from e

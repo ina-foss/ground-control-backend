@@ -1,39 +1,11 @@
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker
-from ina_ground_control.database import Base
-from ina_ground_control.services.media_service import create_media_crud,get_media_by_id,update_media_crud,delete_media_crud,get_medias
+"""Unit tests for Media services"""
+# pylint: disable=redefined-outer-name
+from sqlalchemy.orm import Session as SQLAlchemySession
 from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.services.media_service import create_media_crud, get_media_by_id, update_media_crud, \
+    delete_media_crud, get_medias
 
-
-@pytest.fixture(scope="session")
-def db_engine():
-    """
-        Mock the databalse using sqlite
-    """
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    Base.metadata.drop_all(bind=engine)
-    engine.dispose()
-
-@pytest.fixture(scope="session")
-def db_session(db_engine):
-    """
-        Create the connection session to interract with sqlite
-    """
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = Session()
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
-
-
-def test_get_medias(db_session: Session):
+def test_get_medias(db_session: SQLAlchemySession):
     media_data_1 = {
         "url": "url test",
         "type": "mp4"
@@ -57,7 +29,8 @@ def test_get_medias(db_session: Session):
     assert retrieved_medias[1].url == media_data_2["url"]
     assert retrieved_medias[1].type.value == media_data_2["type"]
 
-def test_create_media_crud(db_session: Session):
+
+def test_create_media_crud(db_session: SQLAlchemySession):
     """
         Testing media creation service
     """
@@ -65,14 +38,14 @@ def test_create_media_crud(db_session: Session):
         "url": "url test",
         "type": "mp4"
     }
-    created_media = create_media_crud(MediaCreate(**media_data),db_session)
+    created_media = create_media_crud(MediaCreate(**media_data), db_session)
     assert created_media is not None
     assert created_media.id is not None
     assert created_media.url == media_data["url"]
     assert created_media.type.value == media_data["type"]
 
 
-def test_get_media_by_id(db_session: Session):
+def test_get_media_by_id(db_session: SQLAlchemySession):
     media_data = {
         "url": "url test",
         "type": "mp4"
@@ -86,12 +59,13 @@ def test_get_media_by_id(db_session: Session):
     assert retrieved_media.url == media_data["url"]
     assert retrieved_media.type.value == media_data["type"]
 
-def test_get_media_by_inexistant_id(db_session: Session):
 
+def test_get_media_by_inexistant_id(db_session: SQLAlchemySession):
     inexistant_media = get_media_by_id(db_session, 999)
     assert inexistant_media is None
 
-def test_update_media_crud(db_session: Session):
+
+def test_update_media_crud(db_session: SQLAlchemySession):
     media_data = {
         "url": "url test",
         "type": "mp4"
@@ -109,7 +83,7 @@ def test_update_media_crud(db_session: Session):
     assert retrieved_updated_media.type.value == updated_media_data["type"]
 
 
-def test_delete_media_crud(db_session: Session):
+def test_delete_media_crud(db_session: SQLAlchemySession):
     media_data = {
         "url": "url test",
         "type": "hls"
@@ -122,4 +96,3 @@ def test_delete_media_crud(db_session: Session):
 
     assert created_media is not None
     assert retrieved_media is None
-

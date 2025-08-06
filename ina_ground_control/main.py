@@ -1,62 +1,50 @@
 """
-This module sets up the main FastAPI application, including routes, middleware, and configuration.
+Ground control application, including routes, middleware, and configuration.
 """
+import logging
 import os
-from dotenv import load_dotenv
+
 import uvicorn
-import typing
-from fastapi import FastAPI, Depends, Request
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
-    AuthorizationMethod,
-    MatchStrategy,
-    CheckPermissions,
-    AuthorizationResult
+    AuthorizationMethod
 )
+from starlette.staticfiles import StaticFiles
+
+from ina_ground_control import logger, get_application_version, map_user
 from ina_ground_control.config import settings
-from ina_ground_control.models.user_model import UserInfo
-from ina_ground_control.routers import projects, tasks, users, resources, annotations,medias ,steps,tags,task_comments, plugins
-from ina_ground_control.constants.roles import Role, ROLE_PERMISSIONS
+from ina_ground_control.database import engine
+from ina_ground_control.routers import projects, tasks, users, resources, annotations, medias, steps, tags, \
+    task_comments, plugins, management
+from ina_ground_control.services.telemetry_service import TelemetryService
+from ina_ground_control.utils.prometheus import PrometheusMiddleware
+from ina_ground_control.exception.handlers import default_exception_handler
+from ina_ground_control.exception.exceptions import GroundControlException, GroundControlRequestValidationError
 
-async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
-    """
-    Maps user information received from Keycloak to a User model instance.
-
-    Args:
-        userinfo (Dict[str, Any]): The user information dictionary.
-
-    Returns:
-        UserInfo: An instance of the UserInfo model.
-    """
-    print("*********************************************************",userinfo)  # Debugging the userinfo dict
-
-    # Map the fields from the userinfo to the UserInfo model
-    user = UserInfo(
-        email=userinfo.get("email"),
-        roles=userinfo.get("roles", []),
-    )
-
-    return user
-
+load_dotenv(".env.local")
+app = FastAPI(
+    title=settings.app.service_name,
+    version=get_application_version(),
+    description=settings.app.description,
+)
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
     url=settings.sso.url,
     realm=settings.sso.realm,
     client_id=settings.sso.client_id,
     client_secret=settings.sso.client_secret,
-    claims=["openid","email","profile","roles"],
+    claims=["openid", "email", "profile", "roles"],
     reject_on_missing_claim=False,
     verify=True,
-    validate_token=True,
-    authorization_method= AuthorizationMethod.CLAIM,
+    authorization_method=AuthorizationMethod.CLAIM,
     authorization_claim="roles",
     use_introspection_endpoint=False,
-    swagger_client_id="web_app",
-    swagger_auth_scopes=["openid"],  # Optional
-    swagger_auth_pkce=True,  # Optional
-    swagger_scheme_name="openid",
+    swagger_client_id=settings.sso.client_id,
     decode_options={
         "verify_signature": True,
         "verify_aud": False,
@@ -64,17 +52,14 @@ keycloak_config = KeycloakConfiguration(
     },
 )
 
-app = FastAPI()
-
-
 setup_keycloak_middleware(
     app,
     keycloak_configuration=keycloak_config,
-    exclude_patterns=["/management/*", "/docs", "/openapi.json", "/redoc"],
-    add_swagger_auth=True,
+    exclude_patterns=["/management/*", "/docs", "/gen_docs/*", "/openapi.json", "/redoc", "/static/*"],
     user_mapper=map_user
 )
 
+# Add router
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
@@ -85,49 +70,91 @@ app.include_router(plugins.router)
 app.include_router(steps.router)
 app.include_router(tags.router)
 app.include_router(task_comments.router)
-app.servers = [{"url": "http://localhost:8000"}]
+app.include_router(management.router)
+# Setting metrics middleware
+app.add_middleware(PrometheusMiddleware, app_name=settings.app.service_name)
+# Mount the static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/gen_docs", StaticFiles(directory="docs/_build"), name="gen_docs")
+app.servers = [{"url": settings.app.server}]
 
-origins = [
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "http://frontend:3000",
-    "https://frontend:3000",
-]
+# Add CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Authorization", "Link", "X-Total-Count", "Highlighted"]
+    allow_origins=settings.cors.allow_origins,
+    allow_credentials=settings.cors.allow_credentials,
+    allow_methods=settings.cors.allow_methods,
+    allow_headers=settings.cors.allow_headers,
+    expose_headers=settings.cors.expose_headers
 )
 
 
-@app.get("/management/health")
-async def info() -> dict:
-    """
-    Health check endpoint that returns the status of the service.
 
-    Returns:
-        dict: A dictionary indicating the service status.
-    """
-    return {"status": "up"}
-
-@app.get("/admin")
-def check_admin(request: Request,
-                _authorization_result: AuthorizationResult = Depends(CheckPermissions( ROLE_PERMISSIONS[Role.GC_ADMIN],
-                                                                                      match_strategy=MatchStrategy.AND))
-                # pylint: disable=invalid-name
-                ):
-    roles_from_token = request.scope.get("auth", {})
-    return {"message": "Hello Admin",
-            "checked roles": ROLE_PERMISSIONS[Role.GC_ADMIN],
-            "roles from token": roles_from_token }
+@app.middleware("http")
+async def log_user(request: Request, call_next):
+    # Add user email to the log record
+    response = await call_next(request)
+    user = request.scope.get("user", {})
+    if isinstance(user,dict) :
+        user_email = user.get("email","Unknown")
+    else:
+        user_email = user.email
+    user_logger = logging.getLogger("uvicorn.debug")
+    user_logger.info("User: %s",user_email)
+    return response
 
 
-load_dotenv(".env.local")
+app.add_exception_handler(GroundControlException, default_exception_handler)
+app.add_exception_handler(GroundControlRequestValidationError, default_exception_handler)
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    try:
+        # Generate the base schema
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+        )
+
+        # Add components if missing
+        if "components" not in openapi_schema:
+            openapi_schema["components"] = {}
+
+        # Add securitySchemes if missing
+        if "securitySchemes" not in openapi_schema["components"]:
+            openapi_schema["components"]["securitySchemes"] = {}
+
+        # Add custom openId security scheme
+        openapi_schema["components"]["securitySchemes"]["openid"] = {
+            "type": "openIdConnect",
+            "openIdConnectUrl": "http://localhost:9080/realms/ground-control/.well-known/openid-configuration"
+        }
+
+        # Apply openId securitySchemes on every routes
+        openapi_schema["security"] = [
+            {
+                "openid": ["admin"]
+            }
+        ]
+
+        app.openapi_schema = openapi_schema  # Cache the schema
+        return app.openapi_schema
+    except Exception as e:
+        logger.error("Error generating OpenAPI schema: %s", str(e))
+        raise
+
+
+app.openapi = custom_openapi
+# Initialize Telemetry Service
+telemetry = TelemetryService(app, engine)
+
 APP_HOST = os.getenv("APP_HOST")
 APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL")
 
 if __name__ == "__main__":
-    uvicorn.run("ina_ground_control.main:app", host=APP_HOST, port=8000,log_level=APP_LOG_LEVEL, reload=True )
+    logger.info("Starting server with host: %s and log level: %s", APP_HOST, APP_LOG_LEVEL)
+    uvicorn.run("ina_ground_control.main:app", host=APP_HOST, port=8000, log_level=APP_LOG_LEVEL, reload=True)

@@ -1,22 +1,20 @@
+import os
+import sys
 from logging.config import fileConfig
+
+from alembic import context
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from alembic import context
-import alembic_postgresql_enum
-import os
-from dotenv import load_dotenv
-import sys
 
 # this is the Alembic Config object, which provides
 # access to the values within the.ini file in use.
 config = context.config
 
-
-
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name) # NOSONAR
 
 # Adjust the system path to include the parent directory of the current script
 # This allows us to import modules from the project root
@@ -24,19 +22,10 @@ current_dir = os.path.dirname(__file__)
 project_root = os.path.join(current_dir, '..', '..')
 sys.path.append(project_root)
 
-
 # Now, import the Base from your database.py file
 from ina_ground_control.database import Base
-from ina_ground_control.models.project_model import Project, ProjectStatus
-from ina_ground_control.models.task_model import Task
-from ina_ground_control.models.user_model import User
-from ina_ground_control.models.annotation_model import Annotation
-from ina_ground_control.models.media_model import Media
-from ina_ground_control.models.step_model import Step
-from ina_ground_control.models.tag_model import Tag
-from ina_ground_control.models.task_comment_model import TaskComment
-from ina_ground_control.models.annotation_task_association import AnnotationTask
-from ina_ground_control.models.plugin_model import Plugin
+
+from ina_ground_control.models import  annotation_model,annotation_task_association,media_model,media_projet_association,plugin_model,project_model,step_model,tag_model,tag_project_association,task_comment_model,task_model,user_model
 
 
 load_dotenv('.env.local')
@@ -48,14 +37,16 @@ PG_PASSWORD = os.getenv('PG_PASSWORD')
 PG_PORT = os.getenv('PG_PORT')
 DATABASE_HOSTNAME = os.getenv('DATABASE_HOSTNAME')
 
-config.set_main_option('sqlalchemy.url', f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}')
+config.set_main_option('sqlalchemy.url',
+                       f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}')
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
-#... etc.
+# ... etc.
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
@@ -69,6 +60,7 @@ def run_migrations_offline() -> None:
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
@@ -85,6 +77,7 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

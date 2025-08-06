@@ -4,13 +4,15 @@ This module provides CRUD operations for steps.
 It includes functions to retrieve a step by ID, create a new step, and update an existing step.
 """
 
-
 from sqlalchemy.orm import Session
-from ina_ground_control.models.step_model import Step
+from sqlalchemy.sql.expression import func
+from ina_ground_control import logger
+from ina_ground_control.models.step_model import Step, StepStatus
 from ina_ground_control.schemas.step_schemas import StepCreate
+from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 
-def get_step_by_id(db: Session, step_id: int):
+def get_step_by_id(db: Session, step_id: int) -> Step:
     """
     Retrieve a step by its ID.
 
@@ -21,7 +23,12 @@ def get_step_by_id(db: Session, step_id: int):
     Returns:
         Step: The step object if found, otherwise None.
     """
-    return db.query(Step).filter(Step.id == step_id).first()
+    step = db.query(Step).filter(Step.id == step_id).first()
+    if step is None:
+        logger.error("Failed to retrieve step with id: %d", step_id)
+        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
+    return step
+
 
 def create_step_crud(step: StepCreate, db: Session):
     """
@@ -40,7 +47,7 @@ def create_step_crud(step: StepCreate, db: Session):
     db.refresh(db_step)
     return db_step
 
-def update_data_step_crud(step_id: int, step: StepCreate, db: Session ):
+def update_data_step_crud(step_id: int, step: StepCreate, db: Session):
     """
     Update the data of an existing step in the database.
 
@@ -53,12 +60,12 @@ def update_data_step_crud(step_id: int, step: StepCreate, db: Session ):
         Step: The updated Step object if the step exists, otherwise None.
     """
     db_step = get_step_by_id(db, step_id=step_id)
-    if db_step is not None:
-        for key, value in step.model_dump().items():
-            setattr(db_step, key, value)
-        db.commit()
-        db.refresh(db_step)
+    for key, value in step.model_dump().items():
+        setattr(db_step, key, value)
+    db.commit()
+    db.refresh(db_step)
     return db_step
+
 
 def delete_step_crud(db: Session, step_id: int):
     """
@@ -71,11 +78,11 @@ def delete_step_crud(db: Session, step_id: int):
     Returns:
     Step: The deleted Step object if the step exists, otherwise None.
     """
-    db_step = db.query(Step).filter(Step.id == step_id).first()
-    if db_step is not None:
-        db.delete(db_step)
-        db.commit()
+    db_step = get_step_by_id(db, step_id)
+    db.delete(db_step)
+    db.commit()
     return db_step
+
 
 def get_steps(db: Session, skip: int = 0, limit: int = 100):
     """
@@ -90,3 +97,19 @@ def get_steps(db: Session, skip: int = 0, limit: int = 100):
     List[step]: A list of step objects.
     """
     return db.query(Step).offset(skip).limit(limit).all()
+
+def finish_step_crud(db: Session, step: Step) -> Step:
+    step.status = StepStatus.DONE
+    step.validated_at = func.now()
+    step.updated_at = func.now()
+    db.commit()
+    db.refresh(step)
+    return step
+
+def update_step_status_crud(db: Session, step: Step, status: StepStatus ) -> Step:
+    step.status = status
+    step.updated_at = func.now()
+    db.commit()
+    db.refresh(step)
+    return step
+

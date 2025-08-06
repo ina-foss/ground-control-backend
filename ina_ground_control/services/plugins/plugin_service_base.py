@@ -4,6 +4,7 @@ This module provides search and add operations for PluginServiceBase.
 """
 from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 
+
 class PluginServiceBase:
     """
     Base class for implementing plugin services.
@@ -24,7 +25,8 @@ class PluginServiceBase:
             Adds new data to the plugin. This method should be implemented
             by subclasses to handle data insertion logic.
     """
-    def __init__(self, config:PluginConfigBase):
+
+    def __init__(self, config: PluginConfigBase):
         """
        Initializes the PluginServiceBase with the provided configuration.
 
@@ -33,7 +35,7 @@ class PluginServiceBase:
        """
         self.config = config
 
-    def search(self,query:str):
+    def search(self, query: str):
         """
        Searches for a specific value.
 
@@ -44,7 +46,8 @@ class PluginServiceBase:
            NotImplementedError: This method is intended to be overridden by subclasses.
        """
         pass
-    def add(self, data:dict):
+
+    def add(self, data: dict):
         """
        Adds new data to the plugin.
 

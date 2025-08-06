@@ -1,15 +1,16 @@
-# TODO: Write test for creating user
+"""Unit tests for User services"""
+# pylint: disable=redefined-outer-name
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import sessionmaker
 from ina_ground_control.database import Base
 from ina_ground_control.schemas.user_base_schemas import UserBaseDto
-from ina_ground_control.services.user_service import create_user_crud, get_user_by_email_crud
+from ina_ground_control.services.user_service import create_user_crud, get_user_by_email_crud,get_users
 
 
 @pytest.fixture(scope="session")
-def db_engine():
+def test_db_engine():
     """
         Mock the databalse using sqlite
     """
@@ -21,14 +22,14 @@ def db_engine():
 
 
 @pytest.fixture(scope="session")
-def db(db_engine):
+def db(test_db_engine):
     """
         Create the connection session to interract with sqlite
     """
-    connection = db_engine.connect()
+    connection = test_db_engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    session = Session()
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+    session = session_factory()
     yield session
     session.close()
     transaction.rollback()
@@ -41,22 +42,33 @@ test_user = {
 }
 
 
-def test_create_user_crud(db: Session):
+def test_create_user_crud(db: SQLAlchemySession):
     """
     Create a User object and check if it corresponds to the initial data
     """
 
     created_user = create_user_crud(db, UserBaseDto(**test_user))
 
-    assert created_user.email == test_user['email']
+    assert created_user.email == test_user["email"]
     assert created_user.role == test_user["role"]
 
-def test_get_user_by_email(db: Session):
+
+def test_get_user_by_email(db: SQLAlchemySession):
     """
     Retrieve the User object created before and check if it corresponds to the initial data
     """
 
-    retrieved_user = get_user_by_email_crud(db,test_user["email"]) 
-    
+    retrieved_user = get_user_by_email_crud(db, test_user["email"])
+
     assert retrieved_user.email == test_user["email"]
     assert retrieved_user.role == test_user["role"]
+
+def test_get_users(db: SQLAlchemySession):
+    """
+    Retrieve the User object created before and check if it corresponds to the initial data
+    """
+
+    retrieved_users = get_users(db,skip=0, limit=10)
+    assert len(retrieved_users) == 1
+    assert retrieved_users[0].email == test_user["email"]
+    assert retrieved_users[0].role == test_user["role"]

@@ -20,30 +20,43 @@ spaces using database-level constraints.
 
 import re
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, Enum, CheckConstraint
-from sqlalchemy.orm import validates
+
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, Enum, CheckConstraint, Boolean
+from sqlalchemy.orm import validates, relationship
+
 from ina_ground_control.database import Base
-class TypePlugin(PyEnum):
+
+class TypePlugin(str, PyEnum):
     """
-      Enum representing the different types available for plugin.
+    Enum representing the different plugin types.
 
-      Attributes:
-          LABEL (str): Represents a label plugin.
-          AUTOCOMPLETE (str): Represents an autocomplete plugin.
-      """
-    LABEL = "label"
-    AUTOCOMPLETE = "autocomplete"
-
-class DisplayZone(PyEnum):
+    Values:
+        LABEL: Label plugin
+        AUTOCOMPLETE: List with autocomplete functionality.
+        LIST_ITEMS: Displays tags and list of items.
+        SUGGESTION_LIST: Interactive suggestion block.
+.       INPUT_LABEL: Simple text input field.
     """
-  Enum representing the different display zone available for plugin.
+    LABEL = "label"                   # Représente un plugin label
+    AUTOCOMPLETE = "autocomplete"     # Présente une liste avec auto-complétion
+    LIST_ITEMS = "listitems"           # Affiche des tags et une liste d'éléments
+    SUGGESTION_LIST = "suggestionlist" # Bloc de suggestions interactives
+    INPUT_LABEL = "inputlabel"         # Affiche un champ de saisie de texte simple
 
-      Attributes:
-          BLOC (str): Represents a bloc zone.
-          COMPONENT (str): Represents a component zone.
+class DisplayZone(str, PyEnum):
+    """
+    Enum representing the different display zones available for a plugin.
+
+    Attributes:
+        BLOC (str): Represents a standalone block zone.
+        SPAN_MODAL_LEFT (str): Represents a modal that spans the left side.
+        SPAN_MODAL_RIGHT (str): Represents a modal that spans the right side.
+        GROUP_MODAL (str): Represents a grouped modal zone for multiple plugins.
     """
     BLOC = "bloc"
-    COMPONENT = "component"
+    SPAN_MODAL_LEFT = "span_modal_left"
+    SPAN_MODAL_RIGHT = "span_modal_right"
+    GROUP_MODAL = "group_modal"
 
 class Plugin(Base):
     """
@@ -55,7 +68,7 @@ class Plugin(Base):
          type (Enum): The type of plugin configuration.
          step_id (Integer): The foreign key linking to the step table.
          configData (JSON): Additional configuration data.
-
+         display_config (JSON): Additional configuration for display zone .
      Table constraints:
          - "check_name_lowercase": Ensures the 'name' field is always in lowercase.
          - "check_name_no_spaces": Ensures the 'name' field does not contain spaces.
@@ -70,7 +83,21 @@ class Plugin(Base):
     display_zone = Column(Enum(DisplayZone))
     step_id = Column(Integer, ForeignKey("step.id"))
     config_data = Column(JSON)
-
+    display_config = Column(JSON, nullable=True)
+    enable_search = Column(Boolean, default=False, nullable=True)
+    data_property = Column(String, nullable=True)
+    parent_id = Column(Integer, ForeignKey("plugin.id"), nullable=True)
+    parent = relationship(
+        "Plugin",
+        back_populates="children",
+        remote_side=[id]
+    )
+    children = relationship(
+        "Plugin",
+        back_populates="parent",
+        cascade="all, delete-orphan",
+        lazy="joined"
+    )
     __table_args__ = (
         CheckConstraint("name = LOWER(name)", name="check_name_lowercase"),
         CheckConstraint("name NOT LIKE '% %'", name="check_name_no_spaces"),
@@ -78,7 +105,7 @@ class Plugin(Base):
 
     @validates("configData")
     def validate_config_data(self, value):
-        #Validates that the configData JSON contains 'type' as a string and 'datasource' as a valid URL.
+        # Validates that the configData JSON contains 'type' as a string and 'datasource' as a valid URL.
         if not isinstance(value, dict):
             raise ValueError("configData must be a JSON object (dictionary).")
 
