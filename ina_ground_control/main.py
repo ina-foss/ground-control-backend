@@ -96,7 +96,9 @@ app.add_middleware(PrometheusMiddleware, app_name=settings.application)
 # Mount the static directories
 mount_static_directory(app, "/static", "static", "static")
 mount_static_directory(app, "/gen_docs", "docs/_build", "gen_docs")
-app.servers = [{"url": f"http://{settings.server_host}:{settings.server_port}"}]
+app.servers = [
+    {"url": f"http://{settings.server_host}:{settings.server_port}"}
+]  # NOSONAR
 
 # Add CORS Middleware
 app.add_middleware(

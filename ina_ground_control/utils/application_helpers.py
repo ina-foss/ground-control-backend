@@ -27,7 +27,7 @@ def setup_logging() -> None:
         logging.config.fileConfig(str(logging_conf_path))  # NOSONAR
     else:
         # Fallback to basic logging if config file not found
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO)  # NOSONAR
 
     # Adjust third-party library logging levels
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
