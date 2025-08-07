@@ -1,8 +1,8 @@
-
 """
 This module defines constants for roles, resources, actions, and permissions used in the ina_ground_control system.
 It associates permissions and roles for access control across the application.
 """
+
 from enum import Enum
 from typing import Dict, List
 
@@ -14,6 +14,7 @@ class Role(str, Enum):
     Enum representing different roles within the ground control system.
     Each role corresponds to specific permissions.
     """
+
     GC_ADMIN = "GC_ADMIN"
     GC_PROJECT_OWNER = "GC_PROJECT_OWNER"
     GC_ANNOTATOR = "GC_ANNOTATOR"
@@ -24,6 +25,7 @@ class Resource(str, Enum):
     Enum representing the various resources within the ground control system.
     Resources can have associated actions defined elsewhere.
     """
+
     PROJECT = "project"
     ANNOTATION = "annotation"
     MEDIA = "media"
@@ -41,6 +43,7 @@ class Action(str, Enum):
     Enum defining the possible actions that can be performed on resources.
     Actions represent operations like Create, Read, Update, Delete, etc.
     """
+
     # CRUD ACTIONS
     CREATE = "create"
     READ = "read"
@@ -166,16 +169,21 @@ class Permission(str, Enum):
     :ivar GET_USER_BY_EMAIL: Permission string to get a user by email.
     :type GET_USER_BY_EMAIL: str
     """
+
     # Project
     CREATE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.CREATE.value}"
     READ_PROJECTS = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ_ALL.value}"
     READ_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ.value}"
     DELETE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.DELETE.value}"
     # Annotation
-    CREATE_ANNOTATION = f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.CREATE.value}"
+    CREATE_ANNOTATION = (
+        f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.CREATE.value}"
+    )
     GET_ANNOTATIONS_BY_ID = f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.GET_ANNOTATIONS_BY_ID.value}"
     UPDATE_ANNOTATION_RESULT = f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.UPDATE_ANNOTATION_RESULT.value}"
-    FINISH_ANNOTATION = f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.FINISH_ANNOTATION.value}"
+    FINISH_ANNOTATION = (
+        f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.FINISH_ANNOTATION.value}"
+    )
     # Media
     READ_MEDIA = f"{GROUND_CONTROL}:{Resource.MEDIA.value}:{Action.READ.value}"
     CREATE_MEDIA = f"{GROUND_CONTROL}:{Resource.MEDIA.value}:{Action.CREATE.value}"
@@ -183,13 +191,17 @@ class Permission(str, Enum):
     DELETE_MEDIA = f"{GROUND_CONTROL}:{Resource.MEDIA.value}:{Action.DELETE.value}"
     READ_MEDIAS = f"{GROUND_CONTROL}:{Resource.MEDIA.value}:{Action.READ_ALL.value}"
     # Plugin
-    SEARCH_PLUGINS = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.SEARCH_PLUGINS.value}"
+    SEARCH_PLUGINS = (
+        f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.SEARCH_PLUGINS.value}"
+    )
     READ_PLUGINS = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.READ_ALL.value}"
     CREATE_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.CREATE.value}"
     DELETE_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.DELETE.value}"
     READ_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.READ.value}"
     # Ressource
-    GET_TRANSCRIPTION = f"{GROUND_CONTROL}:{Resource.RESSOURCE.value}:{Action.GET_TRANSCRIPTION.value}"
+    GET_TRANSCRIPTION = (
+        f"{GROUND_CONTROL}:{Resource.RESSOURCE.value}:{Action.GET_TRANSCRIPTION.value}"
+    )
     # Step
     READ_STEP = f"{GROUND_CONTROL}:{Resource.STEP.value}:{Action.READ.value}"
     CREATE_STEP = f"{GROUND_CONTROL}:{Resource.STEP.value}:{Action.CREATE.value}"
@@ -204,9 +216,7 @@ class Permission(str, Enum):
     # TASK_COMMENT
     READ_TASK_COMMENT = f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.READ_TASK_COMMENT.value}"
     READ_TASK_COMMENTS_BY_TASK_ID = f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.READ_TASK_COMMENTS_BY_TASK_ID.value}"
-    CREATE_TASK_COMMENT = (
-        f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.CREATE_TASK_COMMENT.value}"
-    )
+    CREATE_TASK_COMMENT = f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.CREATE_TASK_COMMENT.value}"
     UPDATE_TASK_COMMENT = f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.UPDATE_TASK_COMMENT.value}"
     DELETE_TASK_COMMENT = f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.DELETE_TASK_COMMENT.value}"
     READ_TASK_COMMENTS = f"{GROUND_CONTROL}:{Resource.TASK_COMMENT.value}:{Action.READ_TASK_COMMENTS.value}"
@@ -219,7 +229,9 @@ class Permission(str, Enum):
     # User
     READ_USERS = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.READ_ALL.value}"
     CREATE_USER = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.CREATE.value}"
-    GET_USER_BY_EMAIL = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.GET_USER_BY_EMAIL.value}"
+    GET_USER_BY_EMAIL = (
+        f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.GET_USER_BY_EMAIL.value}"
+    )
 
     @staticmethod
     def get_value_if_exists(value: str):

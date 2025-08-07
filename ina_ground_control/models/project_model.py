@@ -11,13 +11,14 @@ Classes:
     ProjectStatus (PyEnum): Enum representing the different statuses a project can have.
     Project (Base): SqlAlchemy model representing a project record in the database.
 """
+
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 from ina_ground_control.models.media_projet_association import MediaProject
 from ina_ground_control.models.tag_project_association import TagProject
 
@@ -31,6 +32,7 @@ class DistributionMode(PyEnum):
         STATIC (str):
         DYNAMIC (str):
     """
+
     STATIC = "static"
     DYNAMIC = "dynamic"
 
@@ -46,6 +48,7 @@ class ProjectStatus(PyEnum):
         SKIPPED (str): This project has been ignored.
         DONE (str): Successfully completed.
     """
+
     DRAFT = "draft"
     PENDING = "pending"
     IN_PROGRESS = "in-progress"
@@ -97,8 +100,12 @@ class Project(Base):
 
     created_by = Column(String, ForeignKey("user.email"))
 
-    medias = relationship("Media", secondary=MediaProject.__table__, backref="projects", cascade="all")
-    tags = relationship("Tag", secondary=TagProject.__table__, backref="project", cascade="all")
+    medias = relationship(
+        "Media", secondary=MediaProject.__table__, backref="projects", cascade="all"
+    )
+    tags = relationship(
+        "Tag", secondary=TagProject.__table__, backref="project", cascade="all"
+    )
     owner = relationship("User", back_populates="projects")
     steps = relationship("Step", backref="project", cascade="all, delete-orphan")
 

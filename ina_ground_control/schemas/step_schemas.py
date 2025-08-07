@@ -1,6 +1,7 @@
 """
 Defines Data Transfer Object (DTO) classes for step-related data structures.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -23,8 +24,12 @@ class StepCreate(BaseModel):
     status: StepStatus
     project_id: int
     redundancy: int = Field(default=1, description="Number of annotations per task")
-    completeness_rate: float = Field(default=100.0, ge=0, le=100, description="Must be between 0 and 100")
-    allow_empty_annotation: bool = Field(default=False, description="Allow empty annotations")
+    completeness_rate: float = Field(
+        default=100.0, ge=0, le=100, description="Must be between 0 and 100"
+    )
+    allow_empty_annotation: bool = Field(
+        default=False, description="Allow empty annotations"
+    )
     max_tasks_per_person: int = Field(default=1, ge=1, description="Must be at least 1")
 
 
@@ -63,6 +68,6 @@ class StepPluginDto(BaseModel):
     plugins: PluginWithIdDto
 
 
-from ina_ground_control.schemas.task_schemas import TaskWithIdDto
-from ina_ground_control.schemas.project_schemas import ProjectWithIdDto
 from ina_ground_control.schemas.plugin_schemas import PluginWithIdDto
+from ina_ground_control.schemas.project_schemas import ProjectWithIdDto
+from ina_ground_control.schemas.task_schemas import TaskWithIdDto

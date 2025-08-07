@@ -9,6 +9,7 @@ class TagCreate(BaseModel):
     """
     DTO to create a tag object
     """
+
     key: str
     value: str
 

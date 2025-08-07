@@ -11,5 +11,5 @@ settings = Dynaconf(
     env_switcher="INA_GROUND_CONTROL_ENV",
     environments=True,
     load_dotenv=True,
-    merge_enabled=True
+    merge_enabled=True,
 )

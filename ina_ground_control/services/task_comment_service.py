@@ -7,7 +7,10 @@ It includes functions to retrieve a taskComment by ID, create a new taskComment,
 from sqlalchemy.orm import Session
 
 from ina_ground_control.models.task_comment_model import TaskComment
-from ina_ground_control.schemas.task_comment_schemas import TaskCommentCreate, TaskCommentDto
+from ina_ground_control.schemas.task_comment_schemas import (
+    TaskCommentCreate,
+    TaskCommentDto,
+)
 
 
 def get_task_comment_by_id(db: Session, task_comment_id: int):
@@ -35,7 +38,9 @@ def get_task_comment_by_task_id(db: Session, task_comment_task_id: int):
     Returns:
         List[TaskComment]: The list of all the TaskComments that match the task_id input.
     """
-    return db.query(TaskComment).filter(TaskComment.task_id == task_comment_task_id).all()
+    return (
+        db.query(TaskComment).filter(TaskComment.task_id == task_comment_task_id).all()
+    )
 
 
 def create_task_comment_crud(task_comment: TaskCommentCreate, db: Session):
@@ -56,7 +61,9 @@ def create_task_comment_crud(task_comment: TaskCommentCreate, db: Session):
     return db_task_comment
 
 
-def update_task_comment_crud(task_comment_id: int, task_comment: TaskCommentDto, db: Session):
+def update_task_comment_crud(
+    task_comment_id: int, task_comment: TaskCommentDto, db: Session
+):
     """
     Update the data of an existing taskComment in the database.
 
@@ -88,7 +95,9 @@ def delete_task_comment_crud(db: Session, task_comment_id: int):
     Returns:
     TaskComment: The deleted TaskComment object if the taskComment exists, otherwise None.
     """
-    db_task_comment = db.query(TaskComment).filter(TaskComment.id == task_comment_id).first()
+    db_task_comment = (
+        db.query(TaskComment).filter(TaskComment.id == task_comment_id).first()
+    )
     if db_task_comment is not None:
         db.delete(db_task_comment)
         db.commit()

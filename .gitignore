@@ -40,3 +40,7 @@ htmlcov/
 .pypirc
 docs/_build
 *.iml
+.venv
+.evn
+.env.local
+.env.prod

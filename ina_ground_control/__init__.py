@@ -1,50 +1,57 @@
 """Module ina_ground_control: Provides logging setup and access for the GroundControl service."""
+
 import logging.config
-import os
 import typing
-from importlib import metadata
-from importlib.metadata import PackageNotFoundError
 
+from ina_ground_control.config.settings import Settings
 from ina_ground_control.models.user_model import UserInfo
+from ina_ground_control.utils.application_helpers import (
+    get_application_version,
+    setup_logging,
+)
 
-# Load logging configuration from file
-logging.config.fileConfig("logging.conf") # NOSONAR
+settings = Settings()
+settings.version = get_application_version()
+
+# Set up logging
+setup_logging()
+
 # Get logger
-logger = logging.getLogger("GroundControl")
-logger.setLevel(logging.getLevelName(os.getenv("APP_LOG_LEVEL", "DEBUG").upper()))
+logger = logging.getLogger(__name__)
+logger.setLevel(settings.log_level.upper())
+
+from functools import cache
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 
-def get_application_version(package_name="ina-ground-control"):
+def get_db():
     """
-    Retrieves the application version for the given package name.
+    Get a new database session and close it after use.
 
-    Args:
-        package_name (str): The name of the package to retrieve the version for.
-                            Defaults to 'ina-ground-control'.
-
-    Returns:
-        str: The version of the application if found.
-
-    Logs:
-        INFO: When the version is successfully retrieved.
-        WARNING: When the package version cannot be found.
-        ERROR: For unexpected exceptions.
-
-    Raises:
-        RuntimeError: If an unexpected error occurs while retrieving the version.
+    Yields:
+        Session: A SQLAlchemy session object.
     """
+    db = SessionLocal()
+    db.execute(text("SET TRANSACTION READ WRITE"))
     try:
-        # Attempt to retrieve the version of the specified package
-        version = metadata.version(package_name)
-        logger.info("Successfully retrieved version '%s' for package '%s'.", version, package_name)
-        return version
-    except PackageNotFoundError:
-        # Handle the case where the package is not found
-        logger.warning("Package '%s' not found. Ensure it is installed.", package_name)
-    except Exception as ex:
-        # Catch unexpected exceptions and raise a RuntimeError
-        logger.error("An unexpected error occurred while retrieving the package version: %s", ex, exc_info=True)
-        raise RuntimeError(f"Failed to retrieve version for package '{package_name}'.") from ex
+        yield db
+    finally:
+        db.close()
+
+
+@cache
+def get_engine(db_string: str):
+    """Returns a SQLAlchemy engine instance, cached for reuse."""
+    try:
+        engine = create_engine(db_string, pool_pre_ping=True, echo=settings.debug)
+        logger.info("Database engine created successfully.")
+        return engine
+    except Exception as e:
+        logger.exception("Failed to create database engine : %s", str(e))
+        raise
+
 
 async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
     """
@@ -65,9 +72,16 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
             roles=userinfo.get("roles", []),
         )
     else:
-        logger.warning("Userinfo is none check sso has userinfo enabled and token has roles: %s", userinfo)
-        user = UserInfo(
-            email=unk_email,
-            roles=[]
+        logger.warning(
+            "Userinfo is none check sso has userinfo enabled and token has roles: %s",
+            userinfo,
         )
+        user = UserInfo(email=unk_email, roles=[])
     return user
+
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=get_engine(str(settings.get_db_connection_string())),
+)

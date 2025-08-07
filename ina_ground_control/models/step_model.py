@@ -15,11 +15,21 @@ Classes:
 
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Boolean, Float, CheckConstraint
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 
 
 class AnnotationType(PyEnum):
@@ -30,6 +40,7 @@ class AnnotationType(PyEnum):
         SEGMENTATION (str): The annotation type for segmentation tasks.
         TRANSCRIPTION (str): The annotation type for transcription tasks.
     """
+
     SEGMENTATION = "segmentation"
     TRANSCRIPTION = "transcription"
     SPAN = "span"
@@ -47,13 +58,12 @@ class StepStatus(PyEnum):
         SKIPPED (str): This step has been ignored.
         DONE (str): Successfully completed.
     """
+
     DRAFT = "draft"
     PENDING = "pending"
     IN_PROGRESS = "in-progress"
     SKIPPED = "skipped"
     DONE = "done"
-
-
 
 
 class Step(Base):
@@ -98,6 +108,10 @@ class Step(Base):
     allow_empty_annotation = Column(Boolean, nullable=False, default=True)
     max_tasks_per_person = Column(Integer, nullable=False, default=1)
     __table_args__ = (
-        CheckConstraint("completeness_rate BETWEEN 0 AND 100", name="check_completeness_rate_range"),
-        CheckConstraint("max_tasks_per_person >= 1", name="check_max_tasks_per_person_minimum"),
+        CheckConstraint(
+            "completeness_rate BETWEEN 0 AND 100", name="check_completeness_rate_range"
+        ),
+        CheckConstraint(
+            "max_tasks_per_person >= 1", name="check_max_tasks_per_person_minimum"
+        ),
     )

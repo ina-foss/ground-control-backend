@@ -4,8 +4,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the.ini file in use.
@@ -23,25 +22,38 @@ project_root = os.path.join(current_dir, '..', '..')
 sys.path.append(project_root)
 
 # Now, import the Base from your database.py file
-from ina_ground_control.database import Base
-
-from ina_ground_control.models import  annotation_model,annotation_task_association,media_model,media_projet_association,plugin_model,project_model,step_model,tag_model,tag_project_association,task_comment_model,task_model,user_model
-
+from ina_ground_control.models import (
+    Base,
+    annotation_model,
+    annotation_task_association,
+    media_model,
+    media_projet_association,
+    plugin_model,
+    project_model,
+    step_model,
+    tag_model,
+    tag_project_association,
+    task_comment_model,
+    task_model,
+    user_model,
+)
 
 load_dotenv('.env.local')
 
-PG_SERVER = os.getenv('PG_SERVER')
-PG_DATABASE = os.getenv('PG_DATABASE')
-PG_USERNAME = os.getenv('PG_USERNAME')
-PG_PASSWORD = os.getenv('PG_PASSWORD')
-PG_PORT = os.getenv('PG_PORT')
-DATABASE_HOSTNAME = os.getenv('DATABASE_HOSTNAME')
 
-config.set_main_option('sqlalchemy.url',
-                       f'{PG_SERVER}://{PG_USERNAME}:{PG_PASSWORD}@{DATABASE_HOSTNAME}:{PG_PORT}/{PG_DATABASE}')
+DB_SERVER = os.getenv('GC_DB_SERVER')
+DB_DATABASE = os.getenv('GC_DB_DATABASE')
+DB_USERNAME = os.getenv('GC_DB_USERNAME')
+DB_PASSWORD = os.getenv('GC_DB_PASSWORD')
+DB_PORT = os.getenv('GC_DB_PORT')
+DATABASE_HOSTNAME = os.getenv('GC_DB_HOSTNAME')
+
+DATABASE_URL = f'{DB_SERVER}://{DB_USERNAME}:{DB_PASSWORD}@{DATABASE_HOSTNAME}:{DB_PORT}/{DB_DATABASE}'
+
+config.set_main_option('sqlalchemy.url', DATABASE_URL)
+
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata
-
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

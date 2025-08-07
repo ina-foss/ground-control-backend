@@ -8,10 +8,11 @@ such as comment and relationships with other models like Task.
 Classes:
     TaskComment (Base): SqlAlchemy model representing a taskComment record in the database.
 """
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.sql.expression import func
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 
 
 class TaskComment(Base):
@@ -24,6 +25,7 @@ class TaskComment(Base):
         task_id (Integer): The foreign key linking to the concerned task.
 
     """
+
     __tablename__ = "task_comment"
 
     id = Column(Integer, primary_key=True)

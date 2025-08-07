@@ -8,7 +8,7 @@ from enum import Enum as PyEnum
 
 from sqlalchemy import Column, Enum, ForeignKey, Integer
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 
 
 class InOutEnum(PyEnum):
@@ -40,7 +40,14 @@ class AnnotationTask(Base):
 
     __tablename__ = "annotation_task"
 
-    annotation_id = Column(Integer, ForeignKey("annotation.id",
-                                               ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
-    task_id = Column(Integer, ForeignKey("task.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    annotation_id = Column(
+        Integer,
+        ForeignKey("annotation.id", ondelete="CASCADE", onupdate="CASCADE"),
+        primary_key=True,
+    )
+    task_id = Column(
+        Integer,
+        ForeignKey("task.id", ondelete="CASCADE", onupdate="CASCADE"),
+        primary_key=True,
+    )
     direction = Column(Enum(InOutEnum), nullable=False)

@@ -1,50 +1,62 @@
 """
 Ground control application, including routes, middleware, and configuration.
 """
-import logging
-import os
 
-import uvicorn
-from dotenv import load_dotenv
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi_keycloak_middleware import (
+    AuthorizationMethod,
     KeycloakConfiguration,
     setup_keycloak_middleware,
-    AuthorizationMethod
 )
-from starlette.staticfiles import StaticFiles
 
-from ina_ground_control import logger, get_application_version, map_user
-from ina_ground_control.config import settings
-from ina_ground_control.database import engine
-from ina_ground_control.routers import projects, tasks, users, resources, annotations, medias, steps, tags, \
-    task_comments, plugins, management
-from ina_ground_control.services.telemetry_service import TelemetryService
-from ina_ground_control.utils.prometheus import PrometheusMiddleware
+from ina_ground_control import get_engine, logger, map_user, settings
+from ina_ground_control.config.settings import Settings
+from ina_ground_control.exception.exceptions import (
+    GroundControlException,
+    GroundControlRequestValidationError,
+)
 from ina_ground_control.exception.handlers import default_exception_handler
-from ina_ground_control.exception.exceptions import GroundControlException, GroundControlRequestValidationError
-
-load_dotenv(".env.local")
-app = FastAPI(
-    title=settings.app.service_name,
-    version=get_application_version(),
-    description=settings.app.description,
+from ina_ground_control.routers import (
+    annotations,
+    management,
+    medias,
+    plugins,
+    projects,
+    resources,
+    steps,
+    tags,
+    task_comments,
+    tasks,
+    users,
 )
+from ina_ground_control.services.telemetry_service import TelemetryService
+from ina_ground_control.utils.application_helpers import mount_static_directory
+from ina_ground_control.utils.prometheus import PrometheusMiddleware
+
+app = FastAPI(
+    title=settings.application,
+    version=settings.version,
+    openapi_url=f"{settings.api_docs_path}/openapi.json",
+    debug=settings.debug,
+)
+
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
-    url=settings.sso.url,
-    realm=settings.sso.realm,
-    client_id=settings.sso.client_id,
-    client_secret=settings.sso.client_secret,
+    url=settings.sso_url,
+    realm=settings.sso_realm,
+    client_id=settings.sso_client_id,
+    client_secret=settings.sso_client_secret,
     claims=["openid", "email", "profile", "roles"],
     reject_on_missing_claim=False,
     verify=True,
     authorization_method=AuthorizationMethod.CLAIM,
     authorization_claim="roles",
     use_introspection_endpoint=False,
-    swagger_client_id=settings.sso.client_id,
+    swagger_client_id=settings.sso_client_id,
     decode_options={
         "verify_signature": True,
         "verify_aud": False,
@@ -55,8 +67,15 @@ keycloak_config = KeycloakConfiguration(
 setup_keycloak_middleware(
     app,
     keycloak_configuration=keycloak_config,
-    exclude_patterns=["/management/*", "/docs", "/gen_docs/*", "/openapi.json", "/redoc", "/static/*"],
-    user_mapper=map_user
+    exclude_patterns=[
+        "/management/*",
+        "/docs",
+        "/gen_docs/*",
+        "/openapi.json",
+        "/redoc",
+        "/static/*",
+    ],
+    user_mapper=map_user,
 )
 
 # Add router
@@ -72,22 +91,22 @@ app.include_router(tags.router)
 app.include_router(task_comments.router)
 app.include_router(management.router)
 # Setting metrics middleware
-app.add_middleware(PrometheusMiddleware, app_name=settings.app.service_name)
-# Mount the static directory
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/gen_docs", StaticFiles(directory="docs/_build"), name="gen_docs")
-app.servers = [{"url": settings.app.server}]
+app.add_middleware(PrometheusMiddleware, app_name=settings.application)
+
+# Mount the static directories
+mount_static_directory(app, "/static", "static", "static")
+mount_static_directory(app, "/gen_docs", "docs/_build", "gen_docs")
+app.servers = [{"url": f"http://{settings.server_host}:{settings.server_port}"}]
 
 # Add CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors.allow_origins,
-    allow_credentials=settings.cors.allow_credentials,
-    allow_methods=settings.cors.allow_methods,
-    allow_headers=settings.cors.allow_headers,
-    expose_headers=settings.cors.expose_headers
+    allow_origins=settings.cors_allow_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
+    expose_headers=settings.cors_expose_headers,
 )
-
 
 
 @app.middleware("http")
@@ -95,17 +114,22 @@ async def log_user(request: Request, call_next):
     # Add user email to the log record
     response = await call_next(request)
     user = request.scope.get("user", {})
-    if isinstance(user,dict) :
-        user_email = user.get("email","Unknown")
+    if isinstance(user, dict):
+        user_email = user.get("email", "Unknown")
     else:
         user_email = user.email
     user_logger = logging.getLogger("uvicorn.debug")
-    user_logger.info("User: %s",user_email)
+    user_logger.info("User: %s", user_email)
     return response
 
 
 app.add_exception_handler(GroundControlException, default_exception_handler)
-app.add_exception_handler(GroundControlRequestValidationError, default_exception_handler)
+app.add_exception_handler(
+    GroundControlRequestValidationError, default_exception_handler
+)
+
+settings = Settings()
+
 
 def custom_openapi():
     if app.openapi_schema:
@@ -131,15 +155,14 @@ def custom_openapi():
         # Add custom openId security scheme
         openapi_schema["components"]["securitySchemes"]["openid"] = {
             "type": "openIdConnect",
-            "openIdConnectUrl": "http://localhost:9080/realms/ground-control/.well-known/openid-configuration"
+            "openIdConnectUrl": settings.sso_url
+            + "/realms/"
+            + settings.sso_realm
+            + "/.well-known/openid-configuration",
         }
 
         # Apply openId securitySchemes on every routes
-        openapi_schema["security"] = [
-            {
-                "openid": ["admin"]
-            }
-        ]
+        openapi_schema["security"] = [{"openid": ["admin"]}]
 
         app.openapi_schema = openapi_schema  # Cache the schema
         return app.openapi_schema
@@ -150,11 +173,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 # Initialize Telemetry Service
-telemetry = TelemetryService(app, engine)
-
-APP_HOST = os.getenv("APP_HOST")
-APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL")
-
-if __name__ == "__main__":
-    logger.info("Starting server with host: %s and log level: %s", APP_HOST, APP_LOG_LEVEL)
-    uvicorn.run("ina_ground_control.main:app", host=APP_HOST, port=8000, log_level=APP_LOG_LEVEL, reload=True)
+telemetry = TelemetryService(
+    app, sql_alchemy_engine=get_engine(str(settings.get_db_connection_string()))
+)

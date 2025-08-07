@@ -12,6 +12,7 @@ class TaskCommentCreate(BaseModel):
     """
     DTO to create a taskComment object
     """
+
     comment: Optional[str]
     task_id: int
     created_by: str

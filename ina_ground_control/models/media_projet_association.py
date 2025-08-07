@@ -3,9 +3,9 @@ This module defines the MediaProject model, which represents an association
 between Media and Project entities in the database.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 
 
 class MediaProject(Base):
