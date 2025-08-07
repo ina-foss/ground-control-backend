@@ -20,16 +20,20 @@ Configuration:
     `src` module.
 """
 
-
-from fastapi import status
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from ina_ground_control import logger
-from ina_ground_control.database import get_db
+
+from ina_ground_control import get_db, logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.tag_model import Tag
-from ina_ground_control.schemas.tag_schemas import TagDto , TagCreate
-from ina_ground_control.services.tag_service import get_tag_by_key, create_tag_crud, update_tag_crud,delete_tag_crud,get_tags
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
+from ina_ground_control.schemas.tag_schemas import TagCreate, TagDto
+from ina_ground_control.services.tag_service import (
+    create_tag_crud,
+    delete_tag_crud,
+    get_tag_by_key,
+    get_tags,
+    update_tag_crud,
+)
 
 router = APIRouter(tags=["tag"])
 
@@ -51,7 +55,9 @@ def read_tag(tag_key: str, db: Session = Depends(get_db)):
     tag = get_tag_by_key(db, tag_key=tag_key)
     if tag is None:
         logger.error("Failed to retrieve tag with id: %d", tag_key)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Tag", id=tag_key)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Tag", id=tag_key
+        )
     return tag
 
 
@@ -73,7 +79,10 @@ def create_tag(tag: TagCreate, db: Session = Depends(get_db)):
             return create_tag_crud(tag, db)
     except Exception as e:
         logger.error("Failed to create tag: %s", e)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create tag") from e
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create tag"
+        ) from e
+
 
 # update tag by key
 @router.patch("/tag/{tag_key}", response_model=TagDto)
@@ -93,24 +102,31 @@ def update_tag(tag_key: str, tag: TagDto, db: Session = Depends(get_db)):
     updated_tag = update_tag_crud(tag_key, tag, db)
     if updated_tag is None:
         logger.error("Failed to update tag with key: %d", tag_key)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Tag", id=tag_key)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Tag", id=tag_key
+        )
     return updated_tag
 
 
 # delete tag
-@router.delete("/tag/{tag_key}", status_code=status.HTTP_200_OK, response_model=TagCreate)
+@router.delete(
+    "/tag/{tag_key}", status_code=status.HTTP_200_OK, response_model=TagCreate
+)
 def delete_tag(tag_key: str, db: Session = Depends(get_db)):
     deleted_tag = delete_tag_crud(db, tag_key)
     if deleted_tag is None:
         logger.error("Failed to delete tag with key: %d", tag_key)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Tag", id=tag_key)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Tag", id=tag_key
+        )
     return deleted_tag
 
 
 # get list of tag
 @router.get("/tags", response_model=list[TagDto])
-def read_tags(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
-        -> list[Tag]:
+def read_tags(
+    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+) -> list[Tag]:
     """Retrieve a list of tags with pagination support."""
     tags = get_tags(db, skip=skip, limit=limit)
     return tags

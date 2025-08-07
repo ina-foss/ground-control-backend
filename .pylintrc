@@ -6,13 +6,11 @@
 #   https://google.github.io/styleguide/pylintrc
 
 [MAIN]
+ignore=alembic,venv,.venv,docs
+ignore-patterns=.*alembic.*,alembic/.*,.*venv.*,.*\.venv.*,.*docs.*
 
-# Files or directories to be skipped. They should be base names, not paths.
-ignore=third_party
 
-# Files or directories matching the regex patterns are skipped. The regex
-# matches against base names, not paths.
-ignore-patterns=
+
 
 # Pickle collected data for later comparisons.
 persistent=no

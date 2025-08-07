@@ -11,6 +11,7 @@ Classes:
 Routes:
     GET /management/health: Returns the health status of the API service.
 """
+
 from http import HTTPStatus
 from http.client import HTTPException
 
@@ -19,8 +20,7 @@ from fastapi.responses import PlainTextResponse
 from prometheus_client import generate_latest
 from pydantic import BaseModel
 
-from ina_ground_control import logger, get_application_version
-from ina_ground_control.config import settings
+from ina_ground_control import get_application_version, logger, settings
 
 
 class HealthCheck(BaseModel):
@@ -51,11 +51,18 @@ def get_health() -> HealthCheck:
     Returns:
         HealthCheck: Returns a JSON response with the health status
     """
-    return HealthCheck(service_name=settings.app.service_name, version=get_application_version(), status="OK")
+    return HealthCheck(
+        service_name=settings.application,
+        version=get_application_version(),
+        status="OK",
+    )
 
 
-@router.get("/management/metrics", summary="Metrics",
-            response_description="Prometheus metrics in plain text format.")
+@router.get(
+    "/management/metrics",
+    summary="Metrics",
+    response_description="Prometheus metrics in plain text format.",
+)
 def get_health_metrics() -> PlainTextResponse:
     """
     ## Fetch OpenTelemetry Metrics
@@ -79,4 +86,6 @@ def get_health_metrics() -> PlainTextResponse:
         # Log and handle any unexpected exceptions
         error_message = "Failed to fetch health metrics due to an unexpected error."
         logger.error("%s Details: %s", error_message, str(e))
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_message) from e
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error_message
+        ) from e

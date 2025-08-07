@@ -3,9 +3,9 @@ This module defines the TagProject model, which represents the association
 between a tag and a project in the database.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey, String
+from sqlalchemy import Column, ForeignKey, Integer, String
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 
 
 class TagProject(Base):

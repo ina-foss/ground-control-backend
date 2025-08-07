@@ -12,6 +12,7 @@ Classes:
             ext_id (Optional[str]): The external identifier for the plugin autocomplete value.
             label (Optional[str]): The display label for the plugin autocomplete value.
 """
+
 from typing import Optional
 
 from pydantic import BaseModel
@@ -23,4 +24,3 @@ class PluginAutocompleteValueDTO(BaseModel):
     label: Optional[str]
     image: Optional[str] = None
     description: Optional[str] = None
-

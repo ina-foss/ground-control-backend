@@ -14,11 +14,21 @@ Classes:
 """
 
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, CheckConstraint
+
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import and_
 from sqlalchemy.sql.expression import func
-from ina_ground_control.database import Base
+
+from ina_ground_control.models import Base
 from ina_ground_control.models.annotation_task_association import AnnotationTask
 
 
@@ -46,11 +56,13 @@ class TaskStatus(PyEnum):
         SKIPPED (str): This task has been ignored.
         DONE (str): Successfully completed.
     """
+
     DRAFT = "draft"
     PENDING = "pending"
     IN_PROGRESS = "in-progress"
     SKIPPED = "skipped"
     DONE = "done"
+
 
 class Task(Base):
     """
@@ -95,13 +107,12 @@ class Task(Base):
         "Annotation",
         secondary=AnnotationTask.__table__,
         primaryjoin=and_(
-            AnnotationTask.direction == "OUT",
-            AnnotationTask.task_id == id
+            AnnotationTask.direction == "OUT", AnnotationTask.task_id == id
         ),
         secondaryjoin="Annotation.id == AnnotationTask.annotation_id",
         backref="task",
         cascade="all, delete-orphan",
-        single_parent=True
+        single_parent=True,
     )
 
     task_comments = relationship(
@@ -110,5 +121,7 @@ class Task(Base):
 
     __table_args__ = (
         CheckConstraint("redundancy >= 1", name="check_redundancy_min"),  # Min 1 person
-        CheckConstraint("priority BETWEEN 0 AND 100", name="check_priority_range"),  # 0 to 100
+        CheckConstraint(
+            "priority BETWEEN 0 AND 100", name="check_priority_range"
+        ),  # 0 to 100
     )

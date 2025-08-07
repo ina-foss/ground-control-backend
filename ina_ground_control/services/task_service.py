@@ -4,22 +4,35 @@ This module provides CRUD operations for tasks.
 It includes functions to retrieve a task by ID, create a new task, and update an existing task.
 """
 
-from typing import Any, Dict
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
-from sqlalchemy import select, func
-from ina_ground_control import logger
-from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
-from ina_ground_control.schemas.step_schemas import StepStatus
-from ina_ground_control.services.annotation_service import get_annotations_by_task_id_crud
-from ina_ground_control.services.step_service import get_step_by_id, update_step_status_crud
-from ina_ground_control.services.project_service import get_project_by_id, update_project_status_crud
-from ina_ground_control.models.annotation_model import AnnotationStatus, Annotation
-from ina_ground_control.models.task_model import Task, TaskStatus
-from ina_ground_control.models.project_model import ProjectStatus
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
-from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
 from collections import defaultdict
+from typing import Any, Dict
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, joinedload
+
+from ina_ground_control import logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
+from ina_ground_control.models.annotation_task_association import (
+    AnnotationTask,
+    InOutEnum,
+)
+from ina_ground_control.models.project_model import ProjectStatus
+from ina_ground_control.models.task_model import Task, TaskStatus
+from ina_ground_control.schemas.step_schemas import StepStatus
+from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
+from ina_ground_control.services.annotation_service import (
+    get_annotations_by_task_id_crud,
+)
+from ina_ground_control.services.project_service import (
+    get_project_by_id,
+    update_project_status_crud,
+)
+from ina_ground_control.services.step_service import (
+    get_step_by_id,
+    update_step_status_crud,
+)
+
 
 def get_task_by_id(db: Session, task_id: int) -> Task:
     """
@@ -35,7 +48,9 @@ def get_task_by_id(db: Session, task_id: int) -> Task:
     task = db.query(Task).filter(Task.id == task_id).first()
     if task is None:
         logger.error("Failed to retrieve task with id: %d", task_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id
+        )
     return task
 
 
@@ -56,6 +71,7 @@ def create_task_crud(task: TaskCreateDto, db: Session):
     db.refresh(db_task)
     recalculate_step_status(db, db_task.step_id)
     return db_task
+
 
 def update_data_task_crud(task_id: int, data: Dict[str, Any], db: Session):
     """
@@ -96,7 +112,8 @@ def delete_task_crud(db: Session, task: Task):
         recalculate_step_status(db, task.step_id)
     return task
 
-def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> Task:
+
+def update_task_status_crud(db: Session, task_id: int, status: TaskStatus) -> Task:
     task = get_task_by_id(db, task_id)
     task.status = status
     task.updated_at = func.now()
@@ -105,12 +122,13 @@ def update_task_status_crud(db: Session, task_id: int, status: TaskStatus ) -> T
     recalculate_step_status(db, task.step_id)
     return task
 
+
 def get_tasks_by_annotated_by_crud(
-        db: Session,
-        email: str,
-        page: int = 0,
-        size: int = 10,
-        task_limit_on: bool = False,
+    db: Session,
+    email: str,
+    page: int = 0,
+    size: int = 10,
+    task_limit_on: bool = False,
 ):
     """
     Get prioritized and paginated tasks based on:
@@ -128,8 +146,8 @@ def get_tasks_by_annotated_by_crud(
             .join(Task.annotations)  # Join to Annotation via relationship
             .filter(
                 Task.status == TaskStatus.IN_PROGRESS,
-                Annotation.user_email == email, # Filter based on email
-                Annotation.annotation_status == AnnotationStatus.IN_PROGRESS
+                Annotation.user_email == email,  # Filter based on email
+                Annotation.annotation_status == AnnotationStatus.IN_PROGRESS,
             )
             .options(*eager_options)
             .all()
@@ -138,7 +156,11 @@ def get_tasks_by_annotated_by_crud(
         # and where the current user hasn't already annotated them.
         subquery = (
             select(func.count(Annotation.id))
-            .select_from(AnnotationTask.__table__.join(Annotation, AnnotationTask.annotation_id == Annotation.id))
+            .select_from(
+                AnnotationTask.__table__.join(
+                    Annotation, AnnotationTask.annotation_id == Annotation.id
+                )
+            )
             .where(
                 AnnotationTask.task_id == Task.id,
                 Annotation.annotation_status == AnnotationStatus.IN_PROGRESS,
@@ -150,19 +172,21 @@ def get_tasks_by_annotated_by_crud(
 
         tasks_2 = (
             db.query(Task)
-            .filter(
-                Task.status == TaskStatus.IN_PROGRESS,
-                subquery < Task.redundancy
-            )
+            .filter(Task.status == TaskStatus.IN_PROGRESS, subquery < Task.redundancy)
             .options(*eager_options)
             .all()
         )
 
         # --- Condition 3: Get PENDING tasks that are due soon and have high priority ---
-        tasks_3 = db.query(Task).filter(
-            Task.status == TaskStatus.PENDING,
-            #Task.expiration_date <= today
-        ).order_by(Task.priority.desc()).all()
+        tasks_3 = (
+            db.query(Task)
+            .filter(
+                Task.status == TaskStatus.PENDING,
+                # Task.expiration_date <= today
+            )
+            .order_by(Task.priority.desc())
+            .all()
+        )
 
         # Combine in order of priority: tasks_1 → tasks_2 → tasks_3
         combined = tasks_1 + tasks_2 + tasks_3
@@ -191,14 +215,20 @@ def get_tasks_by_annotated_by_crud(
             limited_tasks = unique_tasks
 
         # Paginate
-        paginated = limited_tasks[offset:offset + size]
-        tasks = [TaskListDto.model_validate(task, from_attributes=True) for task in paginated]
+        paginated = limited_tasks[offset : offset + size]
+        tasks = [
+            TaskListDto.model_validate(task, from_attributes=True) for task in paginated
+        ]
         total_records = len(limited_tasks)
         return tasks, total_records
 
     except Exception as e:
         logger.error("Failed to retrieve tasks by annotated_by: %s", e)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Unexpected error while getting tasks") from e
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details="Unexpected error while getting tasks",
+        ) from e
+
 
 def recalculate_task_status(db: Session, task_id: int):
     task = get_task_by_id(db, task_id)
@@ -231,9 +261,17 @@ def recalculate_task_status(db: Session, task_id: int):
 
 def recalculate_step_status(db: Session, step_id: int):
     step = get_step_by_id(db, step_id)
-    total_tasks = len([task for task in step.tasks if task.status != TaskStatus.SKIPPED and task.status != TaskStatus.DRAFT])
+    total_tasks = len(
+        [
+            task
+            for task in step.tasks
+            if task.status != TaskStatus.SKIPPED and task.status != TaskStatus.DRAFT
+        ]
+    )
     done_tasks = len([task for task in step.tasks if task.status == TaskStatus.DONE])
-    pending_tasks = len([task for task in step.tasks if task.status == TaskStatus.PENDING])
+    pending_tasks = len(
+        [task for task in step.tasks if task.status == TaskStatus.PENDING]
+    )
 
     completion_rate = (done_tasks / total_tasks) * 100 if total_tasks else 0
     new_status = step.status
@@ -255,17 +293,21 @@ def recalculate_step_status(db: Session, step_id: int):
         update_step_status_crud(db, step, new_status)
         recalculate_project_status(db, step.project_id)
 
+
 def recalculate_project_status(db: Session, project_id: int):
     project = get_project_by_id(db, project_id)
 
     active_steps = [
-        step for step in project.steps
+        step
+        for step in project.steps
         if step.status not in (StepStatus.DRAFT, StepStatus.SKIPPED)
     ]
 
     total_steps = len(active_steps)
     done_steps = len([step for step in active_steps if step.status == StepStatus.DONE])
-    pending_steps = len([step for step in active_steps if step.status == StepStatus.PENDING])
+    pending_steps = len(
+        [step for step in active_steps if step.status == StepStatus.PENDING]
+    )
 
     completion_rate = (done_steps / total_steps) * 100 if total_steps else 0
 
@@ -284,5 +326,7 @@ def recalculate_project_status(db: Session, project_id: int):
         new_status = ProjectStatus.IN_PROGRESS
 
     if project.status != new_status:
-        print(f"🔄 Updating Project {project.id} status: {project.status} → {new_status}")
+        print(
+            f"🔄 Updating Project {project.id} status: {project.status} → {new_status}"
+        )
         update_project_status_crud(db, project.id, new_status)

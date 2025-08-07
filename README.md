@@ -1,134 +1,105 @@
-# Ground Control Backend
+# Ground Control API
 
+A secure FastAPI-based backend system designed for ground truth data management and secure client-server communication.
 
-### Création du virtualenv
+## Description
 
-Si vous souhaitez lancer l'api sans le reste de la stack, exécutez les commandes suivantes depuis la racine de ce dépôt :
+Ground Control API provides a robust backend infrastructure for managing ground truth data in machine learning workflows.
+The system implements enterprise-grade security through SSO integration, comprehensive CORS policies, and structured configuration management.
+It features automated database migrations, testing coverage, and production-ready monitoring with OpenTelemetry integration.
 
-```bash
-virtualenv venv
-source venv/bin/activate
-python -m pip install --upgrade pip
-```
+## Key Technologies & Techniques
 
-### Lancement avec docker compose
+- **[FastAPI](https://fastapi.tiangolo.com/)** - Modern, high-performance web framework with automatic API documentation
+- **[Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)** - Type-safe configuration management using environment variables
+- **[SQLAlchemy 2.0](https://docs.sqlalchemy.org/en/20/)** - Modern async-capable ORM with declarative mappings
+- **[Alembic](https://alembic.sqlalchemy.org/)** - Database migration management with PostgreSQL enum support
+- **[FastAPI Keycloak Middleware](https://github.com/fastapi-keycloak/fastapi-keycloak)** - Production SSO authentication integration
+- **[OpenTelemetry](https://opentelemetry.io/)** - Distributed tracing and metrics collection with Prometheus export
+- **[UV Package Manager](https://docs.astral.sh/uv/)** - Fast Python package management and dependency resolution
+- **[Environment-based Configuration](https://pydantic-docs.helpmanual.io/usage/settings/)** - Multi-environment settings with `.env` file support
 
-Sinon, créez un dossier pour le projet ground-control et récupérez les projets front et back :
+## Notable Libraries & Dependencies
 
-```bash
-mkdir ground-control
-git clone https://git.infra.sas.ina/ia/code/ground-control/front.git
-git clone https://git.infra.sas.ina/ia/code/ground-control/backend.git
-cd ground-control/backend/.dev
-docker-compose up -d
-```
+- **[psycopg2-binary](https://pypi.org/project/psycopg2-binary/)** - PostgreSQL database adapter
+- **[python-dotenv](https://pypi.org/project/python-dotenv/)** - Environment variable loading from `.env` files
+- **[jsonpath-ng](https://pypi.org/project/jsonpath-ng/)** - JSONPath implementation for data extraction
+- **[alembic-postgresql-enum](https://pypi.org/project/alembic-postgresql-enum/)** - Enhanced PostgreSQL enum support for migrations
+- **[opentelemetry-exporter-prometheus](https://pypi.org/project/opentelemetry-exporter-prometheus/)** - Metrics export to Prometheus monitoring
+- **[pytest-asyncio](https://pytest-asyncio.readthedocs.io/)** - Async testing support for FastAPI endpoints
 
-### Alembic
-
-Pour générer un script de révision alembic après avoir modifié les fichiers models de l'application, se positionner dans le docker ou le virtual env et éxécuter : 
-
-```bash
-alembic revision --autogenerate -m "Add model changes"
-```
-
-Pour mettre à jour la base avec la dernière révision, éxécuter : 
-
-```bash
-alembic upgrade head
-```
-
-### Documentation
-
-La documentation utilise ![Sphinx](https://pypi.org/project/Sphinx/) et  ![myst](https://pypi.org/project/myst-parser/)
-Pour générer une nouvelle version de la doc, se placer dans le répertoire /docs et éxécuter : 
-
-```bash
-sphinx-build -E -b html . ./_build/
-```
-
-### Bug Possible
-
-Pendant le developpement, il se peut que l'application Nuxt ne puisse plus se rafraîchir. Vous verrez alors dans le terminal du container ce genre d'erreur.
-
-
-![bug nuxt](https://ina1.sharepoint.com/:i:/r/sites/2IA/Documents%20partages/IHMIA/Screenshot%202024-05-21%20154329.png?csf=1&web=1&e=NqgDuH)
-
-En attendant de trouver une solution, supprimer le container `dev-frontend-1` et le relancer suffit
-```bash
-docker rm dev-frontend-1
-docker compose up -d
-```
-
-### Variables d'environnement :
-
-Les variables d'environnement sont définies dans le fichier [.env.local](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/.env.local) et sont utilisées dans la definition de l'url de connexion à la base de données (DATABASE_URL)
-
-| NOM               | EXEMPLE           | DESCRIPTION                                                         |
-|-------------------|-------------------|---------------------------------------------------------------------|
-| PG_SERVER         | postgresql        | serveur de base de donnée utilisé                                   | 
-| PG_DATABASE       | ground_control_db | nom de la base de données                                           | 
-| PG_USERNAME       | user              | nom d'utilisateur comme login pour se connecté à la base de données | 
-| PG_PASSWORD       | postgres          | le mot de passe associé au login                                    |
-| PG_PORT           | 5432              | numero de port de la base de données                                | 
-| DATABASE_HOSTNAME | @db               | nom du domaine                                                      |
-
-### Configuration SSO
-
-Le fichier [settings.yaml](https://git.infra.sas.ina/ia/code/ground-control/backend/-/blob/develop/ina_ground_control/settings.yaml) permet de gerer les parametres de configuration (pour l'environnement de dev et du prod).
-Il permet de stocker des paramètres de configuration de manière structurée et lisible.
-
-| VARIABLE             | EXEMPLE                             | UTILITE                                                                          |
-|----------------------|-------------------------------------|----------------------------------------------------------------------------------|
-| url                  | "http://keycloak:9080/"             | L'URL de base pour le service SSO qui est Keycloak                               | 
-| realm                | "ground-control"                    | le nom du lot defini dans keycloak qui gére le groupe d' utilisateurs            | 
-| client_id            | "backend"                           | L'identifiant du client qui va se connecter à Keycloak (à definir dans keycloak) | 
-| client_secret        | "S95Ja09NGqzB4UvXoUgbcM39IdTz8826"  | la clé secrete generer automatiquement avec keycloak                             |
-
-
-### Utilisation du débugueur avec les IDE jetbrains
-
-* Tout d'abord, mettre à jour l'IDE à la dernière version disponible. (Help > Check for updates)
-
-* Ensuite, dans le menu déroulant des configurations disponibles, sélectionner "Edit Configurations" :
-
-![Sélectionner "Edit Configurations"](.dev/img/1.png)
-
-* Cliquer sur le bouton "+", et ajouter une configuration de type "Python debug server" : 
-
-![Cliquer sur +](.dev/img/2.png)
-
-* Donner un nom à la configuration de debug,
-* Choisir un port 
-* Dans le champ "IDE host name", renseigner l'adresse ip où tourne l'IDE.
-* Mapper le chemin du projet sur la machine avec le chemin dans le container. Par exemple :
-  /home/ben/Projects/ground_control/backend=/code
-
-![Configurer](.dev/img/3.png)
-
-* Il faut rebuild le container avec la version à jour du plugin **pydevd-pycharm**, telle qu'elle est indiquée dans la configuration du serveur de debug. Ainsi, dans le container, faire par exemple :
+## Project Structure
 
 ```
-pip install pydevd-pycharm~=241.18034.62
+├── .dev/                       # Development environment configuration
+├── docs/                       # Documentation source
+├── tests/                      # Test suite (unit and integration)
+├── static/                     # Static file serving directory
+├── ina_ground_control/         # Main application package
+│   ├── auth/                   # Authentication and authorization
+│   ├── config/                 # Configuration modules
+│   ├── models/                 # SQLAlchemy database models  
+│   ├── routers/                # FastAPI route definitions
+│   ├── schemas/                # Pydantic data validation schemas
+│   ├── services/               # Business logic layer
+│   ├── utils/                  # Utility functions and helpers
+│   ├── constants/              # Application constants
+│   ├── exception/              # Custom exception handlers
+│   └── alembic/                # Database migration scripts
+├── pyproject.toml              # Project configuration and dependencies
+├── alembic.ini                 # Alembic migration configuration
+├── logging.conf                # Application logging configuration
+└── settings.py                 # Centralized settings management
 ```
 
-Ou bien ajouter **pydevd-pycharm~=241.18034.62** au requirements-dev.txt, puis rebuild le container :
+**Key Directories:**
+- **`.dev/`** - Contains Docker Compose configurations and development tooling setup
+- **`ina_ground_control/auth/`** - Implements Keycloak SSO integration and JWT token handling
+- **`ina_ground_control/models/`** - Database schema definitions with SQLAlchemy 2.0 declarative style
+- **`ina_ground_control/alembic/`** - Database versioning and migration management
 
-```
-docker compose up -d --build backend
-```
+## Configuration
 
-* Une fois le projet relancé, lancer la configuration debug nouvellement créée en cliquant sur l'icône de debug. On doit voir cet écran :
+The application uses environment-based configuration through the [`settings.py`](settings.py) file, which leverages Pydantic Settings for type-safe configuration management. All settings can be overridden using environment variables with the `GC_` prefix.
 
-![En attente de debug](.dev/img/4.png)
+### Available Configuration Options
 
-* Pour finir, recopier dans le fichier **main.py** juste après les imports les lignes indiquées dans la configuration de debug. Dans l'exemple :
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GC_APPLICATION` | "Ground Control API" | Application name |
+| `GC_VERSION` | "1.0.0" | Application version |
+| `GC_SERVER_HOST` | "0.0.0.0" | Server bind address |
+| `GC_SERVER_PORT` | 8000 | Server port |
+| `GC_SSL_CERT_FILE` | "" | SSL certificate file path |
+| `GC_API_DOCS_PATH` | "/docs" | OpenAPI documentation endpoint |
+| `GC_LOG_LEVEL` | "info" | Logging level (debug, info, warning, error) |
+| `GC_DEBUG` | false | Enable debug mode |
 
-```
-import pydevd_pycharm
-pydevd_pycharm.settrace('192.168.1.21', port=12345, stdoutToServer=True, stderrToServer=True)
-```
+### Database Configuration
 
-![Recopier les lignes dans le fichier main.py](.dev/img/5.png)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GC_DB_SERVER` | "postgresql" | Database server type |
+| `GC_DB_HOSTNAME` | "localhost" | Database host |
+| `GC_DB_DATABASE` | "ground_control_db" | Database name |
+| `GC_DB_USERNAME` | "postgres" | Database username |
+| `GC_DB_PASSWORD` | "" | Database password |
+| `GC_DB_PORT` | 5432 | Database port |
 
-* L'application va détecter un changement et, au reload, se connecter au debugueur. Si un warning apparait dans la console de debug au sujet d'un problème de version, faire simplement "resume program" (F9)
+### SSO Configuration
 
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GC_SSO_URL` | "http://localhost:9080" | Keycloak server URL |
+| `GC_SSO_REALM` | "ground_control" | Keycloak realm name |
+| `GC_SSO_CLIENT_ID` | "internal" | OAuth2 client identifier |
+| `GC_SSO_CLIENT_SECRET` | "internal" | OAuth2 client secret |
+
+### Environment Files
+
+Configuration is loaded from multiple environment files in order of precedence:
+1. `.env.prod` - Production environment settings
+2. `.env.local` - Local development overrides
+3. `.env` - Base environment configuration
+
+Use the provided [`.env.local.example`](.env.local.example) as a template for local development setup.

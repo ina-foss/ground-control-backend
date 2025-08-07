@@ -24,6 +24,7 @@ class PluginConfigAutoComplete(PluginConfigBase):
         response_image_key (str): JSONPath to extract the image URL.
         response_description_key (str): JSONPath to extract a textual description.
     """
+
     search_query: Optional[Union[str, dict]] = None
     response_id_key: Optional[str] = None
     response_ext_id_key: Optional[str] = None
@@ -33,7 +34,5 @@ class PluginConfigAutoComplete(PluginConfigBase):
 
     # Use ConfigDict for configuration
     model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        populate_by_name=True,
-        extra='allow'
+        arbitrary_types_allowed=True, populate_by_name=True, extra="allow"
     )

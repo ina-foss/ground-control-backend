@@ -5,13 +5,15 @@ Defines Data Transfer Object (DTO) classes for task-related data structures.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
-from ina_ground_control.models.task_model import TaskStatus, TaskDataType
+from ina_ground_control.models.task_model import TaskDataType, TaskStatus
+
 from .annotation_schemas import AnnotationWithIdDto
 from .task_comment_schemas import TaskCommentDto
+
 
 class TaskBaseDto(BaseModel):
     """
@@ -30,6 +32,7 @@ class TaskBaseDto(BaseModel):
     redundancy: int = 1
     priority: int = 0
 
+
 class Config:
     from_attributes = True
 
@@ -38,6 +41,7 @@ class TaskWithIdDto(TaskBaseDto):
     """
     Extends TaskBaseDto with an additional id field.
     """
+
     id: int
     created_at: Optional[datetime]
     annotations: list[AnnotationWithIdDto]
@@ -49,6 +53,7 @@ class TaskCreateDto(TaskBaseDto):
     Includes all fields from TaskBaseDto plus an optional
      data field for additional task-specific data.
     """
+
 
 class TaskListDto(TaskCreateDto):
     """
@@ -64,13 +69,12 @@ class TaskListDto(TaskCreateDto):
     media: Optional[MediaDto]
     annotations: list[AnnotationWithIdDto]
 
-
     class Config:
         orm_mode: True
 
 
-from .step_schemas import StepProjectDto
 from .media_schemas import MediaDto
+from .step_schemas import StepProjectDto
 
 
 class PaginatedTasksDTO(BaseModel):
@@ -78,8 +82,10 @@ class PaginatedTasksDTO(BaseModel):
     DTO for handling paginated task request results.
     Contains a list of task requests and the total number of records available.
     """
+
     task_requests: List[TaskListDto]
     total_records: int
+
 
 class ExpirationDateUpdateDto(BaseModel):
     expiration_date: datetime

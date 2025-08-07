@@ -25,8 +25,7 @@ import json
 import requests
 from fastapi import APIRouter, HTTPException, Query
 
-from ina_ground_control import logger
-from ina_ground_control.config import settings
+from ina_ground_control import logger, settings
 from ina_ground_control.utils import segments_to_task
 
 router = APIRouter(tags=["resources"])
@@ -34,12 +33,12 @@ router = APIRouter(tags=["resources"])
 
 @router.get("/transcription")
 def get_transcription(
-        plugin_name: str = Query("transcriptions"),
-        transcription_format: str = Query("amalia-mot"),
-        client_id: str = Query("transcriptions"),
-        channel: str = Query("TF1"),
-        start_date: str = Query("2022-1-25 20:0:0"),
-        end_date: str = Query("2022-1-25 20:30:0"),
+    plugin_name: str = Query("transcriptions"),
+    transcription_format: str = Query("amalia-mot"),
+    client_id: str = Query("transcriptions"),
+    channel: str = Query("TF1"),
+    start_date: str = Query("2022-1-25 20:0:0"),
+    end_date: str = Query("2022-1-25 20:30:0"),
 ):
     """Get transcriptions from PX"""
 
@@ -56,13 +55,16 @@ def get_transcription(
 
     params = {k: v for k, v in params.items() if v is not None}
 
-    headers = {
-        "Authorization": f"Bearer {settings.player_expert.token}"
-    }
+    headers = {"Authorization": f"Bearer {settings.player_expert.token}"}
 
     # Specify a timeout to prevent indefinite hanging
-    response = requests.get(url=base_url, params=params, headers=headers,
-                            verify=settings.player_expert.verify_tls, timeout=10)
+    response = requests.get(
+        url=base_url,
+        params=params,
+        headers=headers,
+        verify=settings.player_expert.verify_tls,
+        timeout=10,
+    )
 
     start_datetime = datetime.datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     formatted_start_date = start_datetime.strftime("%Y%m%dT%H%M%S")
@@ -76,8 +78,10 @@ def get_transcription(
 
     if response.status_code != 200:
         logger.error("Failed to fetch transcription data for : %d", video_id)
-        raise HTTPException(status_code=response.status_code,
-                            detail="Failed to fetch transcription data")
+        raise HTTPException(
+            status_code=response.status_code,
+            detail="Failed to fetch transcription data",
+        )
     data = json.loads(response.text)
     data["id"] = video_id
 

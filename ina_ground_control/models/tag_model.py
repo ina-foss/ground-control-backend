@@ -8,21 +8,23 @@ such as value and relationships with other models like Project.
 Classes:
     Tag (Base): SqlAlchemy model representing a tag record in the database.
 """
-from sqlalchemy import Column, ForeignKey, String, Integer
 
-from ina_ground_control.database import Base
+from sqlalchemy import Column, ForeignKey, Integer, String
+
+from ina_ground_control.models import Base
 
 
 class Tag(Base):
     """
-       Represents a tag record in the database.
+    Represents a tag record in the database.
 
-       Attributes:
-           key (String): The unique identifier of the media (Primary Key).
-           value (String): The value of the tag.
-           projects (relationship): Relationship to the Project model representing projects within the tag.
+    Attributes:
+        key (String): The unique identifier of the media (Primary Key).
+        value (String): The value of the tag.
+        projects (relationship): Relationship to the Project model representing projects within the tag.
 
-       """
+    """
+
     __tablename__ = "tag"
 
     key = Column(String, primary_key=True)

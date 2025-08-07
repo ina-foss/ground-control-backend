@@ -11,6 +11,7 @@ class UserBaseDto(BaseModel):
     """
     Base DTO representing a user object.
     """
+
     email: EmailStr
     role: str
 

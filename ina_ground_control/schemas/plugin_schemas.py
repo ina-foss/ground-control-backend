@@ -8,11 +8,14 @@ This module includes schemas for:
 """
 
 from __future__ import annotations
-from typing import Optional, List
-from pydantic import BaseModel
-from pydantic import ConfigDict
-from ina_ground_control.models.plugin_model import TypePlugin, DisplayZone
-from ina_ground_control.models.plugin.plugin_base import PluginConfigType, DataTypeEnum
+
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict
+
+from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
+from ina_ground_control.models.plugin_model import DisplayZone, TypePlugin
+
 
 class ConfigData(BaseModel):
     """
@@ -31,6 +34,7 @@ class ConfigData(BaseModel):
         client_id (str, optional): Client ID for OAuth2 authentication.
         client_secret (str, optional): Client secret for OAuth2 authentication.
     """
+
     type: PluginConfigType
     data_source: str
     data_type: DataTypeEnum
@@ -40,10 +44,9 @@ class ConfigData(BaseModel):
     client_secret: Optional[str] = None
     # Use ConfigDict for configuration
     model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True,
-        extra='allow'
+        from_attributes=True, populate_by_name=True, extra="allow"
     )
+
 
 class DisplayConfig(BaseModel):
     """
@@ -54,32 +57,33 @@ class DisplayConfig(BaseModel):
         max_items (int): Maximum number of items to display.
         order (int): The display order of the plugin.
     """
+
     multiple_values: Optional[bool] = None
     max_items: Optional[int] = None
     order: Optional[int] = None
 
     model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True,
-        extra='ignore'
+        from_attributes=True, populate_by_name=True, extra="ignore"
     )
+
 
 class PluginCreate(BaseModel):
     """
-  DTO to create a plugin object.
+    DTO to create a plugin object.
 
-  Attributes:
-        name (str): The name of the plugin.
-        type (TypePlugin): The type of the plugin (from `TypePlugin` enum).
-        data_categories (str): Categories for the plugin's data.
-        display_zone (DisplayZone): The display zone for the plugin.
-        step_id (int): The ID of the step associated with the plugin.
-        config_data (ConfigData): Configuration data for the plugin.
-        display_config (Optional[DisplayConfig]): Optional display configuration.
-        enable_search (Optional[bool]): Enable search feature for embedded plugins.
-        data_property (Optional[str]): Data property reference for embedded plugins.
-        children_plugins (Optional[List[PluginCreate]]): List of embedded child plugins.
-  """
+    Attributes:
+          name (str): The name of the plugin.
+          type (TypePlugin): The type of the plugin (from `TypePlugin` enum).
+          data_categories (str): Categories for the plugin's data.
+          display_zone (DisplayZone): The display zone for the plugin.
+          step_id (int): The ID of the step associated with the plugin.
+          config_data (ConfigData): Configuration data for the plugin.
+          display_config (Optional[DisplayConfig]): Optional display configuration.
+          enable_search (Optional[bool]): Enable search feature for embedded plugins.
+          data_property (Optional[str]): Data property reference for embedded plugins.
+          children_plugins (Optional[List[PluginCreate]]): List of embedded child plugins.
+    """
+
     name: str
     type: TypePlugin
     data_categories: str
@@ -90,21 +94,19 @@ class PluginCreate(BaseModel):
     # fields for embedded plugin
     enable_search: Optional[bool] = False
     data_property: Optional[str] = None
-    children: Optional[List['PluginCreate']] = []
+    children: Optional[List["PluginCreate"]] = []
     # Use ConfigDict for configuration
     model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True,
-        extra='ignore'
+        from_attributes=True, populate_by_name=True, extra="ignore"
     )
 
 
 class PluginWithIdDto(PluginCreate):
     """
-   Extends PluginCreate with an additional id field.
+    Extends PluginCreate with an additional id field.
 
-   Attributes:
-       id (int): The unique identifier of the plugin.
-   """
+    Attributes:
+        id (int): The unique identifier of the plugin.
+    """
 
     id: int

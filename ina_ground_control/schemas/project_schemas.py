@@ -66,5 +66,5 @@ class ProjectListDto(ProjectWithIdDto):
     medias: list[MediaCreate]
 
 
-from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
 from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto

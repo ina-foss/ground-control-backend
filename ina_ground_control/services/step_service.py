@@ -6,10 +6,11 @@ It includes functions to retrieve a step by ID, create a new step, and update an
 
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
+
 from ina_ground_control import logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.step_model import Step, StepStatus
 from ina_ground_control.schemas.step_schemas import StepCreate
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 
 def get_step_by_id(db: Session, step_id: int) -> Step:
@@ -26,7 +27,9 @@ def get_step_by_id(db: Session, step_id: int) -> Step:
     step = db.query(Step).filter(Step.id == step_id).first()
     if step is None:
         logger.error("Failed to retrieve step with id: %d", step_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id
+        )
     return step
 
 
@@ -46,6 +49,7 @@ def create_step_crud(step: StepCreate, db: Session):
     db.commit()
     db.refresh(db_step)
     return db_step
+
 
 def update_data_step_crud(step_id: int, step: StepCreate, db: Session):
     """
@@ -98,6 +102,7 @@ def get_steps(db: Session, skip: int = 0, limit: int = 100):
     """
     return db.query(Step).offset(skip).limit(limit).all()
 
+
 def finish_step_crud(db: Session, step: Step) -> Step:
     step.status = StepStatus.DONE
     step.validated_at = func.now()
@@ -106,10 +111,10 @@ def finish_step_crud(db: Session, step: Step) -> Step:
     db.refresh(step)
     return step
 
-def update_step_status_crud(db: Session, step: Step, status: StepStatus ) -> Step:
+
+def update_step_status_crud(db: Session, step: Step, status: StepStatus) -> Step:
     step.status = status
     step.updated_at = func.now()
     db.commit()
     db.refresh(step)
     return step
-

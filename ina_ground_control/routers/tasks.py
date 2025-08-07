@@ -19,26 +19,39 @@ Configuration:
     `src` module.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from fastapi import APIRouter, Depends, Query
 from fastapi_keycloak_middleware import (
-    MatchStrategy,
+    AuthorizationResult,
     CheckPermissions,
-    AuthorizationResult
+    MatchStrategy,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from ina_ground_control import logger
+
+from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
-from ina_ground_control.database import get_db
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.media_schemas import MediaCreate
-from ina_ground_control.schemas.task_schemas import TaskListDto, TaskBaseDto, TaskWithIdDto, PaginatedTasksDTO, TaskStatus
+from ina_ground_control.schemas.task_schemas import (
+    PaginatedTasksDTO,
+    TaskBaseDto,
+    TaskListDto,
+    TaskStatus,
+    TaskWithIdDto,
+)
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
-from ina_ground_control.services.task_service import get_task_by_id, create_task_crud, update_data_task_crud, \
-    delete_task_crud, update_task_status_crud, get_tasks_by_annotated_by_crud
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
+from ina_ground_control.services.task_service import (
+    create_task_crud,
+    delete_task_crud,
+    get_task_by_id,
+    get_tasks_by_annotated_by_crud,
+    update_data_task_crud,
+    update_task_status_crud,
+)
 
 router = APIRouter(tags=["task"])
 
@@ -75,16 +88,18 @@ def create_task(task: TaskBaseDto, db: Session = Depends(get_db)):
         return create_task_crud(task, db)
     except Exception as e:
         logger.error("Failed to create task: %s", e)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create task") from e
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create task"
+        ) from e
 
 
 @router.post("/step/{step_id}", response_model=TaskWithIdDto)
 def task_inject(
-        annotation: AnnotationFullCreate,
-        task: TaskBaseDto,
-        media: MediaCreate,
-        step_id: int,
-        db: Session = Depends(get_db)
+    annotation: AnnotationFullCreate,
+    task: TaskBaseDto,
+    media: MediaCreate,
+    step_id: int,
+    db: Session = Depends(get_db),
 ):
     """
     Use to create a media, a task and an annotation in one request
@@ -113,11 +128,16 @@ def task_inject(
 
     except IntegrityError as e:
         logger.error("Database integrity error: %s", e)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Database integrity error") from e
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR, details="Database integrity error"
+        ) from e
 
     except Exception as e:
         logger.error("An unexpected error occurred: %s", e)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="An unexpected error occurred") from e
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR, details="An unexpected error occurred"
+        ) from e
+
 
 @router.patch("/task/{task_id}", response_model=TaskListDto)
 def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(get_db)):
@@ -136,17 +156,23 @@ def update_data_task(task_id: int, data: Dict[str, Any], db: Session = Depends(g
     task = update_data_task_crud(task_id, data, db)
     if task is None:
         logger.error("Failed to update task with id: %d", task_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id
+        )
     return task
 
 
 @router.delete("/task/{task_id}", response_model=TaskWithIdDto)
-def delete_task(task_id: int, db: Session = Depends(get_db),
-                _authorization_result: AuthorizationResult = Depends(
-                    CheckPermissions([Permission.DELETE_TASK.value],
-                                     match_strategy=MatchStrategy.AND))
-                # pylint: disable=invalid-name
-                ) -> TaskWithIdDto:
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    _authorization_result: AuthorizationResult = Depends(
+        CheckPermissions(
+            [Permission.DELETE_TASK.value], match_strategy=MatchStrategy.AND
+        )
+    ),
+    # pylint: disable=invalid-name
+) -> TaskWithIdDto:
     """
     Delete a task by ID.
 
@@ -159,33 +185,40 @@ def delete_task(task_id: int, db: Session = Depends(get_db),
     retrieved_task = get_task_by_id(db, task_id)
     if retrieved_task is None:
         logger.error("Task with id %d not found", task_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id
+        )
 
     deleted_task = delete_task_crud(db, retrieved_task)
     if deleted_task is None:
         logger.error("Failed to delete task with id: %d", task_id)
-        raise GroundControlException(ErrorCode.GENERIC_OPERATION_FAILED, action="delete", resource="task", id=task_id)
+        raise GroundControlException(
+            ErrorCode.GENERIC_OPERATION_FAILED,
+            action="delete",
+            resource="task",
+            id=task_id,
+        )
     return deleted_task
 
+
 @router.post("/task/{task_id}/status", response_model=TaskListDto)
-def update_task_status(task_id: int, status: TaskStatus ,db: Session = Depends(get_db)):
-    task = update_task_status_crud(db, task_id, status )
+def update_task_status(task_id: int, status: TaskStatus, db: Session = Depends(get_db)):
+    task = update_task_status_crud(db, task_id, status)
     return task
+
 
 @router.get("/tasks/annotated_by/{email}", response_model=PaginatedTasksDTO)
 def get_tasks_by_annotated_by(
-        email: str,
-        page: int = 0,
-        size: int = 10,
-        task_limit_on: bool = Query(
-            False,
-            description="Toggle to enforce the max tasks per person limit"
-        ),
-        db: Session = Depends(get_db)
+    email: str,
+    page: int = 0,
+    size: int = 10,
+    task_limit_on: bool = Query(
+        False, description="Toggle to enforce the max tasks per person limit"
+    ),
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve tasks filtered by annotated_by user (email), with priority rules.
     """
     tasks, total = get_tasks_by_annotated_by_crud(db, email, page, size, task_limit_on)
     return PaginatedTasksDTO(task_requests=tasks, total_records=total)
-

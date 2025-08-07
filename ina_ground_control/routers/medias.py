@@ -20,16 +20,20 @@ Configuration:
     `src` module.
 """
 
-from fastapi import status
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from ina_ground_control import logger
-from ina_ground_control.database import get_db
-from ina_ground_control.models.media_model import Media
 
-from ina_ground_control.schemas.media_schemas import MediaDto , MediaCreate
-from ina_ground_control.services.media_service import get_media_by_id, create_media_crud, update_media_crud,delete_media_crud,get_medias
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
+from ina_ground_control import get_db, logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.models.media_model import Media
+from ina_ground_control.schemas.media_schemas import MediaCreate, MediaDto
+from ina_ground_control.services.media_service import (
+    create_media_crud,
+    delete_media_crud,
+    get_media_by_id,
+    get_medias,
+    update_media_crud,
+)
 
 router = APIRouter(tags=["media"])
 
@@ -51,7 +55,9 @@ def read_media(media_id: int, db: Session = Depends(get_db)):
     media = get_media_by_id(db, media_id=media_id)
     if media is None:
         logger.error("Failed to retrieve media with id: %d", media_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id
+        )
     return media
 
 
@@ -71,45 +77,54 @@ def create_media(media: MediaCreate, db: Session = Depends(get_db)):
         return create_media_crud(media, db)
     except Exception as e:
         logger.error("Failed to create media: %s", e)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create media") from e
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create media"
+        ) from e
 
 
 # update media by id
 @router.patch("/media/{media_id}", response_model=MediaDto)
 def update_data_media(media_id: int, media: MediaCreate, db: Session = Depends(get_db)):
     """
-    Update an existing media by its unique identifier.
+        Update an existing media by its unique identifier.
 
-    Args:
-        media_id (int): The unique identifier of the media to update.
-        data (MediaDto): The updated media data.
-s
-    Returns:
-        MediaDto: The updated media's details.
-    Raises:
-        HTTPException: If the media is not found.
+        Args:
+            media_id (int): The unique identifier of the media to update.
+            data (MediaDto): The updated media data.
+    s
+        Returns:
+            MediaDto: The updated media's details.
+        Raises:
+            HTTPException: If the media is not found.
     """
     media = update_media_crud(media_id, media, db)
     if media is None:
         logger.error("Failed to update media with id: %d", media_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id
+        )
     return media
 
 
 # delete media
-@router.delete("/media/{media_id}", status_code=status.HTTP_200_OK, response_model=MediaCreate)
+@router.delete(
+    "/media/{media_id}", status_code=status.HTTP_200_OK, response_model=MediaCreate
+)
 def delete_media(media_id: int, db: Session = Depends(get_db)):
     deleted_media = delete_media_crud(db, media_id)
     if deleted_media is None:
         logger.error("Failed to delete media with id: %d", media_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Media", id=media_id
+        )
     return deleted_media
 
 
 # get list of media
 @router.get("/medias", response_model=list[MediaDto])
-def read_medias(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)) \
-        -> list[Media]:
+def read_medias(
+    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+) -> list[Media]:
     """Retrieve a list of medias with pagination support."""
     medias = get_medias(db, skip=skip, limit=limit)
     return medias

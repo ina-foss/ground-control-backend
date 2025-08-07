@@ -9,21 +9,26 @@ Functions:
 - finish_annotation_crud
 """
 
-from typing import Any, Dict
-from sqlalchemy import and_
-from typing import Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
+
 from ina_ground_control import logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
-from ina_ground_control.models.task_model import Task
+from ina_ground_control.models.annotation_task_association import (
+    AnnotationTask,
+    InOutEnum,
+)
 from ina_ground_control.models.step_model import Step
-from ina_ground_control.models.annotation_task_association import AnnotationTask, InOutEnum
+from ina_ground_control.models.task_model import Task
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
-from ina_ground_control.exception.exceptions import GroundControlException, ErrorCode
 
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
+
 
 def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     """
@@ -61,18 +66,22 @@ def get_annotations_by_id_crud(db: Session, annotation_id: int):
     Returns:
     Annotation: The Annotation model that matches the id or None.
     """
-    annotation =  db.query(Annotation).filter(Annotation.id == annotation_id).first()
+    annotation = db.query(Annotation).filter(Annotation.id == annotation_id).first()
     if annotation is None:
         logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
-        raise GroundControlException(ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id
+        )
     return annotation
 
-def get_annotations_by_task_id_crud(db: Session,
-                                    task_id: int,
-                                    user_email: str | None,
-                                    direction: InOutEnum,
-                                    status: AnnotationStatus | list[AnnotationStatus] | None = None
-                                    ) -> list[Annotation]:
+
+def get_annotations_by_task_id_crud(
+    db: Session,
+    task_id: int,
+    user_email: str | None,
+    direction: InOutEnum,
+    status: AnnotationStatus | list[AnnotationStatus] | None = None,
+) -> list[Annotation]:
     """
     Return all the annotation objects whose attribute "task_id" matches the argument.
 
@@ -84,17 +93,18 @@ def get_annotations_by_task_id_crud(db: Session,
     List[Annotation]: A list of Annotation objects that match the task_id.
     """
 
-    query = db.query(Annotation).join(
-        AnnotationTask, Annotation.id == AnnotationTask.annotation_id
-    ).filter(
-        AnnotationTask.task_id == task_id,
-        AnnotationTask.direction == direction
+    query = (
+        db.query(Annotation)
+        .join(AnnotationTask, Annotation.id == AnnotationTask.annotation_id)
+        .filter(
+            AnnotationTask.task_id == task_id, AnnotationTask.direction == direction
+        )
     )
 
     if user_email is not None and user_email != "":
         query = query.filter(Annotation.user_email == user_email)
-    if status is not None :
-        if isinstance(status,list):
+    if status is not None:
+        if isinstance(status, list):
             query = query.filter(Annotation.annotation_status.in_(status))
         else:
             query = query.filter(Annotation.annotation_status == status)
@@ -102,7 +112,9 @@ def get_annotations_by_task_id_crud(db: Session,
     return query.all()
 
 
-def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
+def udpate_annotation_result_crud(
+    db: Session, result: Dict[str, Any], annotation_id: int
+) -> Annotation:
     """
     Edit the attribute "result" of the annotation object that matches the ID.
 
@@ -121,7 +133,8 @@ def udpate_annotation_result_crud(db: Session, result: Dict[str, Any], annotatio
     db.refresh(db_annotation)
     return db_annotation
 
-def skip_annotation_crud(db:Session, annotation_id: int ) -> Annotation :
+
+def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
     """
     If the project configuration authorize it, change the status of the annotation obejct to `skipped`
 
@@ -136,16 +149,20 @@ def skip_annotation_crud(db:Session, annotation_id: int ) -> Annotation :
     # Check if the project authorize the skipped state
     if db_annotation.task[0].step.project.allow_skip is False:
         logger.error("Failed to skip annotation with id: %d", annotation_id)
-        raise GroundControlException(ErrorCode.GENERIC_CLIENT_ERROR,
-              details = "Skipping annotation is not allowed because 'allow_skip' is set to False in the project configuration")
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details="Skipping annotation is not allowed because 'allow_skip' is set to False in the project configuration",
+        )
     db_annotation.annotation_status = AnnotationStatus.SKIPPED
     db_annotation.updated_at = func.now()
     db.commit()
     db.refresh(db_annotation)
-    return  db_annotation
+    return db_annotation
 
 
-def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: int) -> Annotation:
+def finish_annotation_crud(
+    db: Session, result: Dict[str, Any], annotation_id: int
+) -> Annotation:
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     db_annotation.result = result
     db_annotation.annotation_status = AnnotationStatus.DONE
@@ -155,18 +172,22 @@ def finish_annotation_crud(db: Session, result: Dict[str, Any], annotation_id: i
     db.refresh(db_annotation)
     return db_annotation
 
-def get_all_annotations_crud(db: Session,
-                             user_email: Optional[str] = None,
-                             status: Optional[AnnotationStatus] = None,
-                             project_id: Optional[int] = None,
-                             step_id: Optional[int] = None,
-                             start_created_at: Optional[datetime] = None,
-                             end_created_at: Optional[datetime] = None,
-                             start_updated_at: Optional[datetime] = None,
-                             end_updated_at: Optional[datetime] = None,
-                             start_validated_at: Optional[datetime] = None,
-                             end_validated_at: Optional[datetime] = None,
-                             skip: int = 0, limit: int = 100):
+
+def get_all_annotations_crud(
+    db: Session,
+    user_email: Optional[str] = None,
+    status: Optional[AnnotationStatus] = None,
+    project_id: Optional[int] = None,
+    step_id: Optional[int] = None,
+    start_created_at: Optional[datetime] = None,
+    end_created_at: Optional[datetime] = None,
+    start_updated_at: Optional[datetime] = None,
+    end_updated_at: Optional[datetime] = None,
+    start_validated_at: Optional[datetime] = None,
+    end_validated_at: Optional[datetime] = None,
+    skip: int = 0,
+    limit: int = 100,
+):
     """
     Returns annotations filtered according to the provided parameters.
     If no parameters are given, all annotations are returned.
@@ -182,7 +203,9 @@ def get_all_annotations_crud(db: Session,
     query = db.query(Annotation)
 
     if step_id or project_id:
-        query = query.join(AnnotationTask, Annotation.id == AnnotationTask.annotation_id)
+        query = query.join(
+            AnnotationTask, Annotation.id == AnnotationTask.annotation_id
+        )
         query = query.join(Task, Task.id == AnnotationTask.task_id)
         query = query.join(Step, Step.id == Task.step_id)
 
@@ -192,7 +215,6 @@ def get_all_annotations_crud(db: Session,
         filters.append(Annotation.user_email == user_email)
     if status:
         filters.append(Annotation.annotation_status == status)
-
 
     if step_id:
         filters.append(Step.id == step_id)
@@ -214,7 +236,9 @@ def get_all_annotations_crud(db: Session,
         filters.append(Annotation.updated_at <= end_updated_at)
 
     if start_validated_at and end_validated_at:
-        filters.append(Annotation.validated_at.between(start_validated_at, end_validated_at))
+        filters.append(
+            Annotation.validated_at.between(start_validated_at, end_validated_at)
+        )
     elif start_validated_at:
         filters.append(Annotation.validated_at >= start_validated_at)
     elif end_validated_at:

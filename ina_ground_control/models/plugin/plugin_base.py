@@ -8,15 +8,18 @@ Pydantic's `BaseModel`, it adds flexibility and robust data handling for plugin 
 
 from enum import Enum
 from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class PluginConfigType(str, Enum):
-    POST_PLUGIN = 'post plugin'
-    GET_PLUGIN = 'get plugin'
+    POST_PLUGIN = "post plugin"
+    GET_PLUGIN = "get plugin"
+
 
 class DataTypeEnum(str, Enum):
-    JSON = 'json'
+    JSON = "json"
+
 
 class PluginConfigBase(BaseModel):
     """
@@ -27,16 +30,15 @@ class PluginConfigBase(BaseModel):
         data_type (DataTypeEnum, optional): Type of expected response data. Only 'json' is currently supported.
         data_source (str, optional): The URL or reference of the data source.
     """
+
     type: PluginConfigType
-    data_type: Optional[DataTypeEnum] = Field(None, alias='data_type')
-    data_source: Optional[str] = Field(None, alias='data_source')
+    data_type: Optional[DataTypeEnum] = Field(None, alias="data_type")
+    data_source: Optional[str] = Field(None, alias="data_source")
     # Auth fields
-    token_url: Optional[str] = Field(None, alias='token_url')
-    client_id: Optional[str] = Field(None, alias='client_id')
-    client_secret: Optional[str] = Field(None, alias='client_secret')
+    token_url: Optional[str] = Field(None, alias="token_url")
+    client_id: Optional[str] = Field(None, alias="client_id")
+    client_secret: Optional[str] = Field(None, alias="client_secret")
     # Use ConfigDict for configuration
     model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        populate_by_name=True,
-        extra='allow'
+        arbitrary_types_allowed=True, populate_by_name=True, extra="allow"
     )

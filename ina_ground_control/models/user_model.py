@@ -12,10 +12,10 @@ Classes:
 from typing import List, Optional
 
 from pydantic import BaseModel
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, DateTime, String
 from sqlalchemy.orm import relationship
 
-from ina_ground_control.database import Base
+from ina_ground_control.models import Base
 
 
 class User(Base):
@@ -41,9 +41,8 @@ class User(Base):
     updated_at = Column(DateTime)
     projects = relationship("Project", back_populates="owner")
     annotations = relationship(
-        "Annotation",
-        backref="user",
-        cascade="all, delete-orphan")
+        "Annotation", backref="user", cascade="all, delete-orphan"
+    )
 
 
 class UserInfo(BaseModel):

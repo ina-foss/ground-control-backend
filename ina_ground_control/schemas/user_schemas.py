@@ -17,6 +17,7 @@ class UserDto(UserBaseDto):
     """
     DTO representing a user object, extending UserBaseDto with associated projects.
     """
+
     projects: list[ProjectDetailDto] = []
     annotations: list[AnnotationCreate] = []
     created_at: Optional[datetime]
@@ -29,4 +30,5 @@ class UserWithTasksDto(UserDto):
     """
     DTO representing a user object with associated tasks.
     """
+
     tasks: list[TaskListDto] = []
