@@ -18,6 +18,30 @@ from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import (
 )
 from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
+from SPARQLWrapper import SPARQLWrapper, JSON
+import logging
+
+logger = logging.getLogger(__name__)
+import urllib3
+
+# Disable SSL warnings (optional)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+def rechercher_entites(query, lang='fr', limit=5):
+    url = "https://www.wikidata.org/w/api.php"
+    params = {
+        "action": "wbsearchentities",
+        "format": "json",
+        "language": lang,   # Force French
+        "type": "item",     # Only Wikidata items
+        "search": query,
+        "limit": limit
+    }
+    response = requests.get(url, params=params, timeout=30, verify=False)
+    result = response.raise_for_status()
+    print("****************************************   ",result)
+    return response.json().get("search", [])
+
 
 
 class PluginServiceAutoComplete(PluginServiceBase):
@@ -100,10 +124,6 @@ class PluginServiceAutoComplete(PluginServiceBase):
             # Handle GET_PLUGIN (simple RESTful API)
             elif self.config.type == PluginConfigType.GET_PLUGIN:
                 if self.config.search_query:
-                    print(
-                        "************************************** data ********   ",
-                        self.config,
-                    )
                     data_source = (
                         f"{self.config.data_source}?{self.config.search_query}={query}"
                     )
@@ -112,6 +132,24 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
                 logger.info("Sending GET request to data source: %s", data_source)
                 response = requests.get(data_source, timeout=30, verify=no_verify)
+            elif self.config.type == PluginConfigType.WIKIDATA:
+                if self.config.search_query:
+                    data_source = (
+                        f"{self.config.data_source}?{self.config.search_query}={query}"
+                    )
+                else:
+                    data_source = self.config.data_source
+                params = {
+                    "action": "wbsearchentities",
+                    "format": "json",
+                    "language": "fr",   # Force French
+                    "type": "item",     # Only Wikidata items
+                    "search": query,
+                    "limit": 10
+                }
+                response = requests.get(self.config.data_source, params=params, timeout=30, verify=False)
+
+                print("****************************************   ",response.json().get('search', []))
 
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)

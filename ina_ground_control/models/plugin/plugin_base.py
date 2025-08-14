@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class PluginConfigType(str, Enum):
     POST_PLUGIN = "post plugin"
     GET_PLUGIN = "get plugin"
+    WIKIDATA = "wikidata"
 
 
 class DataTypeEnum(str, Enum):
