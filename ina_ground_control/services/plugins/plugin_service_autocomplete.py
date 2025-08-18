@@ -4,6 +4,7 @@ This module provides search operation for plugin.
 """
 
 import json
+import logging
 
 import requests
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -18,9 +19,9 @@ from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import (
 )
 from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class PluginServiceAutoComplete(PluginServiceBase):
     """
@@ -114,12 +115,14 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 params = {
                     "action": "wbsearchentities",
                     "format": "json",
-                    "language": "fr",   # Force French
+                    "language": "fr",
                     "uselang": "fr",
-                    "type": "item",     # default value
-                    "search": query
+                    "type": "item",
+                    "search": query,
                 }
-                response = requests.get(self.config.data_source, params=params, timeout=30, verify=False)
+                response = requests.get(
+                    self.config.data_source, params=params, timeout=30, verify=False
+                )
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)
                 raise ValueError(f"Unsupported plugin type: {self.config.type}")
