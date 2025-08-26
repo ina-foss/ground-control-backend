@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     sso_client_secret: str = "internal"
 
     # CORS settings
-    cors_allow_credentials: list[bool] = True
+    cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["*"]
     cors_allow_headers: list[str] = ["*"]
     cors_expose_headers: list[str] = [
