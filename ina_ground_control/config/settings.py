@@ -7,8 +7,6 @@ It includes definitions for the database connection, application metadata,
 and Azure OpenAI deployment details.
 """
 
-from typing import ClassVar, List
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -48,17 +46,17 @@ class Settings(BaseSettings):
     sso_client_secret: str = "internal"
 
     # CORS settings
-    cors_allow_credentials: ClassVar[bool] = True
-    cors_allow_methods: ClassVar[List[str]] = ["*"]
-    cors_allow_headers: ClassVar[List[str]] = ["*"]
-    cors_expose_headers: ClassVar[List[str]] = [
+    cors_allow_credentials: bool = True
+    cors_allow_methods: list[str] = ["*"]
+    cors_allow_headers: list[str] = ["*"]
+    cors_expose_headers: list[str] = [
         "Authorization",
         "Link",
         "X-Total-Count",
         "Highlighted",
         "Content-Disposition",
     ]  # Field
-    cors_allow_origins: ClassVar[List[str]] = [
+    cors_allow_origins: list[str] = [
         "http://localhost",
         "http://localhost:3000",
     ]
