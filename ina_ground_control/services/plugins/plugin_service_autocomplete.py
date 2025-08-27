@@ -121,7 +121,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     "search": query,
                 }
                 response = requests.get(
-                    self.config.data_source, params=params, timeout=30, verify=False
+                    self.config.data_source, params=params, timeout=30, verify=True
                 )
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)
