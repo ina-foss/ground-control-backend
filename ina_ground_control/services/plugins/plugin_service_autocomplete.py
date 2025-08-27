@@ -4,6 +4,7 @@ This module provides search operation for plugin.
 """
 
 import json
+import logging
 
 import requests
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -18,6 +19,8 @@ from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import (
 )
 from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
+
+logger = logging.getLogger(__name__)
 
 
 class PluginServiceAutoComplete(PluginServiceBase):
@@ -100,10 +103,6 @@ class PluginServiceAutoComplete(PluginServiceBase):
             # Handle GET_PLUGIN (simple RESTful API)
             elif self.config.type == PluginConfigType.GET_PLUGIN:
                 if self.config.search_query:
-                    print(
-                        "************************************** data ********   ",
-                        self.config,
-                    )
                     data_source = (
                         f"{self.config.data_source}?{self.config.search_query}={query}"
                     )
@@ -112,7 +111,18 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
                 logger.info("Sending GET request to data source: %s", data_source)
                 response = requests.get(data_source, timeout=30, verify=no_verify)
-
+            elif self.config.type == PluginConfigType.WIKIDATA:
+                params = {
+                    "action": "wbsearchentities",
+                    "format": "json",
+                    "language": "fr",
+                    "uselang": "fr",
+                    "type": "item",
+                    "search": query,
+                }
+                response = requests.get(
+                    self.config.data_source, params=params, timeout=30, verify=False
+                )
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)
                 raise ValueError(f"Unsupported plugin type: {self.config.type}")
