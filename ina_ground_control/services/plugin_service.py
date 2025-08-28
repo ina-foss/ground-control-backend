@@ -13,7 +13,7 @@ from ina_ground_control.models.plugin.plugin_autocomplete import (
     PluginConfigAutoComplete,
 )
 from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO
-from ina_ground_control.models.plugin_model import Plugin
+from ina_ground_control.models.plugin_model import DisplayZone, Plugin
 from ina_ground_control.schemas.plugin_schemas import PluginCreate
 from ina_ground_control.services.plugins.plugin_service_autocomplete import (
     PluginServiceAutoComplete,
@@ -88,10 +88,19 @@ def get_plugins_search(db: Session, plugin_id: int, query: str):
         raise NotImplementedError(f"{str(config)} not implemented")
 
 
-def get_plugins_crud(db: Session, step_id: int, zone: str, plugin_type: str = None):
+def get_plugins_crud(
+    db: Session,
+    step_id: int,
+    zone: str | list[DisplayZone],
+    plugin_type: str | None = None,
+):
     query = db.query(Plugin).filter(
-        Plugin.step_id == step_id, Plugin.display_zone == zone
+        Plugin.step_id == step_id,
     )
+    if isinstance(zone, str):
+        query = query.filter(Plugin.display_zone == zone)
+    elif isinstance(zone, list):
+        query = query.filter(Plugin.display_zone.in_(zone))
     if plugin_type:
         query = query.filter(Plugin.type == plugin_type)
         query = query.order_by(Plugin.display_config["order"].as_integer().asc())

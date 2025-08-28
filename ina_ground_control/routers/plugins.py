@@ -18,7 +18,9 @@ Dependencies:
 
 """
 
-from fastapi import APIRouter, Depends, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
     CheckPermissions,
@@ -86,11 +88,11 @@ def read_plugins(
     return plugins
 
 
-@router.get(
-    "/plugins/step/{step_id}/display/{zone}", response_model=list[PluginWithIdDto]
-)
+@router.get("/plugins/step/{step_id}/display/", response_model=list[PluginWithIdDto])
 def read_all_plugins(
-    step_id: int, zone: DisplayZone, db: Session = Depends(get_db)
+    step_id: int,
+    zone: Annotated[list[DisplayZone], Query()],
+    db: Session = Depends(get_db),
 ) -> list[Plugin]:
     """
     Retrieve plugins for a given step and display zone,
