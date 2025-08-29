@@ -19,6 +19,7 @@ from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 TYPE_MAPPING = {
     "get plugin": PluginConfigAutoComplete,
     "post plugin": PluginConfigAutoComplete,
+    "wikidata": PluginConfigAutoComplete,
 }
 
 
