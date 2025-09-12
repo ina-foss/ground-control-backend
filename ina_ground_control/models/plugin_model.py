@@ -96,6 +96,7 @@ class Plugin(Base):
     type = Column(Enum(TypePlugin))
     display_zone = Column(Enum(DisplayZone))
     step_id = Column(Integer, ForeignKey("step.id"))
+    available_plugins = Column(JSON, nullable=True)
     config_data = Column(JSON)
     display_config = Column(JSON, nullable=True)
     enable_search = Column(Boolean, default=False, nullable=True)

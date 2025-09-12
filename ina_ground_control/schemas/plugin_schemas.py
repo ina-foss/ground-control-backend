@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, JsonValue
 
 from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
 from ina_ground_control.models.plugin_model import DisplayZone, TypePlugin
@@ -89,6 +89,7 @@ class PluginCreate(BaseModel):
     data_categories: str
     display_zone: DisplayZone
     step_id: int
+    available_plugins: Optional[JsonValue] = None
     config_data: ConfigData
     display_config: Optional[DisplayConfig] = None
     # fields for embedded plugin
@@ -110,3 +111,8 @@ class PluginWithIdDto(PluginCreate):
     """
 
     id: int
+    children: Optional[List["PluginWithIdDto"]] = []
+
+
+PluginWithIdDto.model_rebuild()
+PluginCreate.model_rebuild()
