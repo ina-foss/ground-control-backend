@@ -103,7 +103,7 @@ def read_all_plugins(
 
 
 # add new plugin
-@router.post("/plugin", response_model=PluginCreate)
+@router.post("/plugin", response_model=PluginWithIdDto)
 def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
     """
     Create a new plugin.
