@@ -16,6 +16,7 @@ class PluginConfigType(str, Enum):
     POST_PLUGIN = "post plugin"
     GET_PLUGIN = "get plugin"
     WIKIDATA = "wikidata"
+    JSON = "json"
 
 
 class DataTypeEnum(str, Enum):

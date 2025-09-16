@@ -99,7 +99,12 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     timeout=30,
                     verify=no_verify,
                 )
-
+            # Handle JSON_PLUGIN (simple json file)
+            elif self.config.type == PluginConfigType.JSON:
+                fake_response = requests.Response()
+                fake_response.status_code = 200
+                fake_response._content = self.config.data_source.encode("utf-8")
+                response = fake_response
             # Handle GET_PLUGIN (simple RESTful API)
             elif self.config.type == PluginConfigType.GET_PLUGIN:
                 if self.config.search_query:

@@ -20,6 +20,7 @@ TYPE_MAPPING = {
     "get plugin": PluginConfigAutoComplete,
     "post plugin": PluginConfigAutoComplete,
     "wikidata": PluginConfigAutoComplete,
+    "json": PluginConfigAutoComplete,
 }
 
 
