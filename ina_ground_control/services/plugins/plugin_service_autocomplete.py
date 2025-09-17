@@ -103,7 +103,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             elif self.config.type == PluginConfigType.JSON:
                 fake_response = requests.Response()
                 fake_response.status_code = 200
-                fake_response._content = self.config.data_source.encode("utf-8")
+                fake_response._content = self.config.data_source.encode("utf-8") # pylint: disable=protected-access
                 response = fake_response
             # Handle GET_PLUGIN (simple RESTful API)
             elif self.config.type == PluginConfigType.GET_PLUGIN:
