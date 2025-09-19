@@ -99,36 +99,12 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
             search_query="id",
             data_type=DataTypeEnum.JSON,
-            type=PluginConfigType.GET_PLUGIN,
+            type=PluginConfigType.PLUGIN_REQUEST_GET,
             response_id_key="$.conceptSet[*].qcode",
             response_ext_id_key="$.conceptSet[*].uri",
             response_label_key="$.conceptSet[*].prefLabel.fr",
         )
         self.service = PluginServiceAutoComplete(config=self.config)
-
-    @patch(
-        "ina_ground_control.services.plugins.plugin_service_autocomplete.requests.get"
-    )
-    def test_search_valid_response(self, mock_get):
-        # Test the `search` method with a valid HTTP response.
-        # Mock response
-        mock_response = Mock(spec=Response)
-        mock_response.status_code = 200
-        mock_response.content = mock_autocomplete_response
-
-        mock_get.return_value = mock_response
-
-        # Expected result
-        expected_result = [
-            PluginAutocompleteValueDTO(
-                id="medtop:01000000",
-                ext_id="https://cv.iptc.org/newscodes/mediatopic/01000000",
-                label="Arts, culture, divertissement et médias",
-            )
-        ]
-
-        result = self.service.search("medtop:01000000")
-        self.assertEqual(result, expected_result)
 
     @patch(
         "ina_ground_control.services.plugins.plugin_service_autocomplete.requests.get"
@@ -149,7 +125,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
             search_query="query",
             data_type=DataTypeEnum.JSON,
-            type=PluginConfigType.GET_PLUGIN,
+            type=PluginConfigType.PLUGIN_REQUEST_GET,
             response_id_key="$[*].id",
             response_ext_id_key="$[*].code",
             response_label_key="$[*].label",

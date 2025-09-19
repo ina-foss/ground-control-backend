@@ -61,9 +61,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         """
         Perform an autocomplete search using the plugin configuration.
 
-        For `POST_PLUGIN`, sends a POST request with the query parsed as JSON payload
+        For `PLUGIN_REQUEST_POST`, sends a POST request with the query parsed as JSON payload
         (e.g., for Elasticsearch).
-        For `GET_PLUGIN`, sends a GET request with the query string as a parameter.
+        For `PLUGIN_REQUEST_GET`, sends a GET request with the query string as a parameter.
 
         Args:
             query (str): The search query string (raw or JSON depending on plugin type).
@@ -79,8 +79,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
             no_verify = False
             headers = {"Content-Type": "application/json"}
 
-            # Handle POST_PLUGIN (e.g., Elasticsearch)
-            if self.config.type == PluginConfigType.POST_PLUGIN:
+            # Handle PLUGIN_REQUEST_POST (e.g., Elasticsearch)
+            if self.config.type == PluginConfigType.PLUGIN_REQUEST_POST:
                 try:
                     query_json_str = json.dumps(self.config.search_query)
                     payload_str = query_json_str.replace("##query##", query)
@@ -99,16 +99,16 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     timeout=30,
                     verify=no_verify,
                 )
-            # Handle JSON_PLUGIN (simple json file)
-            elif self.config.type == PluginConfigType.JSON:
+            # Handle PLUGIN_STATIC_DATA (simple json file)
+            elif self.config.type == PluginConfigType.PLUGIN_STATIC_DATA:
                 fake_response = requests.Response()
                 fake_response.status_code = 200
                 fake_response._content = (  # pylint: disable=protected-access
                     self.config.data_source.encode("utf-8")
                 )
                 response = fake_response
-            # Handle GET_PLUGIN (simple RESTful API)
-            elif self.config.type == PluginConfigType.GET_PLUGIN:
+            # Handle PLUGIN_REQUEST_GET (simple RESTful API)
+            elif self.config.type == PluginConfigType.PLUGIN_REQUEST_GET:
                 if self.config.search_query:
                     data_source = (
                         f"{self.config.data_source}?{self.config.search_query}={query}"
@@ -118,7 +118,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
                 logger.info("Sending GET request to data source: %s", data_source)
                 response = requests.get(data_source, timeout=30, verify=no_verify)
-            elif self.config.type == PluginConfigType.WIKIDATA:
+            # Handle PLUGIN_WIKIDATA
+            elif self.config.type == PluginConfigType.PLUGIN_WIKIDATA:
                 params = {
                     "action": "wbsearchentities",
                     "format": "json",
@@ -143,7 +144,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 logger.info("Received successful response from data source.")
                 data = self.parse(
                     response,
-                    query if self.config.type == PluginConfigType.GET_PLUGIN else None,
+                    (
+                        query
+                        if self.config.type == PluginConfigType.PLUGIN_REQUEST_GET
+                        else None
+                    ),
                 )
 
                 if not data:

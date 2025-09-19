@@ -13,10 +13,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class PluginConfigType(str, Enum):
-    POST_PLUGIN = "post plugin"
-    GET_PLUGIN = "get plugin"
-    WIKIDATA = "wikidata"
-    JSON = "json"
+    PLUGIN_REQUEST_POST = "plugin_request_post"
+    PLUGIN_REQUEST_GET = "plugin_request_get"
+    PLUGIN_WIKIDATA = "plugin_wikidata"
+    PLUGIN_STATIC_DATA = "plugin_static_data"
 
 
 class DataTypeEnum(str, Enum):

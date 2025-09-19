@@ -17,10 +17,10 @@ from ina_ground_control.models.plugin.plugin_base import PluginConfigBase
 
 # Ensure TYPE_MAPPING remains consistent
 TYPE_MAPPING = {
-    "get plugin": PluginConfigAutoComplete,
-    "post plugin": PluginConfigAutoComplete,
-    "wikidata": PluginConfigAutoComplete,
-    "json": PluginConfigAutoComplete,
+    "plugin_request_get": PluginConfigAutoComplete,
+    "plugin_request_post": PluginConfigAutoComplete,
+    "plugin_wikidata": PluginConfigAutoComplete,
+    "plugin_static_data": PluginConfigAutoComplete,
 }
 
 

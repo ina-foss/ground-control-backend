@@ -23,7 +23,7 @@ def test_get_plugins(db_session: SQLAlchemySession):
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {
-            "type": PluginConfigType.GET_PLUGIN,
+            "type": PluginConfigType.PLUGIN_REQUEST_GET,
             "data_type": DataTypeEnum.JSON,
             "data_source": "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
             "search_query": "label",
@@ -40,7 +40,7 @@ def test_get_plugins(db_session: SQLAlchemySession):
         "display_zone": DisplayZone.BLOC,
         "step_id": 2,
         "config_data": {
-            "type": PluginConfigType.GET_PLUGIN,
+            "type": PluginConfigType.PLUGIN_REQUEST_GET,
             "data_type": DataTypeEnum.JSON,
             "data_source": "https://ground-control.2ia.d.sas.ina/cptall-fr.json",
             "search_query": "label",
@@ -84,7 +84,7 @@ plugin_data = {
     "display_zone": DisplayZone.BLOC,
     "step_id": 1,
     "config_data": {
-        "type": PluginConfigType.GET_PLUGIN,
+        "type": PluginConfigType.PLUGIN_REQUEST_GET,
         "data_type": DataTypeEnum.JSON,
         "data_source": "test data",
     },
@@ -114,7 +114,7 @@ def test_delete_plugin_crud(db_session: SQLAlchemySession):
         "step_id": 1,
         "config_data": {
             "data_source": "test data",
-            "type": PluginConfigType.GET_PLUGIN,
+            "type": PluginConfigType.PLUGIN_REQUEST_GET,
             "data_type": DataTypeEnum.JSON,
         },
     }

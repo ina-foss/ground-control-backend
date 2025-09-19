@@ -17,7 +17,7 @@ from ina_ground_control.models.plugin.plugin_config import PluginConfigDTO
 
 def test_plugin_config_base_valid_type():
     data1 = {
-        "type": PluginConfigType.GET_PLUGIN,
+        "type": PluginConfigType.PLUGIN_REQUEST_GET,
         "data_type": DataTypeEnum.JSON,
         "data_source": "https://cv.iptc.org/newscodes/mediatopic?lang=fr",
         "search_query": "title",
@@ -30,7 +30,7 @@ def test_plugin_config_base_valid_type():
     assert isinstance(config, PluginConfigAutoComplete)
 
     assert isinstance(config, PluginConfigAutoComplete)
-    assert config.type == PluginConfigType.GET_PLUGIN
+    assert config.type == PluginConfigType.PLUGIN_REQUEST_GET
     assert config.data_source == "https://cv.iptc.org/newscodes/mediatopic?lang=fr"
 
 
@@ -49,7 +49,7 @@ def test_plugin_config_base_missing_type():
 
 def test_plugin_config_base_extra_fields():
     data = {
-        "type": PluginConfigType.GET_PLUGIN,
+        "type": PluginConfigType.PLUGIN_REQUEST_GET,
         "data_type": DataTypeEnum.JSON,
         "data_source": "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
         "search_query": "title",
@@ -59,7 +59,7 @@ def test_plugin_config_base_extra_fields():
     }
     config = PluginConfigDTO.build(data)
     assert isinstance(config, PluginConfigAutoComplete)
-    assert config.type == PluginConfigType.GET_PLUGIN
+    assert config.type == PluginConfigType.PLUGIN_REQUEST_GET
     assert (
         config.data_source
         == "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json"

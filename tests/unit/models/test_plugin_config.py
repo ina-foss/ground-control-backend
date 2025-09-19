@@ -18,7 +18,7 @@ class TestPluginConfigDTO(unittest.TestCase):
 
     def setUp(self):
         self.valid_data = {
-            "type": PluginConfigType.GET_PLUGIN,
+            "type": PluginConfigType.PLUGIN_REQUEST_GET,
             "search_query": "title",
             "search_query_param": "q",
             "search_item_sort": "title,asc",
