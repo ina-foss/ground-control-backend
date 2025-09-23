@@ -31,6 +31,7 @@ class PluginConfigAutoComplete(PluginConfigBase):
     response_label_key: Optional[str] = None
     response_image_key: Optional[str] = None
     response_description_key: Optional[str] = None
+    response_categories_key: Optional[str] = None
 
     # Use ConfigDict for configuration
     model_config = ConfigDict(

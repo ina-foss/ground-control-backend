@@ -24,3 +24,4 @@ class PluginAutocompleteValueDTO(BaseModel):
     label: Optional[str]
     image: Optional[str] = None
     description: Optional[str] = None
+    categories: Optional[str] = None

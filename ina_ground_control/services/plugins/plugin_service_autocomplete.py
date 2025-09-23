@@ -219,6 +219,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     if self.config.response_description_key
                     else None
                 )
+                categories_expr = (
+                    jsonpath_parse(self.config.response_categories_key)
+                    if self.config.response_categories_key
+                    else None
+                )
 
                 ids = id_expr.find(data)
                 ext_ids = ext_id_expr.find(data)
@@ -228,6 +233,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     description_expr.find(data)
                     if description_expr
                     else [None] * len(ids)
+                )
+                categories = (
+                    categories_expr.find(data) if categories_expr else [None] * len(ids)
                 )
 
                 transformed_data = [
@@ -239,9 +247,12 @@ class PluginServiceAutoComplete(PluginServiceBase):
                         description=(
                             description_match.value if description_match else None
                         ),
+                        categories=(
+                            categories_match.value if categories_match else None
+                        ),
                     )
-                    for id_match, ext_id_match, label_match, image_match, description_match in zip(
-                        ids, ext_ids, labels, images, descriptions
+                    for id_match, ext_id_match, label_match, image_match, description_match, categories_match in zip(
+                        ids, ext_ids, labels, images, descriptions, categories
                     )
                 ]
                 # filter only if the search attribute is defined and a string, else return the unfiltered array
