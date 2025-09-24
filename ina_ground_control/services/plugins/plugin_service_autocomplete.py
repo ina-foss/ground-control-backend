@@ -57,6 +57,32 @@ class PluginServiceAutoComplete(PluginServiceBase):
         super().__init__(config)
         self.config = config
 
+    def commons_url(self, filename: str) -> str:
+        return f"https://commons.wikimedia.org/wiki/Special:FilePath/{filename}"
+
+    def get_wikidata_image(self, entity_id: str) -> str | None:
+        params = {
+            "action": "wbgetentities",
+            "ids": entity_id,
+            "props": "claims",
+            "format": "json",
+        }
+        try:
+            details = requests.get(
+                self.config.data_source,
+                params=params,
+                timeout=30,
+                verify=False,
+                headers={"User-Agent": ""},
+            ).json()
+            claims = details.get("entities", {}).get(entity_id, {}).get("claims", {})
+            if "P18" in claims:
+                filename = claims["P18"][0]["mainsnak"]["datavalue"]["value"]
+                return self.commons_url(filename)
+        except (RequestException, ValueError, KeyError) as e:
+            logger.warning("Failed to fetch image for entity %s: %s", entity_id, e)
+        return None
+
     def search(self, query: str) -> list[PluginAutocompleteValueDTO]:
         """
         Perform an autocomplete search using the plugin configuration.
@@ -128,6 +154,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     "type": "item",
                     "search": query,
                 }
+                logger.info("Searching Wikidata entities for query: %s", query)
                 response = requests.get(
                     self.config.data_source,
                     params=params,
@@ -135,6 +162,23 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     verify=no_verify,
                     headers={"User-Agent": ""},
                 )
+                data = response.json()
+                results: list[PluginAutocompleteValueDTO] = []
+                for item in data.get("search", []):
+                    entity_id = item["id"]
+                    image_url = self.get_wikidata_image(entity_id)
+
+                    results.append(
+                        PluginAutocompleteValueDTO(
+                            id=entity_id,
+                            ext_id=entity_id,
+                            label=item.get("label"),
+                            description=item.get("description"),
+                            image=image_url,
+                        )
+                    )
+
+                return results
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)
                 raise ValueError(f"Unsupported plugin type: {self.config.type}")
