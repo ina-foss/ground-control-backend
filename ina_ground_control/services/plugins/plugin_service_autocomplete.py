@@ -58,9 +58,37 @@ class PluginServiceAutoComplete(PluginServiceBase):
         self.config = config
 
     def commons_url(self, filename: str) -> str:
+        """
+        Build the direct Wikimedia Commons URL for a given filename.
+
+        Args:
+            filename (str): The name of the file stored on Wikimedia Commons.
+
+        Returns:
+            str: The full URL pointing to the file on Wikimedia Commons.
+        """
         return f"https://commons.wikimedia.org/wiki/Special:FilePath/{filename}"
 
     def get_wikidata_image(self, entity_id: str) -> str | None:
+        """
+        Retrieve the image URL associated with a Wikidata entity (if available).
+
+        This method queries the Wikidata API for the entity's claims and
+        extracts the image filename (property `P18`), then converts it into
+        a direct Wikimedia Commons URL.
+
+        Args:
+            entity_id (str): The unique Wikidata entity identifier (e.g., "Q42").
+
+        Returns:
+            str | None: The direct Wikimedia Commons image URL if found,
+            otherwise None.
+
+        Raises:
+            RequestException: If the HTTP request to the Wikidata API fails.
+            ValueError: If the response cannot be decoded as JSON.
+            KeyError: If the expected fields are missing in the API response.
+        """
         params = {
             "action": "wbgetentities",
             "ids": entity_id,
