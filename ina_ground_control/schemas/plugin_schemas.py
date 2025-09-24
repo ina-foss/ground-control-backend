@@ -61,6 +61,7 @@ class DisplayConfig(BaseModel):
     multiple_values: Optional[bool] = None
     max_items: Optional[int] = None
     order: Optional[int] = None
+    main_plugin: Optional[bool] = False
 
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True, extra="ignore"
