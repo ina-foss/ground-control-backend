@@ -100,7 +100,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 self.config.data_source,
                 params=params,
                 timeout=30,
-                verify=False,
+                verify=True,
                 headers={"User-Agent": ""},
             ).json()
             claims = details.get("entities", {}).get(entity_id, {}).get("claims", {})
@@ -130,7 +130,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             RuntimeError: For unexpected errors or failed HTTP requests.
         """
         try:
-            no_verify = False
+            no_verify = True
             headers = {"Content-Type": "application/json"}
 
             # Handle PLUGIN_REQUEST_POST (e.g., Elasticsearch)

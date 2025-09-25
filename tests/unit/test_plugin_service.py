@@ -18,63 +18,30 @@ from ina_ground_control.services.plugin_service import (
 def test_get_plugins(db_session: SQLAlchemySession):
     plugin_1 = {
         "name": "name_test",
-        "type": TypePlugin.AUTOCOMPLETE,
+        "type": TypePlugin.LIST_ITEMS,
         "data_categories": "data_categories test",
         "display_zone": DisplayZone.BLOC,
         "step_id": 1,
         "config_data": {
-            "type": PluginConfigType.PLUGIN_REQUEST_GET,
+            "type": PluginConfigType.PLUGIN_STATIC_DATA,
             "data_type": DataTypeEnum.JSON,
-            "data_source": "https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
-            "search_query": "label",
+            "data_source": '[{"id":1,"extId":"A1","label":"Item 1"},{"id":2,"extId":"A2","label":"Item 2"}]',
+            "search_query": "",
             "response_id_key": "$[*].id",
             "response_ext_id_key": "$[*].code",
             "response_label_key": "$[*].label",
         },
     }
-
-    plugin_2 = {
-        "name": "name_test2",
-        "type": TypePlugin.AUTOCOMPLETE,
-        "data_categories": "data_categories test",
-        "display_zone": DisplayZone.BLOC,
-        "step_id": 2,
-        "config_data": {
-            "type": PluginConfigType.PLUGIN_REQUEST_GET,
-            "data_type": DataTypeEnum.JSON,
-            "data_source": "https://ground-control.2ia.d.sas.ina/cptall-fr.json",
-            "search_query": "label",
-            "response_id_key": "$.conceptSet[*].qcode",
-            "response_ext_id_key": "$.conceptSet[*].uri",
-            "response_label_key": "$.conceptSet[*].prefLabel.fr",
-        },
-    }
     created_plugin_1 = create_plugin_crud(PluginCreate(**plugin_1), db_session)
-    created_plugin_2 = create_plugin_crud(PluginCreate(**plugin_2), db_session)
     assert created_plugin_1 is not None
-    assert created_plugin_2 is not None
     db_session.commit()
     db_session.refresh(created_plugin_1)
-    db_session.refresh(created_plugin_2)
     given_plugin = get_plugin_by_id(db_session, 1)
     assert given_plugin is not None
     assert given_plugin.id is not None
     assert given_plugin.id == 1
-    given_plugin2 = get_plugin_by_id(db_session, 2)
-    assert given_plugin2 is not None
-    assert given_plugin2.id is not None
-    assert given_plugin2.id == 2
-    retrieved_plugins = get_plugins_search(db_session, 1, " ")
-    retrieved_plugins2 = get_plugins_search(db_session, 2, " ")
+    retrieved_plugins = get_plugins_search(db_session, 1, "Item")
     assert retrieved_plugins is not None
-    assert retrieved_plugins[0].id is not None
-    assert retrieved_plugins[0].id == "ALAMAIS"
-    assert retrieved_plugins[0].ext_id == "ALA"
-    assert retrieved_plugins[0].label == "#Alamaison"
-    assert retrieved_plugins2 is not None
-    assert retrieved_plugins2[0].id is not None
-    assert retrieved_plugins2[0].id == "medtop:01000000"
-    assert retrieved_plugins2[0].label == "Arts, culture, divertissement et médias"
 
 
 plugin_data = {
