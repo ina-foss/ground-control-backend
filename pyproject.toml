@@ -171,6 +171,15 @@ exclude_lines = [
 show_missing = true
 skip_covered = false
 
+[tool.sonar]
+projectKey = "ground-control-backend"
+sources = "ina_ground_control"
+tests = "tests"
+exclusions = "ina_ground_control/alembic/**,ina_ground_control/tests/**,**/__pycache__/**,**/venv/**,**/.venv/**"
+coverageExclusions = "ina_ground_control/alembic/**,ina_ground_control/tests/**"
+pythonVersion = "3.12"
+coverageReportPaths = "coverage.xml"
+
 [tool.pylint.main]
 rcfile = ".pylintrc"
 
