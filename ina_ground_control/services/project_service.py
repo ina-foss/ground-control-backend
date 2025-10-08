@@ -115,3 +115,17 @@ def update_project_status_crud(db: Session, project_id: int, status: ProjectStat
     db.commit()
     db.refresh(project)
     return project
+
+
+def get_project_parameters(db: Session, project_id: int):
+    step = db.query(Step).filter(Step.project_id == project_id).first()
+    if not step:
+        return None  # or raise an exception
+
+    parameters = {
+        "redundancy": step.redundancy,
+        "completeness_rate": step.completeness_rate,
+        "allow_empty_annotation": step.allow_empty_annotation,
+        "max_tasks_per_person": step.max_tasks_per_person,
+    }
+    return parameters

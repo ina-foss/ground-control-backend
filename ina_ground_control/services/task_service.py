@@ -66,6 +66,8 @@ def create_task_crud(task: TaskCreateDto, db: Session):
         Task: The newly created Task object.
     """
     db_task = Task(**task.model_dump())
+    step = get_step_by_id(db, db_task.step_id)
+    db_task.redundancy = step.redundancy
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -233,24 +235,26 @@ def get_tasks_by_annotated_by_crud(
 def recalculate_task_status(db: Session, task_id: int):
     task = get_task_by_id(db, task_id)
 
-    if task.status == TaskStatus.DRAFT:
-        print(f"⏩ Task {task.id} is in DRAFT. Skipping status update.")
-        return
-
     if task.redundancy == 0:
         print(f"⚠️ Task {task_id} has redundancy = 0. Skipping status update.")
         return
 
-    annotations = get_annotations_by_task_id_crud(
+    annotations_done = get_annotations_by_task_id_crud(
         db, task_id, None, InOutEnum.OUT, AnnotationStatus.DONE
     )
-    done_count = len(annotations)
+    annotations_in_progress = get_annotations_by_task_id_crud(
+        db, task_id, None, InOutEnum.OUT, AnnotationStatus.IN_PROGRESS
+    )
 
-    if done_count == 0:
+    done_count = len(annotations_done)
+    in_progress_count = len(annotations_in_progress)
+    new_status = task.status
+
+    if done_count == 0 and in_progress_count == 0:
         new_status = TaskStatus.PENDING
-    elif done_count < task.redundancy:
+    elif done_count < task.redundancy and in_progress_count > 0:
         new_status = TaskStatus.IN_PROGRESS
-    else:
+    elif done_count >= task.redundancy:
         new_status = TaskStatus.DONE
 
     if task.status != new_status:
@@ -261,32 +265,36 @@ def recalculate_task_status(db: Session, task_id: int):
 
 def recalculate_step_status(db: Session, step_id: int):
     step = get_step_by_id(db, step_id)
-    total_tasks = len(
-        [
-            task
-            for task in step.tasks
-            if task.status != TaskStatus.SKIPPED and task.status != TaskStatus.DRAFT
-        ]
-    )
-    done_tasks = len([task for task in step.tasks if task.status == TaskStatus.DONE])
-    pending_tasks = len(
-        [task for task in step.tasks if task.status == TaskStatus.PENDING]
-    )
+    if step.tasks and all(task.status == TaskStatus.DRAFT for task in step.tasks):
+        new_status = StepStatus.DRAFT
+    else:
+        total_tasks = len(
+            [
+                task
+                for task in step.tasks
+                if task.status not in (TaskStatus.SKIPPED, TaskStatus.DRAFT)
+            ]
+        )
+        done_tasks = len(
+            [task for task in step.tasks if task.status == TaskStatus.DONE]
+        )
+        pending_tasks = len(
+            [task for task in step.tasks if task.status == TaskStatus.PENDING]
+        )
 
-    completion_rate = (done_tasks / total_tasks) * 100 if total_tasks else 0
-    new_status = step.status
-    # Check if all tasks are PENDING, if so set the step to PENDING
-    if pending_tasks == total_tasks:
-        new_status = StepStatus.PENDING
-    # Some tasks are PENDING and others are DONE or IN_PROGRESS
-    elif pending_tasks > 0 and pending_tasks < total_tasks:
-        new_status = StepStatus.IN_PROGRESS
-    # Check if any task is IN_PROGRESS, if so set the step to IN_PROGRESS
-    elif any(task.status == TaskStatus.IN_PROGRESS for task in step.tasks):
-        new_status = StepStatus.IN_PROGRESS
-    # If completion rate is enough, mark step as DONE
-    elif completion_rate >= step.completeness_rate:
-        new_status = StepStatus.DONE
+        completion_rate = (done_tasks / total_tasks) * 100 if total_tasks else 0
+        new_status = step.status
+
+        if total_tasks == 0:
+            new_status = StepStatus.PENDING
+        elif completion_rate >= step.completeness_rate:
+            new_status = StepStatus.DONE
+        elif pending_tasks == total_tasks:
+            new_status = StepStatus.PENDING
+        elif pending_tasks > 0 and pending_tasks < total_tasks:
+            new_status = StepStatus.IN_PROGRESS
+        elif any(task.status == TaskStatus.IN_PROGRESS for task in step.tasks):
+            new_status = StepStatus.IN_PROGRESS
 
     if step.status != new_status:
         print(f"🔄 Updating Step {step.id} status: {step.status} → {new_status}")
@@ -297,33 +305,37 @@ def recalculate_step_status(db: Session, step_id: int):
 def recalculate_project_status(db: Session, project_id: int):
     project = get_project_by_id(db, project_id)
 
-    active_steps = [
-        step
-        for step in project.steps
-        if step.status not in (StepStatus.DRAFT, StepStatus.SKIPPED)
-    ]
-
-    total_steps = len(active_steps)
-    done_steps = len([step for step in active_steps if step.status == StepStatus.DONE])
-    pending_steps = len(
-        [step for step in active_steps if step.status == StepStatus.PENDING]
-    )
-
-    completion_rate = (done_steps / total_steps) * 100 if total_steps else 0
-
-    new_status = project.status
-
-    if total_steps == 0:
-        # No active steps — default to PENDING or keep current
-        new_status = ProjectStatus.PENDING
-    elif pending_steps == total_steps:
-        new_status = ProjectStatus.PENDING
-    elif any(step.status == StepStatus.IN_PROGRESS for step in active_steps):
-        new_status = ProjectStatus.IN_PROGRESS
-    elif completion_rate >= 100:
-        new_status = ProjectStatus.DONE
+    # If all steps are draft → project should be draft
+    if project.steps and all(step.status == StepStatus.DRAFT for step in project.steps):
+        new_status = ProjectStatus.DRAFT
     else:
-        new_status = ProjectStatus.IN_PROGRESS
+        active_steps = [
+            step
+            for step in project.steps
+            if step.status not in (StepStatus.DRAFT, StepStatus.SKIPPED)
+        ]
+
+        total_steps = len(active_steps)
+        done_steps = len(
+            [step for step in active_steps if step.status == StepStatus.DONE]
+        )
+        pending_steps = len(
+            [step for step in active_steps if step.status == StepStatus.PENDING]
+        )
+
+        completion_rate = (done_steps / total_steps) * 100 if total_steps else 0
+        new_status = project.status
+
+        if total_steps == 0:
+            new_status = ProjectStatus.PENDING
+        elif pending_steps == total_steps:
+            new_status = ProjectStatus.PENDING
+        elif any(step.status == StepStatus.IN_PROGRESS for step in active_steps):
+            new_status = ProjectStatus.IN_PROGRESS
+        elif completion_rate >= 100:
+            new_status = ProjectStatus.DONE
+        else:
+            new_status = ProjectStatus.IN_PROGRESS
 
     if project.status != new_status:
         print(

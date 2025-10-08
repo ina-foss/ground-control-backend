@@ -33,12 +33,14 @@ from ina_ground_control.schemas.project_schemas import (
     ProjectBaseDto,
     ProjectDetailDto,
     ProjectListDto,
+    ProjectParametersResponse,
     ProjectWithIdDto,
 )
 from ina_ground_control.services.project_service import (
     create_project_crud,
     delete_project_crud,
     get_project_by_id,
+    get_project_parameters,
     get_projects,
     update_project_crud,
 )
@@ -88,11 +90,6 @@ def create_project(
 def read_project(project_id: int, db: Session = Depends(get_db)) -> Project:
     """Get details of a single project by ID."""
     project = get_project_by_id(db, project_id=project_id)
-    if project is None:
-        logger.error("Failed to retrieve project with id: %d", project_id)
-        raise GroundControlException(
-            ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
-        )
     return project
 
 
@@ -133,3 +130,9 @@ def delete_project(
             ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
         )
     return deleted_project
+
+
+@router.get("/{project_id}/parameters", response_model=ProjectParametersResponse)
+def read_project_parameters(project_id: int, db: Session = Depends(get_db)):
+    parameters = get_project_parameters(db, project_id)
+    return parameters

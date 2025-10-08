@@ -1,6 +1,5 @@
 """Unit tests for Project services"""
 
-# pylint: disable=redefined-outer-name
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
@@ -28,11 +27,11 @@ project_data = {
 
 def test_get_projects(db_session: SQLAlchemySession):
     """
-    Test to retrieve all the project in the database
+    Test to retrieve all the projects in the database
     """
     project_data_1 = {
         "title": "Test Project 1",
-        "description": "Test description 2",
+        "description": "Test description 1",
         "status": "draft",
         "annotation_type": "segmentation",
         "is_published": True,
@@ -64,15 +63,20 @@ def test_get_projects(db_session: SQLAlchemySession):
 
     retrieved_projects = get_projects(db_session)
 
-    assert retrieved_projects is not None
-    assert retrieved_projects[2].id == created_project_1.id
-    assert retrieved_projects[2].description == project_data_1["description"]
-    assert retrieved_projects[2].created_by == project_data_1["created_by"]
-    assert retrieved_projects[2].title == project_data_1["title"]
-    assert retrieved_projects[3].title == project_data_2["title"]
-    assert retrieved_projects[3].description == project_data_2["description"]
-    assert retrieved_projects[3].created_by == project_data_2["created_by"]
-    assert retrieved_projects[3].id == created_project_2.id
+    # Ensure at least 2 projects were returned
+    assert len(retrieved_projects) >= 2
+
+    # Find the created projects in the returned list dynamically
+    project_1 = next(p for p in retrieved_projects if p.id == created_project_1.id)
+    project_2 = next(p for p in retrieved_projects if p.id == created_project_2.id)
+
+    assert project_1.title == project_data_1["title"]
+    assert project_1.description == project_data_1["description"]
+    assert project_1.created_by == project_data_1["created_by"]
+
+    assert project_2.title == project_data_2["title"]
+    assert project_2.description == project_data_2["description"]
+    assert project_2.created_by == project_data_2["created_by"]
 
 
 def test_get_project_by_id(db_session: SQLAlchemySession):

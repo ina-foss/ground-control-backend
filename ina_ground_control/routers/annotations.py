@@ -50,7 +50,10 @@ def create_annotation(
     AnnotationDTO: The newly created annotation
     """
     try:
-        return create_annotation_crud(db, annotation)
+        created_annotation = create_annotation_crud(db, annotation)
+        if created_annotation.task:
+            recalculate_task_status(db, created_annotation.task[0].id)
+        return created_annotation
     except Exception as e:
         logger.error("Failed to create annotation: %s", e)
         raise GroundControlException(

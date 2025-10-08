@@ -218,7 +218,7 @@ def get_tasks_by_annotated_by(
     db: Session = Depends(get_db),
 ):
     """
-    Retrieve tasks filtered by annotated_by user (email), with priority rules.
+    Retrieve tasks filtered by anno tated_by user (email), with priority rules.
     """
     tasks, total = get_tasks_by_annotated_by_crud(db, email, page, size, task_limit_on)
     return PaginatedTasksDTO(task_requests=tasks, total_records=total)

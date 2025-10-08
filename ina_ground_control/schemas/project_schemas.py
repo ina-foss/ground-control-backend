@@ -10,6 +10,8 @@ from typing import Optional
 from pydantic import BaseModel
 
 from ina_ground_control.models.project_model import ProjectStatus
+from ina_ground_control.schemas.media_schemas import MediaCreate
+from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
 
 
 class ProjectBaseDto(BaseModel):
@@ -66,5 +68,8 @@ class ProjectListDto(ProjectWithIdDto):
     medias: list[MediaCreate]
 
 
-from ina_ground_control.schemas.media_schemas import MediaCreate
-from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
+class ProjectParametersResponse(BaseModel):
+    redundancy: int
+    completeness_rate: float
+    allow_empty_annotation: bool
+    max_tasks_per_person: int

@@ -304,26 +304,39 @@ def test_get_tasks_by_annotated_by_crud(db_session: SQLAlchemySession):
 
 
 def test_recalculate_task_status(db_session: SQLAlchemySession):
-    # Case 1: Task is DRAFT → should skip
+    # Case 1: Task is DRAFT → should become PENDING if redundancy > 0
     task = create_task_crud(TaskCreateDto(**task_data), db_session)
+    task.status = TaskStatus.DRAFT
+    task.redundancy = 1  # ensure redundancy > 0
+    db_session.commit()
+
     recalculate_task_status(db_session, task.id)
-    assert get_task_by_id(db_session, task.id).status == TaskStatus.DRAFT
-    # Case 2. PENDING => PENDING
+    task_refreshed = get_task_by_id(db_session, task.id)
+    assert task_refreshed.status == TaskStatus.PENDING
+
+    # Case 2: Task is PENDING → stays PENDING
     task_2 = create_task_crud(
         TaskCreateDto(**{**task_data, "status": TaskStatus.PENDING}), db_session
     )
     recalculate_task_status(db_session, task_2.id)
-    assert get_task_by_id(db_session, task_2.id).status == TaskStatus.PENDING
-    # 3. IN_PROGRESS => DONE
+    task_2_refreshed = get_task_by_id(db_session, task_2.id)
+    assert task_2_refreshed.status == TaskStatus.PENDING
+
+    # Case 3: Task is IN_PROGRESS → becomes DONE after enough DONE annotations
     task_3 = create_task_crud(
-        TaskCreateDto(**{**task_data, "status": TaskStatus.IN_PROGRESS}), db_session
+        TaskCreateDto(
+            **{**task_data, "status": TaskStatus.IN_PROGRESS, "redundancy": 1}
+        ),
+        db_session,
     )
+
+    # Create a DONE annotation
     annotation_data = {
         "annotation": {
             "user_email": "user.email@ina.fr",
-            "annotation_status": AnnotationStatus.IN_PROGRESS,
+            "annotation_status": AnnotationStatus.DONE,
             "version": 1,
-            "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
+            "result": {"toto1": "test"},
         },
         "association": {
             "annotation_id": 1,
@@ -334,9 +347,11 @@ def test_recalculate_task_status(db_session: SQLAlchemySession):
     annotation = create_annotation_crud(
         db_session, AnnotationFullCreate(**annotation_data)
     )
-    finish_annotation_crud(db_session, annotation.result, annotation.id)
+
+    # Recalculate task status
     recalculate_task_status(db_session, task_3.id)
-    assert get_task_by_id(db_session, task_3.id).status == TaskStatus.DONE
+    task_3_refreshed = get_task_by_id(db_session, task_3.id)
+    assert task_3_refreshed.status == TaskStatus.DONE
 
 
 def test_recalculate_step_status(db_session):
