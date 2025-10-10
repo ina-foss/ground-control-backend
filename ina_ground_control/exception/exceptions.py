@@ -64,6 +64,11 @@ class ErrorCode(Enum):
         "Failed to {action} {resource} with {id}",
         500,
     )
+    BAD_REQUEST = (
+        "BAD_REQUEST",
+        "Failed to {action} {resource}{id_part}",
+        400,
+    )
 
     # Business-Specific Errors
 

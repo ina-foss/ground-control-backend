@@ -1,11 +1,19 @@
 """Unit tests for Project services"""
 
+import pytest
 from sqlalchemy.orm import Session as SQLAlchemySession
 
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.models.project_model import ProjectStatus
+from ina_ground_control.models.step_model import StepStatus
+from ina_ground_control.models.task_model import TaskStatus
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 from ina_ground_control.services.project_service import (
     create_project_crud,
     delete_project_crud,
+    finish_project_service,
+    get_progressed_tasks_for_project_service,
     get_project_by_id,
     get_projects,
     update_project_crud,
@@ -149,3 +157,57 @@ def test_delete_project_crud(db_session: SQLAlchemySession):
 
     assert created_project is not None
     assert retrieved_project is None
+
+
+def test_finish_project_service(db_session: SQLAlchemySession):
+    """
+    Test that finish_project_service sets project, steps, and tasks to DONE
+    """
+    project = create_project_crud(db_session, ProjectBaseDto(**project_data))
+    step = project.steps[0] if project.steps else None
+    if step:
+        for task in step.tasks:
+            task.status = TaskStatus.DRAFT
+    db_session.commit()
+    finish_project_service(db_session, project.id)
+    retrieved_project = get_project_by_id(db_session, project.id)
+    assert retrieved_project.status == ProjectStatus.DONE
+    for step in retrieved_project.steps:
+        assert step.status == StepStatus.DONE
+        for task in step.tasks:
+            assert task.status == TaskStatus.DONE
+
+
+def test_get_progressed_tasks_for_project_service(db_session: SQLAlchemySession):
+    """
+    Test that get_progressed_tasks_for_project_service returns only tasks
+    with IN_PROGRESS status for a given project.
+    """
+    task_status = TaskStatus.DONE
+    project = create_project_crud(db_session, ProjectBaseDto(**project_data))
+
+    for step in project.steps:
+        for task in step.tasks:
+            task.status = task_status
+    db_session.commit()
+
+    if task_status == TaskStatus.IN_PROGRESS:
+        tasks = get_progressed_tasks_for_project_service(db_session, project.id)
+        assert isinstance(tasks, list)
+        assert all(isinstance(t, TaskWithIdDto) for t in tasks)
+        for t in tasks:
+            assert t.status == TaskStatus.IN_PROGRESS
+    else:
+        tasks = get_progressed_tasks_for_project_service(db_session, project.id)
+        assert tasks == []
+
+
+def test_get_progressed_tasks_for_nonexistent_project(db_session: SQLAlchemySession):
+    """
+    Test that requesting in-progress tasks for a nonexistent project
+    raises GroundControlException with RESOURCE_NOT_FOUND.
+    """
+    non_existing_project_id = 9999
+    with pytest.raises(GroundControlException) as exc_info:
+        get_progressed_tasks_for_project_service(db_session, non_existing_project_id)
+    assert exc_info.value.code == ErrorCode.RESOURCE_NOT_FOUND.value[0]

@@ -51,6 +51,7 @@ class Action(str, Enum):
     UPDATE = "update"
     DELETE = "delete"
     # Project
+    FINISH_PROJECT = "finish"
     # Annotation
     GET_ANNOTATIONS_BY_ID = "get_annotations_by_id"
     UPDATE_ANNOTATION_RESULT = "update_annotation_result"
@@ -68,9 +69,11 @@ class Action(str, Enum):
     CREATE_TASK_COMMENT = "create_task_comment"
     UPDATE_TASK_COMMENT = "update_task_comment"
     DELETE_TASK_COMMENT = "delete_task_comment"
-    READ_TASK_COMMENTS = "read_task_comments"
+    READ_TASK_COMMENTS = ("read_task_comments",)
     # Task
     TASK_INJECT = "task_inject"
+    ACTIVATE = "activate"
+    UPDATE_EXPIRATION_DATTE = "update_expiration_date"
     # User
     GET_USER_BY_EMAIL = "get_user_by_email"
 
@@ -175,6 +178,9 @@ class Permission(str, Enum):
     READ_PROJECTS = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ_ALL.value}"
     READ_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ.value}"
     DELETE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.DELETE.value}"
+    FINISH_PROJECT = (
+        f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.FINISH_PROJECT.value}"
+    )
     # Annotation
     CREATE_ANNOTATION = (
         f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.CREATE.value}"
@@ -226,6 +232,10 @@ class Permission(str, Enum):
     TASK_INJECT = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.TASK_INJECT.value}"
     UPDATE_DATA_TASK = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.UPDATE.value}"
     DELETE_TASK = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.DELETE.value}"
+    ACTIVATE_TASK = f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.ACTIVATE.value}"
+    UPDATE_EXPIRATION_DATTE = (
+        f"{GROUND_CONTROL}:{Resource.TASK.value}:{Action.UPDATE_EXPIRATION_DATTE.value}"
+    )
     # User
     READ_USERS = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.READ_ALL.value}"
     CREATE_USER = f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.CREATE.value}"

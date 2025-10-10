@@ -12,9 +12,13 @@ Functions:
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from ina_ground_control import logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.project_model import Project, ProjectStatus
-from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.step_model import Step, StepStatus
+from ina_ground_control.models.task_model import Task, TaskStatus
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 
 
 def get_projects(db: Session, skip: int = 0, limit: int = 100):
@@ -129,3 +133,72 @@ def get_project_parameters(db: Session, project_id: int):
         "max_tasks_per_person": step.max_tasks_per_person,
     }
     return parameters
+
+
+def finish_project_service(db: Session, project_id: int):
+    """Mark the project and all related steps and tasks as DONE."""
+    project = get_project_by_id(db, project_id)
+    if not project:
+        logger.error("Failed to retrieve project with id: %d", project_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+        )
+    if project.status == ProjectStatus.DONE:
+        logger.warning("Project %d is already DONE", project_id)
+        raise GroundControlException(
+            ErrorCode.BAD_REQUEST,
+            action="finish",
+            resource="project",
+            id_part=f" with id {project_id} (already marked as DONE)",
+        )
+    project.status = ProjectStatus.DONE
+    project.updated_at = func.now()
+    for step in project.steps:
+        step.status = StepStatus.DONE
+        step.updated_at = func.now()
+        for task in step.tasks:
+            task.status = TaskStatus.DONE
+            task.updated_at = func.now()
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def get_progressed_tasks_for_project_service(
+    db: Session, project_id: int
+) -> list[TaskWithIdDto]:
+    """
+    Return all tasks in 'IN_PROGRESS' status for a given project.
+    """
+    try:
+        project_exists = get_project_by_id(db, project_id)
+        if not project_exists:
+            logger.error("Project with id %d not found", project_id)
+            raise GroundControlException(
+                ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+            )
+
+        tasks = (
+            db.query(Task)
+            .join(Step)
+            .join(Project)
+            .filter(Project.id == project_id, Task.status == TaskStatus.IN_PROGRESS)
+            .all()
+        )
+
+        validated_tasks = [
+            TaskWithIdDto.model_validate(task, from_attributes=True) for task in tasks
+        ]
+
+        return validated_tasks
+
+    except GroundControlException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to retrieve in-progress tasks for project %d: %s", project_id, e
+        )
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details=f"Unexpected error while retrieving in-progress tasks for project {project_id}",
+        ) from e
