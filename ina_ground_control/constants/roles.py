@@ -69,7 +69,7 @@ class Action(str, Enum):
     CREATE_TASK_COMMENT = "create_task_comment"
     UPDATE_TASK_COMMENT = "update_task_comment"
     DELETE_TASK_COMMENT = "delete_task_comment"
-    READ_TASK_COMMENTS = ("read_task_comments",)
+    READ_TASK_COMMENTS = "read_task_comments"
     # Task
     TASK_INJECT = "task_inject"
     ACTIVATE = "activate"
