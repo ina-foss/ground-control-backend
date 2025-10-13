@@ -11,6 +11,10 @@ from jsonpath_ng.ext import parse as jsonpath_parse
 from requests.exceptions import RequestException
 
 from ina_ground_control import logger
+from ina_ground_control.exception.exceptions import (
+    ErrorCode,
+    GroundControlException,
+)
 from ina_ground_control.models.plugin.plugin_autocomplete import (
     PluginConfigAutoComplete,
 )
@@ -234,14 +238,16 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
         except RequestException as req_exc:
             logger.error("HTTP request failed: %s", str(req_exc))
-            raise RuntimeError(
-                "Failed to fetch autocomplete results from the data source."
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details="Failed to fetch autocomplete results from the data source.",
             ) from req_exc
 
         except Exception as exc:
             logger.error("Unexpected error during autocomplete search: %s", str(exc))
-            raise RuntimeError(
-                "Unexpected error occurred during autocomplete operation."
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details="Unexpected error occurred during autocomplete operation.",
             ) from exc
 
     def add(self, data: dict):
@@ -256,6 +262,359 @@ class PluginServiceAutoComplete(PluginServiceBase):
         """
         pass
 
+    def _parse_json_response(self, response) -> dict | None:
+        """
+        Parse JSON response content.
+
+        Args:
+            response: The HTTP response object.
+
+        Returns:
+            dict | None: Parsed JSON data or None if parsing fails.
+        """
+        try:
+            content = response.content.decode("utf-8-sig")
+            return json.loads(content)
+        except json.JSONDecodeError as e:
+            logger.error("Failed to parse JSON response: %s", e)
+            return None
+
+    def _extract_jsonpath_results(self, data: dict) -> dict:
+        """
+        Extract data using JSONPath expressions from configuration.
+
+        Args:
+            data (dict): The JSON data to extract from.
+
+        Returns:
+            dict: Dictionary containing extracted lists for each field.
+        """
+        id_expr = jsonpath_parse(self.config.response_id_key)
+        ext_id_expr = jsonpath_parse(self.config.response_ext_id_key)
+        label_expr = jsonpath_parse(self.config.response_label_key)
+        image_expr = (
+            jsonpath_parse(self.config.response_image_key)
+            if self.config.response_image_key
+            else None
+        )
+        description_expr = (
+            jsonpath_parse(self.config.response_description_key)
+            if self.config.response_description_key
+            else None
+        )
+        categories_expr = (
+            jsonpath_parse(self.config.response_categories_key)
+            if self.config.response_categories_key
+            else None
+        )
+
+        return {
+            "ids": id_expr.find(data),
+            "ext_ids": ext_id_expr.find(data),
+            "labels": label_expr.find(data),
+            "images": image_expr.find(data) if image_expr else [],
+            "descriptions": description_expr.find(data) if description_expr else [],
+            "categories": categories_expr.find(data) if categories_expr else [],
+        }
+
+    def _transform_to_dto_list(
+        self, extracted_data: dict
+    ) -> list[PluginAutocompleteValueDTO]:
+        """
+        Transform extracted JSONPath results into DTO objects.
+
+        Args:
+            extracted_data (dict): Dictionary containing extracted data lists.
+
+        Returns:
+            list[PluginAutocompleteValueDTO]: List of transformed DTO objects.
+        """
+        ids = extracted_data["ids"]
+        ext_ids = extracted_data["ext_ids"]
+        labels = extracted_data["labels"]
+        images = extracted_data["images"]
+        descriptions = extracted_data["descriptions"]
+        categories = extracted_data["categories"]
+
+        num_results = len(ids)
+        transformed_data = []
+
+        for i in range(num_results):
+            transformed_data.append(
+                PluginAutocompleteValueDTO(
+                    id=ids[i].value if i < len(ids) and ids[i] else None,
+                    ext_id=(
+                        ext_ids[i].value if i < len(ext_ids) and ext_ids[i] else None
+                    ),
+                    label=labels[i].value if i < len(labels) and labels[i] else None,
+                    image=images[i].value if i < len(images) and images[i] else None,
+                    description=(
+                        descriptions[i].value
+                        if i < len(descriptions) and descriptions[i]
+                        else None
+                    ),
+                    categories=(
+                        categories[i].value
+                        if i < len(categories) and categories[i]
+                        else None
+                    ),
+                )
+            )
+
+        return transformed_data
+
+    def _should_filter_results(self, query: str, transformed_data: list) -> bool:
+        """
+        Determine if results should be filtered based on query.
+
+        Args:
+            query (str): The search query string.
+            transformed_data (list): The transformed data list.
+
+        Returns:
+            bool: True if filtering should be applied, False otherwise.
+        """
+        if not query or not query.strip():
+            return False
+        if not self.config.search_query:
+            return False
+        if self.config.type == PluginConfigType.POST_PLUGIN:
+            return False
+        if not transformed_data:
+            return False
+
+        first_item_attr = getattr(transformed_data[0], self.config.search_query, None)
+        return isinstance(first_item_attr, str)
+
+    def _filter_and_sort_results(
+        self, transformed_data: list[PluginAutocompleteValueDTO], query: str
+    ) -> list[PluginAutocompleteValueDTO]:
+        """
+        Filter and sort results based on query position in search attribute.
+
+        Args:
+            transformed_data (list[PluginAutocompleteValueDTO]): The data to filter.
+            query (str): The search query string.
+
+        Returns:
+            list[PluginAutocompleteValueDTO]: Filtered and sorted results.
+        """
+
+        def get_query_position(item):
+            attr_value = getattr(item, self.config.search_query, "")
+            if isinstance(attr_value, str):
+                return attr_value.lower().find(query.lower())
+            return -1
+
+        filtered_data = [
+            item for item in transformed_data if get_query_position(item) != -1
+        ]
+        return sorted(filtered_data, key=get_query_position)
+
+    def _safe_extract_value(self, expr_results: list, index: int):
+        """
+        Safely extract value from JSONPath results.
+
+        Args:
+            expr_results (list): List of JSONPath match results.
+            index (int): Index to extract from.
+
+        Returns:
+            The extracted value or None if not available.
+        """
+        if index < len(expr_results) and expr_results[index] is not None:
+            try:
+                return expr_results[index].value
+            except AttributeError:
+                return expr_results[index]
+        return None
+
+    def _safe_jsonpath_parse(self, expression: str, field_name: str):
+        """
+        Safely parse JSONPath expression with better error handling.
+
+        Args:
+            expression (str): The JSONPath expression to parse.
+            field_name (str): The field name for error messages.
+
+        Returns:
+            Parsed JSONPath expression or None if empty.
+
+        Raises:
+            GroundControlException: If expression is invalid.
+        """
+        if not expression:
+            return None
+        try:
+            return jsonpath_parse(expression)
+        except Exception as e:
+            logger.error(
+                "Invalid JSONPath expression for %s: %s - %s",
+                field_name,
+                expression,
+                e,
+            )
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details=f"Invalid JSONPath expression for {field_name}: {expression}",
+            ) from e
+
+    def _parse_jsonpath_expressions(self) -> dict:
+        """
+        Parse all JSONPath expressions from configuration.
+
+        Returns:
+            dict: Dictionary containing all parsed JSONPath expressions.
+
+        Raises:
+            GroundControlException: If required expressions are missing or invalid.
+        """
+        id_expr = self._safe_jsonpath_parse(
+            self.config.response_id_key, "response_id_key"
+        )
+        ext_id_expr = self._safe_jsonpath_parse(
+            self.config.response_ext_id_key, "response_ext_id_key"
+        )
+        label_expr = self._safe_jsonpath_parse(
+            self.config.response_label_key, "response_label_key"
+        )
+        image_expr = self._safe_jsonpath_parse(
+            self.config.response_image_key, "response_image_key"
+        )
+        description_expr = self._safe_jsonpath_parse(
+            self.config.response_description_key, "response_description_key"
+        )
+        categories_expr = self._safe_jsonpath_parse(
+            self.config.response_categories_key, "response_categories_key"
+        )
+
+        if not id_expr:
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details="Missing required JSONPath expression for response_id_key",
+            )
+
+        return {
+            "id_expr": id_expr,
+            "ext_id_expr": ext_id_expr,
+            "label_expr": label_expr,
+            "image_expr": image_expr,
+            "description_expr": description_expr,
+            "categories_expr": categories_expr,
+        }
+
+    def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
+        """
+        Extract data using JSONPath expressions.
+
+        Args:
+            data (dict): The JSON data to extract from.
+            expressions (dict): Dictionary of parsed JSONPath expressions.
+
+        Returns:
+            dict: Dictionary containing extracted lists for each field.
+        """
+        return {
+            "ids": expressions["id_expr"].find(data) if expressions["id_expr"] else [],
+            "ext_ids": (
+                expressions["ext_id_expr"].find(data)
+                if expressions["ext_id_expr"]
+                else []
+            ),
+            "labels": (
+                expressions["label_expr"].find(data)
+                if expressions["label_expr"]
+                else []
+            ),
+            "images": (
+                expressions["image_expr"].find(data)
+                if expressions["image_expr"]
+                else []
+            ),
+            "descriptions": (
+                expressions["description_expr"].find(data)
+                if expressions["description_expr"]
+                else []
+            ),
+            "categories": (
+                expressions["categories_expr"].find(data)
+                if expressions["categories_expr"]
+                else []
+            ),
+        }
+
+    def _create_dto_from_extracted_data(
+        self, extracted_data: dict, index: int
+    ) -> PluginAutocompleteValueDTO:
+        """
+        Create a DTO object from extracted data at given index.
+
+        Args:
+            extracted_data (dict): Dictionary containing extracted data lists.
+            index (int): Index to create DTO from.
+
+        Returns:
+            PluginAutocompleteValueDTO: The created DTO object.
+        """
+        return PluginAutocompleteValueDTO(
+            id=self._safe_extract_value(extracted_data["ids"], index),
+            ext_id=self._safe_extract_value(extracted_data["ext_ids"], index),
+            label=self._safe_extract_value(extracted_data["labels"], index),
+            image=self._safe_extract_value(extracted_data["images"], index),
+            description=self._safe_extract_value(extracted_data["descriptions"], index),
+            categories=self._safe_extract_value(extracted_data["categories"], index),
+        )
+
+    def _build_transformed_data(
+        self, extracted_data: dict
+    ) -> list[PluginAutocompleteValueDTO]:
+        """
+        Build list of DTOs from extracted data.
+
+        Args:
+            extracted_data (dict): Dictionary containing extracted data lists.
+
+        Returns:
+            list[PluginAutocompleteValueDTO]: List of transformed DTO objects.
+        """
+        num_results = len(extracted_data["ids"])
+        logger.debug("Found %d results to process", num_results)
+
+        transformed_data = []
+        for i in range(num_results):
+            try:
+                item_data = self._create_dto_from_extracted_data(extracted_data, i)
+                transformed_data.append(item_data)
+            except Exception as e:
+                logger.warning("Failed to process item %d: %s", i, e)
+                continue
+
+        return transformed_data
+
+    def _apply_filtering_if_needed(
+        self, transformed_data: list[PluginAutocompleteValueDTO], query: str
+    ) -> list[PluginAutocompleteValueDTO]:
+        """
+        Apply filtering and sorting to transformed data if conditions are met.
+
+        Args:
+            transformed_data (list[PluginAutocompleteValueDTO]): The data to filter.
+            query (str): The search query string.
+
+        Returns:
+            list[PluginAutocompleteValueDTO]: Filtered results or original data.
+        """
+        if not self._should_filter_results(query, transformed_data):
+            return transformed_data
+
+        try:
+            return self._filter_and_sort_results(transformed_data, query)
+        except Exception as e:
+            logger.warning(
+                "Error during result filtering, returning unfiltered results: %s", e
+            )
+            return transformed_data
+
     def parse(self, response, query) -> list[PluginAutocompleteValueDTO]:
         """
         Parses the HTTP response into a list of `PluginAutocompleteValueDTO` objects.
@@ -268,93 +627,44 @@ class PluginServiceAutoComplete(PluginServiceBase):
             list[PluginAutocompleteValueDTO]: A list of transformed autocomplete value objects.
 
         Raises:
-            Exception: If the response's data type is unknown.
+            GroundControlException: If parsing fails or data is invalid.
         """
-        if self.config.data_type == DataTypeEnum.JSON:
-            try:
-                # Handle potential UTF-8 BOM in the response
-                content = response.content.decode("utf-8-sig")
-                data = json.loads(content)
-            except json.JSONDecodeError as e:
-                logger.error("Failed to parse JSON response: %s", e)
-            if data:
-                id_expr = jsonpath_parse(self.config.response_id_key)
-                ext_id_expr = jsonpath_parse(self.config.response_ext_id_key)
-                label_expr = jsonpath_parse(self.config.response_label_key)
-                image_expr = (
-                    jsonpath_parse(self.config.response_image_key)
-                    if self.config.response_image_key
-                    else None
-                )
-                description_expr = (
-                    jsonpath_parse(self.config.response_description_key)
-                    if self.config.response_description_key
-                    else None
-                )
-                categories_expr = (
-                    jsonpath_parse(self.config.response_categories_key)
-                    if self.config.response_categories_key
-                    else None
-                )
+        if self.config.data_type != DataTypeEnum.JSON:
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details=f"Unsupported data type: {self.config.data_type}",
+            )
 
-                ids = id_expr.find(data)
-                ext_ids = ext_id_expr.find(data)
-                labels = label_expr.find(data)
-                images = image_expr.find(data) if image_expr else [None] * len(ids)
-                descriptions = (
-                    description_expr.find(data)
-                    if description_expr
-                    else [None] * len(ids)
+        data = self._parse_json_response(response)
+        if data is None:
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details="Invalid JSON response",
+            )
+
+        if not data:
+            logger.warning("JSON response is empty.")
+            return []
+
+        try:
+            expressions = self._parse_jsonpath_expressions()
+            extracted_data = self._extract_jsonpath_data(data, expressions)
+
+            if not extracted_data["ids"]:
+                logger.warning(
+                    "No ID fields found in response using JSONPath: %s",
+                    self.config.response_id_key,
                 )
-                categories = (
-                    categories_expr.find(data) if categories_expr else [None] * len(ids)
-                )
-
-                transformed_data = [
-                    PluginAutocompleteValueDTO(
-                        id=id_match.value if id_match else None,
-                        ext_id=ext_id_match.value if ext_id_match else None,
-                        label=label_match.value if label_match else None,
-                        image=image_match.value if image_match else None,
-                        description=(
-                            description_match.value if description_match else None
-                        ),
-                        categories=(
-                            categories_match.value if categories_match else None
-                        ),
-                    )
-                    for id_match, ext_id_match, label_match, image_match, description_match, categories_match in zip(
-                        ids, ext_ids, labels, images, descriptions, categories
-                    )
-                ]
-                # filter only if the search attribute is defined and a string, else return the unfiltered array
-                if (
-                    query
-                    and query.strip()
-                    and self.config.search_query
-                    and self.config.type != PluginConfigType.POST_PLUGIN
-                    and isinstance(
-                        getattr(transformed_data[0], self.config.search_query), str
-                    )
-                ):
-
-                    def get_query_position(item):
-                        attr_value = getattr(item, self.config.search_query, "")
-                        if isinstance(attr_value, str):
-                            return attr_value.lower().find(query.lower())
-                        return -1
-
-                    filtred_transformed_data = [
-                        item
-                        for item in transformed_data
-                        if get_query_position(item) != -1
-                    ]
-                    transformed_data = sorted(
-                        filtred_transformed_data, key=get_query_position
-                    )
-                return transformed_data
-            else:
-                logger.warning("JSON response is empty.")
                 return []
-        else:
-            raise ValueError(f"Unknown data type: {self.config.data_type} ")
+
+            transformed_data = self._build_transformed_data(extracted_data)
+            return self._apply_filtering_if_needed(transformed_data, query)
+
+        except GroundControlException:
+            raise
+        except Exception as e:
+            logger.error("Error processing JSON response: %s", e)
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details=f"Failed to process response data: {str(e)}",
+            ) from e

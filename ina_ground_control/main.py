@@ -14,7 +14,6 @@ from fastapi_keycloak_middleware import (
 )
 
 from ina_ground_control import get_engine, logger, map_user, settings
-from ina_ground_control.config.settings import Settings
 from ina_ground_control.exception.exceptions import (
     GroundControlException,
     GroundControlRequestValidationError,
@@ -95,7 +94,6 @@ app.add_middleware(PrometheusMiddleware, app_name=settings.application)
 
 # Mount the static directories
 mount_static_directory(app, "/static", "static", "static")
-mount_static_directory(app, "/gen_docs", "docs/_build", "gen_docs")
 app.servers = [
     {"url": f"http://{settings.server_host}:{settings.server_port}"}  # NOSONAR
 ]
@@ -129,8 +127,6 @@ app.add_exception_handler(GroundControlException, default_exception_handler)
 app.add_exception_handler(
     GroundControlRequestValidationError, default_exception_handler
 )
-
-settings = Settings()
 
 
 def custom_openapi():

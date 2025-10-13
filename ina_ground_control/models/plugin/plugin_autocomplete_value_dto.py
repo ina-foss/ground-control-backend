@@ -19,9 +19,9 @@ from pydantic import BaseModel
 
 
 class PluginAutocompleteValueDTO(BaseModel):
-    id: Optional[str]
-    ext_id: Optional[str]
-    label: Optional[str]
+    id: Optional[str | int] = None
+    ext_id: Optional[str] = None
+    label: Optional[str] = None
     image: Optional[str] = None
     description: Optional[str] = None
     categories: Optional[str] = None
