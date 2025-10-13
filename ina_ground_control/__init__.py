@@ -80,7 +80,7 @@ async def map_user(userinfo: typing.Dict[str, typing.Any]) -> UserInfo:
     return user
 
 
-SessionLocal = sessionmaker(
+SessionLocal = sessionmaker(  # pylint: disable=invalid-name
     autocommit=False,
     autoflush=False,
     bind=get_engine(str(settings.get_db_connection_string())),

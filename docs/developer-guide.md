@@ -12,6 +12,7 @@
 ```shell script
 # Clone the repository
 git clone <repository-url>
+
 cd backend
 
 # Install uv (if not already installed)

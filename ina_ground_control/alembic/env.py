@@ -1,3 +1,5 @@
+"""Alembic environment configuration for database migrations."""
+
 import os
 import sys
 from logging.config import fileConfig
@@ -6,14 +8,14 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-# this is the Alembic Config object, which provides
-# access to the values within the.ini file in use.
+# This is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name) # NOSONAR
+    fileConfig(config.config_file_name)  # NOSONAR
 
 # Adjust the system path to include the parent directory of the current script
 # This allows us to import modules from the project root
@@ -21,25 +23,11 @@ current_dir = os.path.dirname(__file__)
 project_root = os.path.join(current_dir, '..', '..')
 sys.path.append(project_root)
 
-# Now, import the Base from your database.py file
-from ina_ground_control.models import (
-    Base,
-    annotation_model,
-    annotation_task_association,
-    media_model,
-    media_projet_association,
-    plugin_model,
-    project_model,
-    step_model,
-    tag_model,
-    tag_project_association,
-    task_comment_model,
-    task_model,
-    user_model,
-)
+# Import the Base metadata from your models
+from ina_ground_control.models import Base  # noqa: F401
 
+# Load environment variables
 load_dotenv('.env.local')
-
 
 DB_SERVER = os.getenv('GC_DB_SERVER')
 DB_DATABASE = os.getenv('GC_DB_DATABASE')
@@ -49,25 +37,20 @@ DB_PORT = os.getenv('GC_DB_PORT')
 DATABASE_HOSTNAME = os.getenv('GC_DB_HOSTNAME')
 
 DATABASE_URL = f'{DB_SERVER}://{DB_USERNAME}:{DB_PASSWORD}@{DATABASE_HOSTNAME}:{DB_PORT}/{DB_DATABASE}'
-
 config.set_main_option('sqlalchemy.url', DATABASE_URL)
 
 # Set the target_metadata to the metadata of your Base
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    url = config.get_main_option('sqlalchemy.url')
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={'paramstyle': 'named'},
     )
 
     with context.begin_transaction():
@@ -78,14 +61,12 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+        prefix='sqlalchemy.',
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

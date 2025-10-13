@@ -1,6 +1,7 @@
 """Unit tests for Plugin services"""
 
 # pylint: disable=redefined-outer-name
+import pytest
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
@@ -13,6 +14,19 @@ from ina_ground_control.services.plugin_service import (
     get_plugins_crud,
     get_plugins_search,
 )
+
+plugin_data = {
+    "name": "name_test",
+    "type": TypePlugin.AUTOCOMPLETE,
+    "data_categories": "data_categories test",
+    "display_zone": DisplayZone.BLOC,
+    "step_id": 1,
+    "config_data": {
+        "type": PluginConfigType.PLUGIN_REQUEST_GET,
+        "data_type": DataTypeEnum.JSON,
+        "data_source": "test data",
+    },
+}
 
 
 def test_get_plugins(db_session: SQLAlchemySession):
@@ -42,20 +56,6 @@ def test_get_plugins(db_session: SQLAlchemySession):
     assert given_plugin.id == 1
     retrieved_plugins = get_plugins_search(db_session, 1, "Item")
     assert retrieved_plugins is not None
-
-
-plugin_data = {
-    "name": "name_test",
-    "type": TypePlugin.AUTOCOMPLETE,
-    "data_categories": "data_categories test",
-    "display_zone": DisplayZone.BLOC,
-    "step_id": 1,
-    "config_data": {
-        "type": PluginConfigType.PLUGIN_REQUEST_GET,
-        "data_type": DataTypeEnum.JSON,
-        "data_source": "test data",
-    },
-}
 
 
 def test_create_plugin_crud(db_session: SQLAlchemySession):
@@ -98,3 +98,27 @@ def test_delete_plugin_crud(db_session: SQLAlchemySession):
 
     assert created_plugin is not None
     assert retrieved_plugin is None
+
+
+def test_get_plugin_by_id_not_found(db_session: SQLAlchemySession):
+    """Should return None if plugin ID not found"""
+    result = get_plugin_by_id(db_session, 9999)
+    assert result is None
+
+
+def test_delete_plugin_crud_not_found(db_session: SQLAlchemySession):
+    """Should return None if plugin doesn't exist"""
+    result = delete_plugin_crud(db_session, 9999)
+    assert result is None
+
+
+def test_get_plugins_crud_zone_str(db_session: SQLAlchemySession):
+    """Should return plugins filtered by string zone"""
+    result = get_plugins_crud(db_session, step_id=1, zone=DisplayZone.BLOC)
+    assert isinstance(result, list)
+
+
+def test_get_plugins_crud_zone_list(db_session: SQLAlchemySession):
+    """Should return plugins filtered by list of zones"""
+    result = get_plugins_crud(db_session, step_id=1, zone=[DisplayZone.BLOC])
+    assert isinstance(result, list)

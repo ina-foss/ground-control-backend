@@ -49,7 +49,8 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "requests-oauth2client==1.7.0",
     "sparqlwrapper>=2.0.0",
-    "httpx==0.28.1"
+    "httpx==0.28.1",
+    "pytest-asyncio>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -157,6 +158,13 @@ omit = [
     "*/__pycache__/*",
     "*/venv/*",
     "*/.venv/*",
+    "*/routers/*",
+    "*/constants/*",
+    "*/schemas/*",
+    "*/models/*",
+    "*/config.py",
+    "*/main.py",
+    "*/utils/*",
 ]
 
 [tool.coverage.report]
@@ -175,8 +183,32 @@ skip_covered = false
 projectKey = "ground-control-backend"
 sources = "ina_ground_control"
 tests = "tests"
-exclusions = "ina_ground_control/alembic/**,ina_ground_control/tests/**,**/__pycache__/**,**/venv/**,**/.venv/**"
-coverageExclusions = "ina_ground_control/alembic/**,ina_ground_control/tests/**"
+exclusions = """
+**/alembic/**,
+**/tests/**,
+**/__pycache__/**,
+**/venv/**,
+**/.venv/**,
+**/routers/**,
+**/constants/**,
+**/main.py,
+**/schemas/**,
+**/models/**,
+**/config.py
+"""
+coverageExclusions = """
+**/alembic/**,
+**/tests/**,
+**/__pycache__/**,
+**/venv/**,
+**/.venv/**,
+**/routers/**,
+**/constants/**,
+**/main.py,
+**/schemas/**,
+**/models/**,
+**/config.py
+"""
 pythonVersion = "3.12"
 coverageReportPaths = "coverage.xml"
 
@@ -189,3 +221,4 @@ docs = [
     "sphinx>=8.1.3",
     "sphinx-rtd-theme>=3.0.2",
 ]
+
