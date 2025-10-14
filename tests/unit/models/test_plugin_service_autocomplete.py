@@ -149,7 +149,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             PluginAutocompleteValueDTO(id="2", ext_id="B456", label="Item 2"),
         ]
 
-        result = self.service.parse(mock_response, " ")
+        result = self.service.parse(mock_response)
         self.assertEqual(result, expected_result)
 
     def test_parse_valid_json(self):
@@ -170,7 +170,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
             ),
         ]
 
-        result = self.service.parse(mock_response, " ")
+        result = self.service.parse(mock_response)
         self.assertEqual(result, expected_result)
 
     def test_parse_empty_json(self):
@@ -178,7 +178,7 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         mock_response = Mock()
         mock_response.content = json.dumps([]).encode("utf-8")
 
-        result = self.service.parse(mock_response, " ")
+        result = self.service.parse(mock_response)
         self.assertEqual(result, [])
 
     def test_parse_unknown_data_type(self):
@@ -188,4 +188,4 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         mock_response = Mock()
 
         with self.assertRaises(GroundControlException):
-            self.service.parse(mock_response, " ")
+            self.service.parse(mock_response)
