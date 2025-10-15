@@ -417,7 +417,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         """
         if index < len(expr_results) and expr_results[index] is not None:
             try:
-                return expr_results[index].value
+                return str(expr_results[index].value)
             except AttributeError:
                 return expr_results[index]
         return None
