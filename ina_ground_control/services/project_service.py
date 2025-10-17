@@ -1,0 +1,204 @@
+"""
+Service related to project objects.
+
+Functions:
+- get_projects
+- get_project_by_id
+- create_project_crud
+- update_project_crud
+- delete_project_crud
+"""
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
+
+from ina_ground_control import logger
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.models.project_model import Project, ProjectStatus
+from ina_ground_control.models.step_model import Step, StepStatus
+from ina_ground_control.models.task_model import Task, TaskStatus
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.schemas.task_schemas import TaskWithIdDto
+
+
+def get_projects(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Retrieve a list of projects from the database with optional pagination.
+
+    Parameters:
+    db (Session): The database session used for querying.
+    skip (int): The number of records to skip for pagination. Default is 0.
+    limit (int): The maximum number of records to return. Default is 100.
+
+    Returns:
+    List[Project]: A list of Project objects.
+    """
+    return db.query(Project).offset(skip).limit(limit).all()
+
+
+def get_project_by_id(db: Session, project_id: int):
+    """
+    Retrieve a project by its ID, including its tasks.
+
+    Parameters:
+    db (Session): The database session used for querying.
+    project_id (int): The unique identifier of the project to retrieve.
+
+    Returns:
+    Project: The Project object if found, otherwise None.
+    """
+    return (
+        db.query(Project)
+        .options(joinedload(Project.steps).joinedload(Step.tasks))
+        .filter(Project.id == project_id)
+        .first()
+    )
+
+
+def create_project_crud(db: Session, project: ProjectBaseDto):
+    """
+    Create a new project in the database.
+
+    Parameters:
+    db (Session): The database session used for querying.
+    project (ProjectBaseDto): The project data transfer object containing project details.
+
+    Returns:
+    Project: The newly created Project object.
+    """
+    db_project = Project(**project.model_dump())
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+
+def update_project_crud(db: Session, project: ProjectBaseDto, project_id: int):
+    """
+    Update an existing project in the database.
+
+    Parameters:
+    db (Session): The database session used for querying.
+    project (ProjectBaseDto): The project data transfer object containing updated project details.
+    project_id (int): The unique identifier of the project to update.
+
+    Returns:
+    Project: The updated Project object if the project exists, otherwise None.
+    """
+    db_project = db.query(Project).filter(Project.id == project_id).first()
+    if db_project is not None:
+        for key, value in project.model_dump().items():
+            setattr(db_project, key, value)
+        db.commit()
+        db.refresh(db_project)
+    return db_project
+
+
+def delete_project_crud(db: Session, project_id: int):
+    """
+    Delete a project from the database.
+
+    Parameters:
+    db (Session): The database session used for querying.
+    project_id (int): The unique identifier of the project to delete.
+
+    Returns:
+    Project: The deleted Project object if the project exists, otherwise None.
+    """
+    db_project = db.query(Project).filter(Project.id == project_id).first()
+    if db_project is not None:
+        db.delete(db_project)
+        db.commit()
+    return db_project
+
+
+def update_project_status_crud(db: Session, project_id: int, status: ProjectStatus):
+    project = get_project_by_id(db, project_id)
+    project.status = status
+    project.updated_at = func.now()
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def get_project_parameters(db: Session, project_id: int):
+    step = db.query(Step).filter(Step.project_id == project_id).first()
+    if not step:
+        return None  # or raise an exception
+
+    parameters = {
+        "redundancy": step.redundancy,
+        "completeness_rate": step.completeness_rate,
+        "allow_empty_annotation": step.allow_empty_annotation,
+        "max_tasks_per_person": step.max_tasks_per_person,
+    }
+    return parameters
+
+
+def finish_project_service(db: Session, project_id: int):
+    """Mark the project and all related steps and tasks as DONE."""
+    project = get_project_by_id(db, project_id)
+    if not project:
+        logger.error("Failed to retrieve project with id: %d", project_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+        )
+    if project.status == ProjectStatus.DONE:
+        logger.warning("Project %d is already DONE", project_id)
+        raise GroundControlException(
+            ErrorCode.BAD_REQUEST,
+            action="finish",
+            resource="project",
+            id_part=f" with id {project_id} (already marked as DONE)",
+        )
+    project.status = ProjectStatus.DONE
+    project.updated_at = func.now()
+    for step in project.steps:
+        step.status = StepStatus.DONE
+        step.updated_at = func.now()
+        for task in step.tasks:
+            task.status = TaskStatus.DONE
+            task.updated_at = func.now()
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def get_progressed_tasks_for_project_service(
+    db: Session, project_id: int
+) -> list[TaskWithIdDto]:
+    """
+    Return all tasks in 'IN_PROGRESS' status for a given project.
+    """
+    try:
+        project_exists = get_project_by_id(db, project_id)
+        if not project_exists:
+            logger.error("Project with id %d not found", project_id)
+            raise GroundControlException(
+                ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+            )
+
+        tasks = (
+            db.query(Task)
+            .join(Step)
+            .join(Project)
+            .filter(Project.id == project_id, Task.status == TaskStatus.IN_PROGRESS)
+            .all()
+        )
+
+        validated_tasks = [
+            TaskWithIdDto.model_validate(task, from_attributes=True) for task in tasks
+        ]
+
+        return validated_tasks
+
+    except GroundControlException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to retrieve in-progress tasks for project %d: %s", project_id, e
+        )
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details=f"Unexpected error while retrieving in-progress tasks for project {project_id}",
+        ) from e

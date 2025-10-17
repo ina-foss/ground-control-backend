@@ -1,0 +1,63 @@
+# Ground Control API - Docker Compose Configuration
+# This configuration builds the FastAPI application and all required services
+name: ground-control
+
+networks:
+  ground-control-network:
+    driver: bridge
+
+services:
+  # Main FastAPI Application
+  app:
+    build:
+      context: ..
+      dockerfile: .dev/Dockerfile
+    container_name: ground-control-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Application Settings
+      - GC_APPLICATION=Ground Control API
+      - GC_VERSION=1.0.0
+      - GC_SERVER_HOST=0.0.0.0
+      - GC_SERVER_PORT=8000
+      - GC_DEBUG=true
+      - GC_LOG_LEVEL=info
+
+      # Database Configuration
+      - GC_DB_SERVER=postgresql
+      - GC_DB_HOSTNAME=postgresql
+      - GC_DB_DATABASE=ground_control_db
+      - GC_DB_USERNAME=postgres
+      - GC_DB_PASSWORD=
+      - GC_DB_PORT=5432
+
+      # SSO Configuration
+      - GC_SSO_URL=http://keycloak:9080
+      - GC_SSO_REALM=ground_control
+      - GC_SSO_CLIENT_ID=internal
+      - GC_SSO_CLIENT_SECRET=internal
+
+      # CORS Settings
+      - GC_CORS_ALLOW_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
+      - GC_CORS_ALLOW_CREDENTIALS=true
+      - GC_CORS_ALLOW_METHODS=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      - GC_CORS_ALLOW_HEADERS=["*"]
+
+    volumes:
+      - ./static:/app/static
+      - ./docs/_build:/app/docs/_build
+#    depends_on:
+#      postgresql:
+#        condition: service_healthy
+#      keycloak:
+#        condition: service_healthy
+    networks:
+      - ground-control-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/management/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
