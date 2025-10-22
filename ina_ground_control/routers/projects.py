@@ -38,6 +38,7 @@ from ina_ground_control.schemas.project_schemas import (
 )
 from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 from ina_ground_control.services.project_service import (
+    archive_project_service,
     create_project_crud,
     delete_project_crud,
     finish_project_service,
@@ -45,6 +46,7 @@ from ina_ground_control.services.project_service import (
     get_project_by_id,
     get_project_parameters,
     get_projects,
+    unarchive_project_service,
     update_project_crud,
 )
 
@@ -159,3 +161,33 @@ def finish_project(
 @router.post("/{project_id}/progressed_tasks", response_model=list[TaskWithIdDto])
 def get_progressed_tasks_for_project(project_id: int, db: Session = Depends(get_db)):
     return get_progressed_tasks_for_project_service(db, project_id)
+
+
+@router.post("/{project_id}/archive", response_model=ProjectWithIdDto)
+def archive_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    _authorization_result: AuthorizationResult = Depends(
+        CheckPermissions(
+            [Permission.ARCHIVE_PROJECT.value], match_strategy=MatchStrategy.AND
+        )
+    ),
+    # pylint: disable=invalid-name):
+):
+    project = archive_project_service(db, project_id)
+    return project
+
+
+@router.post("/{project_id}/unarchive", response_model=ProjectWithIdDto)
+def unarchive_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    _authorization_result: AuthorizationResult = Depends(
+        CheckPermissions(
+            [Permission.UNARCHIVE_PROJECT.value], match_strategy=MatchStrategy.AND
+        )
+    ),
+    # pylint: disable=invalid-name):
+):
+    project = unarchive_project_service(db, project_id)
+    return project

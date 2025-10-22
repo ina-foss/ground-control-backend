@@ -64,6 +64,7 @@ class StepStatus(PyEnum):
     IN_PROGRESS = "in-progress"
     SKIPPED = "skipped"
     DONE = "done"
+    ARCHIVED = "archived"
 
 
 class Step(Base):
@@ -96,6 +97,7 @@ class Step(Base):
     description = Column(String)
     annotation_type = Column(Enum(AnnotationType), nullable=False)
     status = Column(Enum(StepStatus), nullable=False)
+    archived_status = Column(Enum(StepStatus), nullable=True, default=None)
     order = Column(Integer)
     pinned_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now())

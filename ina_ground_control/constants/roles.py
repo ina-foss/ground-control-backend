@@ -52,6 +52,8 @@ class Action(str, Enum):
     DELETE = "delete"
     # Project
     FINISH_PROJECT = "finish"
+    ARCHIVE_PROJECT = "archive"
+    UNARCHIVE_PROJECT = "unarchive"
     # Annotation
     GET_ANNOTATIONS_BY_ID = "get_annotations_by_id"
     UPDATE_ANNOTATION_RESULT = "update_annotation_result"
@@ -180,6 +182,12 @@ class Permission(str, Enum):
     DELETE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.DELETE.value}"
     FINISH_PROJECT = (
         f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.FINISH_PROJECT.value}"
+    )
+    ARCHIVE_PROJECT = (
+        f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.ARCHIVE_PROJECT.value}"
+    )
+    UNARCHIVE_PROJECT = (
+        f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.UNARCHIVE_PROJECT.value}"
     )
     # Annotation
     CREATE_ANNOTATION = (

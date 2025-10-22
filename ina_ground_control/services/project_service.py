@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from ina_ground_control import logger
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.project_model import Project, ProjectStatus
 from ina_ground_control.models.step_model import Step, StepStatus
 from ina_ground_control.models.task_model import Task, TaskStatus
@@ -201,4 +202,136 @@ def get_progressed_tasks_for_project_service(
         raise GroundControlException(
             ErrorCode.GENERIC_CLIENT_ERROR,
             details=f"Unexpected error while retrieving in-progress tasks for project {project_id}",
+        ) from e
+
+
+def archive_project_service(db: Session, project_id: int):
+    """
+    Archive a project and all its related entities (steps, tasks, annotations).
+    Sets all statuses to 'ARCHIVED' and preserves previous status where applicable.
+
+    :param db: SQLAlchemy session object.
+    :param project_id: ID of the project to archive.
+    :raises GroundControlException: If project is not found or unexpected error occurs.
+    :return: The archived project object.
+    """
+    try:
+        project = get_project_by_id(db, project_id)
+        if not project:
+            raise GroundControlException(
+                ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+            )
+
+        if project.status == ProjectStatus.DONE:
+            logger.warning(
+                "Project %d is DONE; cannot archive a finished project.", project_id
+            )
+            raise GroundControlException(
+                ErrorCode.BAD_REQUEST,
+                action="archive",
+                resource="project",
+                id_part=f" with id {project_id} (already marked as DONE, cannot be archived)",
+            )
+
+        if project.status == ProjectStatus.ARCHIVED:
+            logger.warning("Project %d is already ARCHIVED", project_id)
+            raise GroundControlException(
+                ErrorCode.BAD_REQUEST,
+                action="archive",
+                resource="project",
+                id_part=f" with id {project_id} (already marked as ARCHIVED)",
+            )
+
+        logger.info("Archiving project %d...", project_id)
+
+        # Archive project
+        project.archived_status = project.status
+        project.status = ProjectStatus.ARCHIVED
+
+        for step in project.steps:
+            step.archived_status = step.status
+            step.status = StepStatus.ARCHIVED
+
+            for task in step.tasks:
+                task.archived_status = task.status
+                task.status = TaskStatus.ARCHIVED
+
+                for annotation in getattr(task, "annotations", []):
+                    annotation.archived_status = annotation.annotation_status
+                    annotation.annotation_status = AnnotationStatus.ARCHIVED
+
+        db.commit()
+        db.refresh(project)
+
+        logger.info("Project %d archived successfully.", project_id)
+        return project
+
+    except GroundControlException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error("Failed to archive project %d: %s", project_id, e)
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details=f"Unexpected error while archiving project {project_id}",
+        ) from e
+
+
+def unarchive_project_service(db: Session, project_id: int):
+    """
+    Unarchive a previously archived project and all its related entities.
+    Reverts their statuses from 'ARCHIVED' back to the saved archived_status values.
+
+    :param db: SQLAlchemy session object.
+    :param project_id: ID of the project to restore.
+    :raises GroundControlException: If project not found, not archived, or unexpected error occurs.
+    :return: The restored project object.
+    """
+    try:
+        project = get_project_by_id(db, project_id)
+        if not project:
+            raise GroundControlException(
+                ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+            )
+
+        if project.status != ProjectStatus.ARCHIVED:
+            logger.warning("Project %d is not archived; cannot restore.", project_id)
+            raise GroundControlException(
+                ErrorCode.BAD_REQUEST,
+                action="restore",
+                resource="project",
+                id_part=f" with id {project_id} (not archived)",
+            )
+
+        logger.info("Restoring archived project %d...", project_id)
+
+        project.status = project.archived_status
+        project.archived_status = None
+
+        for step in project.steps:
+            step.status = step.archived_status
+            step.archived_status = None
+
+            for task in step.tasks:
+                task.status = task.archived_status
+                task.archived_status = None
+
+                for annotation in getattr(task, "annotations", []):
+                    annotation.annotation_status = annotation.archived_status
+                    annotation.archived_status = None
+
+        db.commit()
+        db.refresh(project)
+
+        logger.info("Project %d restored successfully.", project_id)
+        return project
+
+    except GroundControlException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error("Failed to restore project %d: %s", project_id, e)
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details=f"Unexpected error while restoring project {project_id}",
         ) from e

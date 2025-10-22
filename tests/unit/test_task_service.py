@@ -114,20 +114,6 @@ step_data_1 = {
     "completeness_rate": 100.0,
 }
 
-annotation_data = {
-    "annotation": {
-        "user_email": "user.email@ina.fr",
-        "annotation_status": AnnotationStatus.IN_PROGRESS,
-        "version": 1,
-        "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
-    },
-    "association": {
-        "annotation_id": 1,  # Ensure unique annotation IDs
-        "task_id": 1,
-        "direction": InOutEnum.OUT,
-    },
-}
-
 
 def test_get_task_by_id(db_session: SQLAlchemySession):
     create_project_crud(db_session, ProjectBaseDto(**project_data))

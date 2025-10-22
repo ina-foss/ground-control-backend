@@ -62,6 +62,7 @@ class TaskStatus(PyEnum):
     IN_PROGRESS = "in-progress"
     SKIPPED = "skipped"
     DONE = "done"
+    ARCHIVED = "archived"
 
 
 class Task(Base):
@@ -93,6 +94,7 @@ class Task(Base):
     instruction = Column(String)
     data_type = Column(Enum(TaskDataType))  # , nullable=False
     status = Column(Enum(TaskStatus))
+    archived_status = Column(Enum(TaskStatus), nullable=True, default=None)
     documentation = Column(String)
     lead_time = Column(Integer)
     expiration_date = Column(DateTime, nullable=True, default=None)

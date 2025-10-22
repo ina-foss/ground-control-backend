@@ -38,6 +38,7 @@ class AnnotationStatus(PyEnum):
     PENDING = "pending"
     SKIPPED = "skipped"
     DONE = "done"
+    ARCHIVED = "archived"
 
 
 class Annotation(Base):
@@ -63,6 +64,7 @@ class Annotation(Base):
     user_email = Column(String, ForeignKey("user.email"), nullable=False)
     result = Column(JSON)
     annotation_status = Column(Enum(AnnotationStatus))
+    archived_status = Column(Enum(AnnotationStatus), nullable=True, default=None)
     version = Column(Integer)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime)

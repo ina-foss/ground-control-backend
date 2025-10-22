@@ -54,6 +54,7 @@ class ProjectStatus(PyEnum):
     IN_PROGRESS = "in-progress"
     SKIPPED = "skipped"
     DONE = "done"
+    ARCHIVED = "archived"
 
 
 class Project(Base):
@@ -89,6 +90,7 @@ class Project(Base):
     title = Column(String, nullable=False)
     description = Column(String)
     status = Column(Enum(ProjectStatus), nullable=False)
+    archived_status = Column(Enum(ProjectStatus), nullable=True, default=None)
     distribution_mode = Column(Enum(DistributionMode))
     is_published = Column(Boolean)
     empty_annotations = Column(Boolean)
