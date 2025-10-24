@@ -24,8 +24,14 @@ from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
 from ina_ground_control.services.annotation_service import (
     get_annotations_by_task_id_crud,
 )
-from ina_ground_control.services.project_service import get_project_by_id
-from ina_ground_control.services.step_service import get_step_by_id
+from ina_ground_control.services.project_service import (
+    get_project_by_id,
+    update_project_status_crud,
+)
+from ina_ground_control.services.step_service import (
+    get_step_by_id,
+    update_step_status_crud,
+)
 
 
 def get_task_by_id(db: Session, task_id: int) -> Task:
@@ -298,11 +304,11 @@ def recalculate_step_status(db_session, step_id: int):
     tasks = step.tasks
 
     if not tasks:
-        step.status = StepStatus.PENDING
+        new_status = StepStatus.PENDING
     elif all(task.status == TaskStatus.DRAFT for task in tasks):
-        step.status = StepStatus.DRAFT
+        new_status = StepStatus.DRAFT
     elif all(task.status == TaskStatus.SKIPPED for task in tasks):
-        step.status = StepStatus.SKIPPED
+        new_status = StepStatus.SKIPPED
     else:
         done_tasks = sum(task.status == TaskStatus.DONE for task in tasks)
         pending_tasks = sum(task.status == TaskStatus.PENDING for task in tasks)
@@ -310,13 +316,17 @@ def recalculate_step_status(db_session, step_id: int):
         total_active_tasks = done_tasks + pending_tasks + in_progress_tasks
 
         if total_active_tasks == 0:
-            step.status = StepStatus.PENDING
+            new_status = StepStatus.PENDING
         elif done_tasks == total_active_tasks:
-            step.status = StepStatus.DONE
+            new_status = StepStatus.DONE
         elif pending_tasks == total_active_tasks:
-            step.status = StepStatus.PENDING
+            new_status = StepStatus.PENDING
         else:
-            step.status = StepStatus.IN_PROGRESS
+            new_status = StepStatus.IN_PROGRESS
+
+    if step.status != new_status:
+        update_step_status_crud(db_session, step, new_status)
+        recalculate_project_status(db_session, step.project_id)
 
     db_session.commit()
     return step
@@ -327,17 +337,20 @@ def recalculate_project_status(db_session, project_id: int):
     steps = project.steps
 
     if not steps:
-        project.status = ProjectStatus.PENDING
+        new_status = ProjectStatus.PENDING
     elif all(step.status == StepStatus.DRAFT for step in steps):
-        project.status = ProjectStatus.DRAFT
+        new_status = ProjectStatus.DRAFT
     elif all(step.status == StepStatus.SKIPPED for step in steps):
-        project.status = ProjectStatus.PENDING
+        new_status = ProjectStatus.PENDING
     elif all(step.status == StepStatus.DONE for step in steps):
-        project.status = ProjectStatus.DONE
+        new_status = ProjectStatus.DONE
     elif all(step.status == StepStatus.PENDING for step in steps):
-        project.status = ProjectStatus.PENDING
+        new_status = ProjectStatus.PENDING
     else:
-        project.status = ProjectStatus.IN_PROGRESS
+        new_status = ProjectStatus.IN_PROGRESS
+
+    if project.status != new_status:
+        update_project_status_crud(db_session, project.id, new_status)
 
     db_session.commit()
     return project
