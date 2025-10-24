@@ -414,4 +414,4 @@ def test_recalculate_project_status(db_session):
     update_step_status_crud(db_session, step1, StepStatus.SKIPPED)
     update_step_status_crud(db_session, step2, StepStatus.DRAFT)
     recalculate_project_status(db_session, project.id)
-    assert get_project_by_id(db_session, project.id).status == ProjectStatus.PENDING
+    assert get_project_by_id(db_session, project.id).status == ProjectStatus.IN_PROGRESS

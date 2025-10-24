@@ -73,3 +73,4 @@ class ProjectParametersResponse(BaseModel):
     completeness_rate: float
     allow_empty_annotation: bool
     max_tasks_per_person: int
+    allow_skip: bool

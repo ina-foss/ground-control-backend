@@ -24,7 +24,7 @@ from ina_ground_control.models.annotation_task_association import (
     InOutEnum,
 )
 from ina_ground_control.models.step_model import Step
-from ina_ground_control.models.task_model import Task
+from ina_ground_control.models.task_model import Task, TaskStatus
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
@@ -53,6 +53,33 @@ def create_annotation_crud(db: Session, data: AnnotationFullCreate):
     db.commit()
     db.refresh(anno_db)
     return anno_db
+
+
+def delete_annotation_crud(db: Session, annotation_id: int):
+    """
+    Delete an annotation from the database.
+
+    Args:
+        db (Session): The database session used for querying.
+        annotation_id (int): The unique identifier of the annotation to delete.
+
+    Returns:
+        Annotation: The deleted Annotation object if it exists.
+
+    Raises:
+        GroundControlException: If the annotation is not found in the database.
+    """
+    annotation = db.query(Annotation).filter(Annotation.id == annotation_id).first()
+
+    if annotation is None:
+        logger.error(ERROR_MESSAGE_FAILED_ANNOTATION, annotation_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Annotation", id=annotation_id
+        )
+
+    db.delete(annotation)
+    db.commit()
+    return annotation
 
 
 def get_annotations_by_id_crud(db: Session, annotation_id: int):
@@ -136,28 +163,75 @@ def udpate_annotation_result_crud(
 
 def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
     """
-    If the project configuration authorize it, change the status of the annotation obejct to `skipped`
+    If the project configuration authorizes it, change the status of the annotation object to `skipped`.
 
-    Parameters:
-    db (Session): Session object which contains connection information.
-    annotation_id (int): Integer that corresponds to the annotation ID.
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy session object.
+    annotation_id : int
+        ID of the annotation to skip.
 
-    Return:
-    Annotation: The updated Annotation object.
+    Returns
+    -------
+    Annotation
+        The updated Annotation object.
+
+    Raises
+    ------
+    GroundControlException
+        If annotation or task not found, skipping not allowed, or DB error occurs.
     """
-    db_annotation = get_annotations_by_id_crud(db, annotation_id)
-    # Check if the project authorize the skipped state
-    if db_annotation.task[0].step.project.allow_skip is False:
-        logger.error("Failed to skip annotation with id: %d", annotation_id)
+    try:
+        db_annotation = get_annotations_by_id_crud(db, annotation_id)
+        if not db_annotation:
+            raise GroundControlException(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                resource="annotation",
+                id=annotation_id,
+            )
+
+        if db_annotation.annotation_status == AnnotationStatus.SKIPPED:
+            logger.info("Annotation %d is already skipped", annotation_id)
+            raise GroundControlException(
+                ErrorCode.GENERIC_OPERATION_FAILED,
+                action="skip",
+                resource="annotation (already skipped)",
+                id=annotation_id,
+            )
+
+        task = db_annotation.task[0]
+        if task.step.project.allow_skip is False:
+            logger.warning(
+                "Skipping not allowed for project (annotation_id=%s)", annotation_id
+            )
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details="Skipping annotation is not allowed because 'allow_skip' is set to False in the project configuration",
+            )
+
+        db_annotation.annotation_status = AnnotationStatus.SKIPPED
+        task.status = TaskStatus.SKIPPED
+        db_annotation.updated_at = func.now()
+
+        db.commit()
+        db.refresh(db_annotation)
+
+        logger.info("Annotation %d successfully skipped", annotation_id)
+        return db_annotation
+
+    except GroundControlException:
+        raise
+
+    except Exception as e:
+        db.rollback()
+        logger.exception("Unexpected error while skipping annotation %d", annotation_id)
         raise GroundControlException(
-            ErrorCode.GENERIC_CLIENT_ERROR,
-            details="Skipping annotation is not allowed because 'allow_skip' is set to False in the project configuration",
-        )
-    db_annotation.annotation_status = AnnotationStatus.SKIPPED
-    db_annotation.updated_at = func.now()
-    db.commit()
-    db.refresh(db_annotation)
-    return db_annotation
+            ErrorCode.GENERIC_OPERATION_FAILED,
+            action="skip",
+            resource="annotation",
+            id=annotation_id,
+        ) from e
 
 
 def finish_annotation_crud(

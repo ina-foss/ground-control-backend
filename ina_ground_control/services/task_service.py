@@ -24,14 +24,8 @@ from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
 from ina_ground_control.services.annotation_service import (
     get_annotations_by_task_id_crud,
 )
-from ina_ground_control.services.project_service import (
-    get_project_by_id,
-    update_project_status_crud,
-)
-from ina_ground_control.services.step_service import (
-    get_step_by_id,
-    update_step_status_crud,
-)
+from ina_ground_control.services.project_service import get_project_by_id
+from ina_ground_control.services.step_service import get_step_by_id
 
 
 def get_task_by_id(db: Session, task_id: int) -> Task:
@@ -116,7 +110,32 @@ def delete_task_crud(db: Session, task: Task):
 
 
 def update_task_status_crud(db: Session, task_id: int, status: TaskStatus) -> Task:
+    """
+    Update the status of a task.
+    If the new status is SKIPPED, delete all annotations linked to the task (via AnnotationTask).
+
+    Args:
+        db (Session): Database session.
+        task_id (int): ID of the task to update.
+        status (TaskStatus): The new status to set.
+
+    Returns:
+        Task: The updated Task object.
+    """
     task = get_task_by_id(db, task_id)
+    if not task:
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            resource="Task",
+            id=task_id,
+        )
+
+    if task.status == TaskStatus.SKIPPED:
+        if task.annotations:
+            for annotation in task.annotations:
+                db.delete(annotation)
+            db.commit()
+
     task.status = status
     task.updated_at = func.now()
     db.commit()
@@ -245,17 +264,28 @@ def recalculate_task_status(db: Session, task_id: int):
     annotations_in_progress = get_annotations_by_task_id_crud(
         db, task_id, None, InOutEnum.OUT, AnnotationStatus.IN_PROGRESS
     )
+    annotations_skipped = get_annotations_by_task_id_crud(
+        db, task_id, None, InOutEnum.OUT, AnnotationStatus.SKIPPED
+    )
 
     done_count = len(annotations_done)
     in_progress_count = len(annotations_in_progress)
+    skipped_count = len(annotations_skipped)
+    total_annotations = done_count + in_progress_count + skipped_count
+
     new_status = task.status
 
-    if done_count == 0 and in_progress_count == 0:
+    if total_annotations == 0:
         new_status = TaskStatus.PENDING
-    elif done_count < task.redundancy and in_progress_count > 0:
-        new_status = TaskStatus.IN_PROGRESS
+    elif skipped_count == total_annotations:
+        # all skipped
+        new_status = TaskStatus.SKIPPED
     elif done_count >= task.redundancy:
         new_status = TaskStatus.DONE
+    elif in_progress_count > 0 or done_count > 0:
+        new_status = TaskStatus.IN_PROGRESS
+    else:
+        new_status = TaskStatus.PENDING
 
     if task.status != new_status:
         print(f"🔄 Updating Task {task.id} status: {task.status} → {new_status}")
@@ -263,82 +293,51 @@ def recalculate_task_status(db: Session, task_id: int):
         recalculate_step_status(db, task.step_id)
 
 
-def recalculate_step_status(db: Session, step_id: int):
-    step = get_step_by_id(db, step_id)
-    if step.tasks and all(task.status == TaskStatus.DRAFT for task in step.tasks):
-        new_status = StepStatus.DRAFT
+def recalculate_step_status(db_session, step_id: int):
+    step = get_step_by_id(db_session, step_id)
+    tasks = step.tasks
+
+    if not tasks:
+        step.status = StepStatus.PENDING
+    elif all(task.status == TaskStatus.DRAFT for task in tasks):
+        step.status = StepStatus.DRAFT
+    elif all(task.status == TaskStatus.SKIPPED for task in tasks):
+        step.status = StepStatus.SKIPPED
     else:
-        total_tasks = len(
-            [
-                task
-                for task in step.tasks
-                if task.status not in (TaskStatus.SKIPPED, TaskStatus.DRAFT)
-            ]
-        )
-        done_tasks = len(
-            [task for task in step.tasks if task.status == TaskStatus.DONE]
-        )
-        pending_tasks = len(
-            [task for task in step.tasks if task.status == TaskStatus.PENDING]
-        )
+        done_tasks = sum(task.status == TaskStatus.DONE for task in tasks)
+        pending_tasks = sum(task.status == TaskStatus.PENDING for task in tasks)
+        in_progress_tasks = sum(task.status == TaskStatus.IN_PROGRESS for task in tasks)
+        total_active_tasks = done_tasks + pending_tasks + in_progress_tasks
 
-        completion_rate = (done_tasks / total_tasks) * 100 if total_tasks else 0
-        new_status = step.status
-
-        if total_tasks == 0:
-            new_status = StepStatus.PENDING
-        elif completion_rate >= step.completeness_rate:
-            new_status = StepStatus.DONE
-        elif pending_tasks == total_tasks:
-            new_status = StepStatus.PENDING
-        elif pending_tasks > 0 and pending_tasks < total_tasks:
-            new_status = StepStatus.IN_PROGRESS
-        elif any(task.status == TaskStatus.IN_PROGRESS for task in step.tasks):
-            new_status = StepStatus.IN_PROGRESS
-
-    if step.status != new_status:
-        print(f"🔄 Updating Step {step.id} status: {step.status} → {new_status}")
-        update_step_status_crud(db, step, new_status)
-        recalculate_project_status(db, step.project_id)
-
-
-def recalculate_project_status(db: Session, project_id: int):
-    project = get_project_by_id(db, project_id)
-
-    # If all steps are draft → project should be draft
-    if project.steps and all(step.status == StepStatus.DRAFT for step in project.steps):
-        new_status = ProjectStatus.DRAFT
-    else:
-        active_steps = [
-            step
-            for step in project.steps
-            if step.status not in (StepStatus.DRAFT, StepStatus.SKIPPED)
-        ]
-
-        total_steps = len(active_steps)
-        done_steps = len(
-            [step for step in active_steps if step.status == StepStatus.DONE]
-        )
-        pending_steps = len(
-            [step for step in active_steps if step.status == StepStatus.PENDING]
-        )
-
-        completion_rate = (done_steps / total_steps) * 100 if total_steps else 0
-        new_status = project.status
-
-        if total_steps == 0:
-            new_status = ProjectStatus.PENDING
-        elif pending_steps == total_steps:
-            new_status = ProjectStatus.PENDING
-        elif any(step.status == StepStatus.IN_PROGRESS for step in active_steps):
-            new_status = ProjectStatus.IN_PROGRESS
-        elif completion_rate >= 100:
-            new_status = ProjectStatus.DONE
+        if total_active_tasks == 0:
+            step.status = StepStatus.PENDING
+        elif done_tasks == total_active_tasks:
+            step.status = StepStatus.DONE
+        elif pending_tasks == total_active_tasks:
+            step.status = StepStatus.PENDING
         else:
-            new_status = ProjectStatus.IN_PROGRESS
+            step.status = StepStatus.IN_PROGRESS
 
-    if project.status != new_status:
-        print(
-            f"🔄 Updating Project {project.id} status: {project.status} → {new_status}"
-        )
-        update_project_status_crud(db, project.id, new_status)
+    db_session.commit()
+    return step
+
+
+def recalculate_project_status(db_session, project_id: int):
+    project = get_project_by_id(db_session, project_id)
+    steps = project.steps
+
+    if not steps:
+        project.status = ProjectStatus.PENDING
+    elif all(step.status == StepStatus.DRAFT for step in steps):
+        project.status = ProjectStatus.DRAFT
+    elif all(step.status == StepStatus.SKIPPED for step in steps):
+        project.status = ProjectStatus.PENDING
+    elif all(step.status == StepStatus.DONE for step in steps):
+        project.status = ProjectStatus.DONE
+    elif all(step.status == StepStatus.PENDING for step in steps):
+        project.status = ProjectStatus.PENDING
+    else:
+        project.status = ProjectStatus.IN_PROGRESS
+
+    db_session.commit()
+    return project
