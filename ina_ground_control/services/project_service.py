@@ -162,6 +162,9 @@ def finish_project_service(db: Session, project_id: int):
         for task in step.tasks:
             task.status = TaskStatus.DONE
             task.updated_at = func.now()
+            for annotation in getattr(task, "annotations", []):
+                annotation.annotation_status = AnnotationStatus.DONE
+                annotation.updated_at = func.now()
     db.commit()
     db.refresh(project)
     return project
