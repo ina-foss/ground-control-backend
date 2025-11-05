@@ -21,7 +21,7 @@ Configuration:
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
     CheckPermissions,
@@ -36,7 +36,6 @@ from ina_ground_control.exception.exceptions import ErrorCode, GroundControlExce
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.task_schemas import (
-    PaginatedTasksDTO,
     TaskBaseDto,
     TaskListDto,
     TaskStatus,
@@ -48,7 +47,6 @@ from ina_ground_control.services.task_service import (
     create_task_crud,
     delete_task_crud,
     get_task_by_id,
-    get_tasks_by_annotated_by_crud,
     update_data_task_crud,
     update_task_status_crud,
 )
@@ -205,20 +203,3 @@ def delete_task(
 def update_task_status(task_id: int, status: TaskStatus, db: Session = Depends(get_db)):
     task = update_task_status_crud(db, task_id, status)
     return task
-
-
-@router.get("/tasks/annotated_by/{email}", response_model=PaginatedTasksDTO)
-def get_tasks_by_annotated_by(
-    email: str,
-    page: int = 0,
-    size: int = 10,
-    task_limit_on: bool = Query(
-        False, description="Toggle to enforce the max tasks per person limit"
-    ),
-    db: Session = Depends(get_db),
-):
-    """
-    Retrieve tasks filtered by anno tated_by user (email), with priority rules.
-    """
-    tasks, total = get_tasks_by_annotated_by_crud(db, email, page, size, task_limit_on)
-    return PaginatedTasksDTO(task_requests=tasks, total_records=total)

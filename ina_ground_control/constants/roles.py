@@ -180,6 +180,7 @@ class Permission(str, Enum):
     READ_PROJECTS = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ_ALL.value}"
     READ_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ.value}"
     DELETE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.DELETE.value}"
+    UPDATE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.UPDATE.value}"
     FINISH_PROJECT = (
         f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.FINISH_PROJECT.value}"
     )

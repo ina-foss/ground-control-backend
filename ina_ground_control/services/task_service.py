@@ -4,23 +4,19 @@ This module provides CRUD operations for tasks.
 It includes functions to retrieve a task by ID, create a new task, and update an existing task.
 """
 
-from collections import defaultdict
 from typing import Any, Dict
 
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from ina_ground_control import logger
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
-from ina_ground_control.models.annotation_task_association import (
-    AnnotationTask,
-    InOutEnum,
-)
+from ina_ground_control.models.annotation_model import AnnotationStatus
+from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.models.project_model import ProjectStatus
 from ina_ground_control.models.task_model import Task, TaskStatus
 from ina_ground_control.schemas.step_schemas import StepStatus
-from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskListDto
+from ina_ground_control.schemas.task_schemas import TaskCreateDto
 from ina_ground_control.services.annotation_service import (
     get_annotations_by_task_id_crud,
 )
@@ -148,113 +144,6 @@ def update_task_status_crud(db: Session, task_id: int, status: TaskStatus) -> Ta
     db.refresh(task)
     recalculate_step_status(db, task.step_id)
     return task
-
-
-def get_tasks_by_annotated_by_crud(
-    db: Session,
-    email: str,
-    page: int = 0,
-    size: int = 10,
-    task_limit_on: bool = False,
-):
-    """
-    Get prioritized and paginated tasks based on:
-    1. IN_PROGRESS tasks where user is in annotated_by array.
-    2. IN_PROGRESS tasks where redundancy is not met and expiration is near.
-    3. PENDING tasks with high priority and expiration is near.
-    """
-    try:
-        offset = page * size
-        eager_options = [joinedload(Task.annotations), joinedload(Task.step)]
-
-        # --- Condition 1: IN_PROGRESS tasks annotated by user ---
-        tasks_1 = (
-            db.query(Task)
-            .join(Task.annotations)  # Join to Annotation via relationship
-            .filter(
-                Task.status == TaskStatus.IN_PROGRESS,
-                Annotation.user_email == email,  # Filter based on email
-                Annotation.annotation_status == AnnotationStatus.IN_PROGRESS,
-            )
-            .options(*eager_options)
-            .all()
-        )
-        # --- Condition 2: Get IN_PROGRESS tasks that haven't yet reached the required redundancy ---
-        # and where the current user hasn't already annotated them.
-        subquery = (
-            select(func.count(Annotation.id))
-            .select_from(
-                AnnotationTask.__table__.join(
-                    Annotation, AnnotationTask.annotation_id == Annotation.id
-                )
-            )
-            .where(
-                AnnotationTask.task_id == Task.id,
-                Annotation.annotation_status == AnnotationStatus.IN_PROGRESS,
-                Annotation.user_email != email,
-            )
-            .correlate(Task)
-            .scalar_subquery()
-        )
-
-        tasks_2 = (
-            db.query(Task)
-            .filter(Task.status == TaskStatus.IN_PROGRESS, subquery < Task.redundancy)
-            .options(*eager_options)
-            .all()
-        )
-
-        # --- Condition 3: Get PENDING tasks that are due soon and have high priority ---
-        tasks_3 = (
-            db.query(Task)
-            .filter(
-                Task.status == TaskStatus.PENDING,
-                # Task.expiration_date <= today
-            )
-            .order_by(Task.priority.desc())
-            .all()
-        )
-
-        # Combine in order of priority: tasks_1 → tasks_2 → tasks_3
-        combined = tasks_1 + tasks_2 + tasks_3
-        # Deduplicate by ID
-        seen = set()
-        unique_tasks = []
-        for task in combined:
-            if task.id not in seen:
-                unique_tasks.append(task)
-                seen.add(task.id)
-
-        # Group and apply max_task_per_person limit
-        if task_limit_on:
-            grouped = defaultdict(list)
-            for task in unique_tasks:
-                if task.step:
-                    grouped[task.step.id].append(task)
-
-            # Apply max_task_per_person limit from each step
-            limited_tasks = []
-            for _, tasks in grouped.items():
-                step = tasks[0].step  # All tasks share the same step
-                limit = step.max_tasks_per_person or len(tasks)
-                limited_tasks.extend(tasks[:limit])
-        else:
-            limited_tasks = unique_tasks
-
-        # Paginate
-        paginated = limited_tasks[offset : offset + size]
-        tasks = [
-            TaskListDto.model_validate(task, from_attributes=True) for task in paginated
-        ]
-        total_records = len(limited_tasks)
-        return tasks, total_records
-
-    except Exception as e:
-        logger.error("Failed to retrieve tasks by annotated_by: %s", e)
-        raise GroundControlException(
-            ErrorCode.GENERIC_CLIENT_ERROR,
-            details="Unexpected error while getting tasks",
-        ) from e
 
 
 def recalculate_task_status(db: Session, task_id: int):

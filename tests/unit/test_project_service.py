@@ -84,10 +84,12 @@ annotation_data = {
 }
 
 
-def test_get_projects(db_session: SQLAlchemySession):
+def test_get_projects(db_session: SQLAlchemySession, monkeypatch):
     """
-    Test to retrieve all the projects in the database
+    Test to retrieve all the projects in the database, including task assignment
+    logic based on user role.
     """
+    # Create test projects
     project_data_1 = {
         "title": "Test Project 1",
         "description": "Test description 1",
@@ -120,7 +122,18 @@ def test_get_projects(db_session: SQLAlchemySession):
         db_session, ProjectBaseDto(**project_data_2)
     )
 
-    retrieved_projects = get_projects(db_session)
+    # Mock a request with a current user
+    class MockUser:
+        email = "tester@example.com"
+        roles = []
+
+    class MockRequest:
+        scope = {"user": MockUser()}
+
+    request = MockRequest()
+
+    # Retrieve projects using the get_projects function
+    retrieved_projects = get_projects(db_session, request)
 
     # Ensure at least 2 projects were returned
     assert len(retrieved_projects) >= 2
@@ -129,6 +142,7 @@ def test_get_projects(db_session: SQLAlchemySession):
     project_1 = next(p for p in retrieved_projects if p.id == created_project_1.id)
     project_2 = next(p for p in retrieved_projects if p.id == created_project_2.id)
 
+    # Validate project fields
     assert project_1.title == project_data_1["title"]
     assert project_1.description == project_data_1["description"]
     assert project_1.created_by == project_data_1["created_by"]
@@ -136,6 +150,10 @@ def test_get_projects(db_session: SQLAlchemySession):
     assert project_2.title == project_data_2["title"]
     assert project_2.description == project_data_2["description"]
     assert project_2.created_by == project_data_2["created_by"]
+
+    # Optional: check that tasks_to_annotate is present (can be None if no tasks)
+    for project in retrieved_projects:
+        assert hasattr(project, "tasks_to_annotate")
 
 
 def test_get_project_by_id(db_session: SQLAlchemySession):

@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from ina_ground_control.models.project_model import ProjectStatus
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
+from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 
 
 class ProjectBaseDto(BaseModel):
@@ -64,8 +65,11 @@ class ProjectListDto(ProjectWithIdDto):
 
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
-    steps: list["StepDetailDto"]
     medias: list[MediaCreate]
+    # GC_ADMIN sees full steps and tasks
+    steps: Optional[list["StepDetailDto"]] = []
+    # Non-admin users get a "single task" [0]
+    tasks_to_annotate: Optional[list["TaskWithIdDto"]] = None
 
 
 class ProjectParametersResponse(BaseModel):

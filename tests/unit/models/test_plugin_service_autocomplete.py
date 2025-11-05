@@ -7,9 +7,7 @@ from unittest.mock import Mock, patch
 
 from requests.models import Response
 
-from ina_ground_control.exception.exceptions import (
-    GroundControlException,
-)
+from ina_ground_control.exception.exceptions import GroundControlException
 from ina_ground_control.models.plugin.plugin_autocomplete import (
     PluginConfigAutoComplete,
 )

@@ -11,10 +11,7 @@ from jsonpath_ng.ext import parse as jsonpath_parse
 from requests.exceptions import RequestException
 
 from ina_ground_control import logger
-from ina_ground_control.exception.exceptions import (
-    ErrorCode,
-    GroundControlException,
-)
+from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.plugin.plugin_autocomplete import (
     PluginConfigAutoComplete,
 )

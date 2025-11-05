@@ -3407,7 +3407,16 @@
       "clientRoles": {
         "account": [
           "view-profile",
-          "manage-account"
+          "manage-account",
+          "GC_ADMIN",
+          "ground-control:project:create",
+          "ground-control:project:update",
+          "ground-control:project:delete",
+          "ground-control:project:finish",
+          "ground-control:project:archive",
+          "ground-control:project:unarchive",
+          "ground-control:task:activate",
+          "ground-control:task:delete"
         ]
       },
       "notBefore": 0,

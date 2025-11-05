@@ -9,10 +9,14 @@ Functions:
 - delete_project_crud
 """
 
+from datetime import datetime
+
+from fastapi import Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from ina_ground_control import logger
+from ina_ground_control.constants.roles import Role
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.project_model import Project, ProjectStatus
@@ -22,19 +26,93 @@ from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 
 
-def get_projects(db: Session, skip: int = 0, limit: int = 100):
+def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
     """
-    Retrieve a list of projects from the database with optional pagination.
-
-    Parameters:
-    db (Session): The database session used for querying.
-    skip (int): The number of records to skip for pagination. Default is 0.
-    limit (int): The maximum number of records to return. Default is 100.
-
-    Returns:
-    List[Project]: A list of Project objects.
+    Given a project and a user, return the first relevant task to annotate
+    according to user role and annotation logic.
     """
-    return db.query(Project).offset(skip).limit(limit).all()
+    if Role.GC_ADMIN.value in roles:
+        return project
+
+    now = datetime.utcnow()
+    all_filtered_tasks = []
+    for step in project.steps:
+        for task in step.tasks:
+            # Condition 1: tasks in progress by this user
+            if any(
+                ann.user_email == user_email
+                and ann.annotation_status == AnnotationStatus.IN_PROGRESS
+                for ann in task.annotations
+            ):
+                all_filtered_tasks.append(task)
+                # TODO: => continue
+                break
+
+            # Condition 2: insufficient redundancy or expired pending
+            other_anns_in_progress = [
+                ann
+                for ann in task.annotations
+                if ann.annotation_status == AnnotationStatus.IN_PROGRESS
+                and ann.user_email != user_email
+            ]
+            if (
+                task.status == TaskStatus.IN_PROGRESS
+                and len(other_anns_in_progress) < task.redundancy
+            ):
+                all_filtered_tasks.append(task)
+                # TODO: => continue
+                break
+
+            # Condition 3: pending tasks and prioritize expired pending
+            if task.status == TaskStatus.PENDING:
+                if task.expiration_date and task.expiration_date <= now:
+                    all_filtered_tasks.insert(0, task)
+                else:
+                    all_filtered_tasks.append(task)
+    # TODO:
+    # In the future, we may use `step.max_tasks_per_person` (or a project-level limit)
+    # to determine how many tasks to assign per user for a given project.
+    # For now, we only return the first relevant task available for the user.
+    if all_filtered_tasks:
+        project.tasks_to_annotate = [all_filtered_tasks[0]]
+    else:
+        project.tasks_to_annotate = None
+    return project
+
+
+def get_projects(db: Session, request: Request, skip: int = 0, limit: int = 100):
+    projects = db.query(Project).offset(skip).limit(limit).all()
+    current_user = request.scope.get("user", {})
+    roles = current_user.roles
+    user_email = current_user.email
+
+    for project in projects:
+        get_relevant_task_for_user(project, user_email, roles)
+    return projects
+
+
+def get_project_by_id_based_on_user_role(
+    db: Session, request: Request, project_id: int
+):
+    project = (
+        db.query(Project)
+        .options(joinedload(Project.steps).joinedload(Step.tasks))
+        .filter(Project.id == project_id)
+        .first()
+    )
+
+    if not project:
+        logger.error("Failed to retrieve project with id: %d", project_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+        )
+
+    current_user = request.scope.get("user", {})
+    user_email = current_user.email
+    roles = current_user.roles
+
+    project = get_relevant_task_for_user(project, user_email, roles)
+    return project
 
 
 def get_project_by_id(db: Session, project_id: int):

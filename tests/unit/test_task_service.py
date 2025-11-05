@@ -41,7 +41,6 @@ from ina_ground_control.services.task_service import (
     create_task_crud,
     delete_task_crud,
     get_task_by_id,
-    get_tasks_by_annotated_by_crud,
     recalculate_project_status,
     recalculate_step_status,
     recalculate_task_status,
@@ -214,79 +213,6 @@ def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
 
     db.commit()
     return task
-
-
-def test_get_tasks_by_annotated_by_crud(db_session: SQLAlchemySession):
-    create_project_crud(db_session, ProjectBaseDto(**project_data))
-    step = create_step_crud(StepCreate(**step_data_1), db_session)
-
-    # --- Create Tasks ---
-    task_data_1 = {
-        "name": "task 1",
-        "status": TaskStatus.IN_PROGRESS,
-        "step_id": step.id,
-        "redundancy": 2,
-        "media_id": 1,
-        "data_type": "ldd",
-        "lead_time": 1,
-        "created_at": "2025-04-27T21:05:01.328292",
-    }
-
-    task_data_2 = {
-        "name": "task 1",
-        "status": TaskStatus.IN_PROGRESS,
-        "step_id": step.id,
-        "redundancy": 2,
-        "media_id": 1,
-        "data_type": "ldd",
-        "lead_time": 1,
-        "created_at": "2025-04-27T21:05:01.328292",
-    }
-
-    task_data_3 = {
-        "name": "task 1",
-        "status": TaskStatus.PENDING,
-        "step_id": step.id,
-        "redundancy": 2,
-        "media_id": 1,
-        "data_type": "ldd",
-        "lead_time": 1,
-        "created_at": "2025-04-27T21:05:01.328292",
-    }
-
-    task_1 = create_task_crud(TaskCreateDto(**task_data_1), db_session)
-    create_task_crud(TaskCreateDto(**task_data_2), db_session)
-    create_task_crud(TaskCreateDto(**task_data_3), db_session)
-
-    # --- Add Annotations ---
-    ann_1 = Annotation(
-        user_email="user1@example.com", annotation_status=AnnotationStatus.IN_PROGRESS
-    )
-    db_session.add(ann_1)
-    db_session.commit()
-    db_session.refresh(ann_1)
-    annotation_task = AnnotationTask(
-        annotation_id=ann_1.id, task_id=task_1.id, direction=InOutEnum.OUT
-    )
-    db_session.add(annotation_task)
-
-    # --- Test: Get tasks for user1 without task_limit ---
-    tasks, total = get_tasks_by_annotated_by_crud(
-        db=db_session, email="user1@example.com", page=0, size=10, task_limit_on=False
-    )
-    assert (
-        total == 3
-    ), "Expected 3 total tasks (IN_PROGRESS by user, others IN_PROGRESS or PENDING)"
-
-    # --- Test: Get tasks for user1 with task_limit_on ---
-    tasks, total = get_tasks_by_annotated_by_crud(
-        db=db_session, email="user1@example.com", page=0, size=10, task_limit_on=True
-    )
-    assert total == 1, "Expected only 1 task due to max_tasks_per_person=1"
-
-    # --- Assert expected task is returned ---
-    task_ids = [t.id for t in tasks]
-    assert task_1.id in task_ids, "Expected task_1 to be in result"
 
 
 def test_recalculate_task_status(db_session: SQLAlchemySession):
