@@ -4,7 +4,6 @@ It associates permissions and roles for access control across the application.
 """
 
 from enum import Enum
-from typing import Dict, List
 
 GROUND_CONTROL = "ground-control"
 
@@ -15,9 +14,8 @@ class Role(str, Enum):
     Each role corresponds to specific permissions.
     """
 
-    GC_ADMIN = "GC_ADMIN"
-    GC_PROJECT_OWNER = "GC_PROJECT_OWNER"
-    GC_ANNOTATOR = "GC_ANNOTATOR"
+    GC_ADMIN = "admin"
+    GC_PROJECT_OWNER = "project_owner"
 
 
 class Resource(str, Enum):
@@ -176,6 +174,7 @@ class Permission(str, Enum):
     """
 
     # Project
+    ADMIN_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Role.GC_ADMIN.value}"
     CREATE_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.CREATE.value}"
     READ_PROJECTS = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ_ALL.value}"
     READ_PROJECT = f"{GROUND_CONTROL}:{Resource.PROJECT.value}:{Action.READ.value}"
@@ -281,16 +280,3 @@ class Permission(str, Enum):
             bool: True if the value exists in the Permission enum; False otherwise.
         """
         return value in (e.value for e in Permission)
-
-
-# Define role-based permissions using the Permission Enum
-ROLE_PERMISSIONS: Dict[str, List[Permission]] = {
-    Role.GC_ADMIN: [
-        Permission.CREATE_PROJECT.value,
-        Permission.DELETE_PROJECT.value,
-        Permission.DELETE_STEP.value,
-        Permission.DELETE_PLUGIN.value,
-    ],
-    Role.GC_PROJECT_OWNER: [],
-    Role.GC_ANNOTATOR: [],
-}

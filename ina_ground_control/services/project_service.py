@@ -16,7 +16,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from ina_ground_control import logger
-from ina_ground_control.constants.roles import Role
+from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.project_model import Project, ProjectStatus
@@ -31,7 +31,7 @@ def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
     Given a project and a user, return the first relevant task to annotate
     according to user role and annotation logic.
     """
-    if Role.GC_ADMIN.value in roles:
+    if Permission.ADMIN_PROJECT.value in roles:
         return project
 
     now = datetime.utcnow()

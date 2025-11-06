@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
-from ina_ground_control.constants.roles import Role
+from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
@@ -91,7 +91,7 @@ def get_annotation_by_task_id(
     email = user.email
     roles = user.roles
 
-    if Role.GC_ADMIN in roles or user_email == "":
+    if Permission.ADMIN_PROJECT.value in roles or user_email == "":
         annotations = get_annotations_by_task_id_crud(
             db, task_id=task_id, direction=direction, user_email=user_email
         )

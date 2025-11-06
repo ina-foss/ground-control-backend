@@ -1114,6 +1114,15 @@
           "attributes": {}
         },
         {
+          "id": "bb153879-2065-43de-b307-810eb7dd9598",
+          "name": "ground-control:project:admin",
+          "description": "",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6cc5a716-0880-47dc-b714-9a4967246b2f",
+          "attributes": {}
+        },
+        {
           "id": "6450156d-7526-48f2-8ea0-bb1e51f9eefa",
           "name": "manage-account",
           "description": "${role_manage-account}",
@@ -3408,7 +3417,7 @@
         "account": [
           "view-profile",
           "manage-account",
-          "GC_ADMIN",
+          "ground-control:project:admin",
           "ground-control:project:create",
           "ground-control:project:update",
           "ground-control:project:delete",
