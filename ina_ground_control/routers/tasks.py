@@ -21,7 +21,7 @@ Configuration:
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
     CheckPermissions,
@@ -97,40 +97,50 @@ def task_inject(
     task: TaskBaseDto,
     media: MediaCreate,
     step_id: int,
+    activate: bool = Query(default=False, description="Whether to activate the task"),
     db: Session = Depends(get_db),
 ):
     """
-    Use to create a media, a task and an annotation in one request
+    Create a media, a task, and an annotation in one atomic transaction.
 
-    List of parameters overwritten by the request
-    which can be equal to 0:
+    Parameters overwritten:
     - `task.media_id`
     - `annotation.association.task_id`
     - `annotation.association.annotation_id`
-
+    - `activate`: optional flag to activate the task (default: False)
     """
     try:
         # Create Media
         created_media = create_media_crud(media, db)
 
-        # Use the media id for the Task
+        # Create Task
         task.media_id = created_media.id
         task.step_id = step_id
         created_task = create_task_crud(task, db)
 
-        # Use the task id for the Annotation
+        # Optionally activate task
+        if activate:
+            update_task_status_crud(db, created_task.id, TaskStatus.PENDING)
+
+        # Create Annotation
         annotation.association.task_id = created_task.id
         create_annotation_crud(db, annotation)
+
+        # Commit all changes only if everything succeeded
+        db.commit()
+        db.refresh(created_task)
 
         return created_task
 
     except IntegrityError as e:
+        db.rollback()
         logger.error("Database integrity error: %s", e)
         raise GroundControlException(
             ErrorCode.GENERIC_CLIENT_ERROR, details="Database integrity error"
         ) from e
 
     except Exception as e:
+        db.rollback()
         logger.error("An unexpected error occurred: %s", e)
         raise GroundControlException(
             ErrorCode.GENERIC_CLIENT_ERROR, details="An unexpected error occurred"
