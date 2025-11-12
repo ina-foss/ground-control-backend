@@ -16,11 +16,9 @@ services:
       - KC_HTTPS_PORT=9443
       - KC_HEALTH_ENABLED=true
       - KC_HTTP_MANAGEMENT_PORT=9990
-    # If you want to expose these ports outside your dev PC,
-    # remove the "127.0.0.1:" prefix
     ports:
-      - 127.0.0.1:9080:9080
-      - 127.0.0.1:9443:9443
+      - 9080:9080
+      - 9443:9443
     healthcheck:
       test: 'bash /opt/keycloak/health-check.sh'
       interval: 5s

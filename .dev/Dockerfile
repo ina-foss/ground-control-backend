@@ -16,7 +16,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
-ADD .dev /app
+
+COPY pyproject.toml uv.lock ./
+COPY README.md ./
+COPY alembic.ini ./
+COPY logging.conf ./
+COPY ina_ground_control ./ina_ground_control/
+
+# Set version for setuptools-scm
+ARG APP_VERSION=0.0.1
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${APP_VERSION}
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
@@ -30,8 +40,12 @@ FROM python:3.12-slim-bookworm
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /app
 
+WORKDIR /app
+
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Run the FastAPI application by default
-CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/src/uv_docker_example"]
+
+
+# Run database migrations and start the application
+CMD ["sh", "-c", "alembic upgrade head && uvicorn ina_ground_control.main:app --reload --host 0.0.0.0 --port 8000"]

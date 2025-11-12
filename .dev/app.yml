@@ -39,7 +39,7 @@ services:
       - GC_SSO_CLIENT_SECRET=internal
 
       # CORS Settings
-      - GC_CORS_ALLOW_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
+      - GC_CORS_ALLOW_ORIGINS=["http://localhost"]
       - GC_CORS_ALLOW_CREDENTIALS=true
       - GC_CORS_ALLOW_METHODS=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
       - GC_CORS_ALLOW_HEADERS=["*"]
@@ -47,11 +47,11 @@ services:
     volumes:
       - ./static:/app/static
       - ./docs/_build:/app/docs/_build
-#    depends_on:
-#      postgresql:
-#        condition: service_healthy
-#      keycloak:
-#        condition: service_healthy
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - ground-control-network
     restart: unless-stopped
@@ -61,3 +61,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  postgresql:
+    extends:
+      file: postgresql.yml
+      service: postgresql
+    networks:
+      - ground-control-network
+
+  keycloak:
+    extends:
+      file: keycloak.yml
+      service: keycloak
+    networks:
+      - ground-control-network
