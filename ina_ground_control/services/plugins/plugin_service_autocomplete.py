@@ -131,7 +131,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             RuntimeError: For unexpected errors or failed HTTP requests.
         """
         try:
-            no_verify = True
+            no_verify = False
             headers = {"Content-Type": "application/json"}
 
             # Handle PLUGIN_REQUEST_POST (e.g., Elasticsearch)
