@@ -47,6 +47,7 @@ from ina_ground_control.services.project_service import (
     get_project_by_id_based_on_user_role,
     get_project_parameters,
     get_projects,
+    get_projects_count,
     unarchive_project_service,
     update_project_crud,
 )
@@ -66,10 +67,13 @@ def read_projects(
     db: Session = Depends(get_db),
 ) -> list[Project]:
     """Retrieve a list of projects with pagination support."""
+    # Get total count efficiently with a single COUNT query
+    total_count = get_projects_count(db)
+
+    # Get paginated projects
     projects = get_projects(db, request, skip=skip, limit=limit)
-    response.headers["X-Total-Count"] = str(
-        len(get_projects(db, request, skip=0, limit=1000))
-    )
+
+    response.headers["X-Total-Count"] = str(total_count)
     return projects
 
 

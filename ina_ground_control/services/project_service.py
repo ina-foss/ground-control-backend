@@ -80,6 +80,19 @@ def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
     return project
 
 
+def get_projects_count(db: Session) -> int:
+    """
+    Get the total count of projects in the database.
+
+    Parameters:
+    db (Session): The database session used for querying.
+
+    Returns:
+    int: The total number of projects.
+    """
+    return db.query(func.count(Project.id)).scalar()
+
+
 def get_projects(db: Session, request: Request, skip: int = 0, limit: int = 100):
     projects = db.query(Project).offset(skip).limit(limit).all()
     current_user = request.scope.get("user", {})
