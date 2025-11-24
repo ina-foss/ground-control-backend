@@ -22,6 +22,7 @@ from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginCon
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
 
 logger = logging.getLogger(__name__)
+PLUGIN_GLOBAL_TIMEOUT = 10
 
 
 class PluginServiceAutoComplete(PluginServiceBase):
@@ -100,7 +101,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             details = requests.get(
                 self.config.data_source,
                 params=params,
-                timeout=30,
+                timeout=PLUGIN_GLOBAL_TIMEOUT,
                 verify=True,
                 headers={"User-Agent": ""},
             ).json()
@@ -131,7 +132,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             RuntimeError: For unexpected errors or failed HTTP requests.
         """
         try:
-            no_verify = False
+            no_verify = True
             headers = {"Content-Type": "application/json"}
 
             # Handle PLUGIN_REQUEST_POST (e.g., Elasticsearch)
@@ -151,7 +152,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     self.config.data_source,
                     json=payload,
                     headers=headers,
-                    timeout=30,
+                    timeout=PLUGIN_GLOBAL_TIMEOUT,
                     verify=no_verify,
                 )
             # Handle PLUGIN_STATIC_DATA (simple json file)
@@ -172,7 +173,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     data_source = self.config.data_source
 
                 logger.info("Sending GET request to data source: %s", data_source)
-                response = requests.get(data_source, timeout=30, verify=no_verify)
+                response = requests.get(
+                    data_source, timeout=PLUGIN_GLOBAL_TIMEOUT, verify=no_verify
+                )
             # Handle PLUGIN_WIKIDATA
             elif self.config.type == PluginConfigType.PLUGIN_WIKIDATA:
                 params = {
@@ -187,7 +190,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 response = requests.get(
                     self.config.data_source,
                     params=params,
-                    timeout=30,
+                    timeout=PLUGIN_GLOBAL_TIMEOUT,
                     verify=no_verify,
                     headers={"User-Agent": ""},
                 )
