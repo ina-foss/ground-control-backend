@@ -11,6 +11,10 @@ Classes:
             id (Optional[str]): The internal identifier for the plugin autocomplete value.
             ext_id (Optional[str]): The external identifier for the plugin autocomplete value.
             label (Optional[str]): The display label for the plugin autocomplete value.
+            image (Optional[str]): Url of the image that should be display next to the option.
+            description(Optional[str]): Additional information to describe the option.
+            categories(Optional[str]): Stringified JSON array that may contains different categories.
+            group(Optional[str]): Optional property to visually group the options in the plugin.
 """
 
 from typing import Optional
@@ -25,3 +29,4 @@ class PluginAutocompleteValueDTO(BaseModel):
     image: Optional[str] = None
     description: Optional[str] = None
     categories: Optional[str] = None
+    group: Optional[str] = None

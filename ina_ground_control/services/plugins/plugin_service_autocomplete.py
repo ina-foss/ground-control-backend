@@ -480,7 +480,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         categories_expr = self._safe_jsonpath_parse(
             self.config.response_categories_key, "response_categories_key"
         )
-
+        group_expr = self._safe_jsonpath_parse(
+            self.config.response_group_key, "response_group_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -494,6 +496,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "image_expr": image_expr,
             "description_expr": description_expr,
             "categories_expr": categories_expr,
+            "group_expr": group_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -534,6 +537,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["categories_expr"]
                 else []
             ),
+            "group": (
+                expressions["group_expr"].find(data)
+                if expressions["group_expr"]
+                else []
+            ),
         }
 
     def _create_dto_from_extracted_data(
@@ -556,6 +564,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             image=self._safe_extract_value(extracted_data["images"], index),
             description=self._safe_extract_value(extracted_data["descriptions"], index),
             categories=self._safe_extract_value(extracted_data["categories"], index),
+            group=self._safe_extract_value(extracted_data["group"], index),
         )
 
     def _build_transformed_data(
