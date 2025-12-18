@@ -13,7 +13,7 @@ from datetime import datetime
 
 from fastapi import Request
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ina_ground_control import logger
 from ina_ground_control.constants.roles import Permission
@@ -94,7 +94,19 @@ def get_projects_count(db: Session) -> int:
 
 
 def get_projects(db: Session, request: Request, skip: int = 0, limit: int = 100):
-    projects = db.query(Project).offset(skip).limit(limit).all()
+    projects = (
+        db.query(Project)
+        .options(
+            selectinload(Project.steps)
+            .selectinload(Step.tasks)
+            .selectinload(Task.annotations),
+            selectinload(Project.medias),
+            selectinload(Project.tags),
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     current_user = request.scope.get("user", {})
     roles = current_user.roles
     user_email = current_user.email
