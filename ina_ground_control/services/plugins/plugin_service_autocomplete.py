@@ -300,6 +300,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
             if self.config.response_categories_key
             else None
         )
+        editable_expr = (
+            jsonpath_parse(self.config.response_editable_key)
+            if self.config.response_editable_key
+            else None
+        )
 
         return {
             "ids": id_expr.find(data),
@@ -308,6 +313,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "images": image_expr.find(data) if image_expr else [],
             "descriptions": description_expr.find(data) if description_expr else [],
             "categories": categories_expr.find(data) if categories_expr else [],
+            "editable": editable_expr.find(data) if editable_expr else [],
         }
 
     def _transform_to_dto_list(
@@ -483,6 +489,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         group_expr = self._safe_jsonpath_parse(
             self.config.response_group_key, "response_group_key"
         )
+        editable_expr = self._safe_jsonpath_parse(
+            self.config.response_editable_key, "response_editable_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -497,6 +506,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "description_expr": description_expr,
             "categories_expr": categories_expr,
             "group_expr": group_expr,
+            "editable_expr": editable_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -542,6 +552,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["group_expr"]
                 else []
             ),
+            "editable": (
+                expressions["editable_expr"].find(data)
+                if expressions["editable_expr"]
+                else []
+            ),
         }
 
     def _create_dto_from_extracted_data(
@@ -565,6 +580,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             description=self._safe_extract_value(extracted_data["descriptions"], index),
             categories=self._safe_extract_value(extracted_data["categories"], index),
             group=self._safe_extract_value(extracted_data["group"], index),
+            editable=self._safe_extract_value(extracted_data["editable"], index),
         )
 
     def _build_transformed_data(
