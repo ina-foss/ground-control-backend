@@ -31,3 +31,4 @@ class PluginAutocompleteValueDTO(BaseModel):
     categories: Optional[str] = None
     group: Optional[str] = None
     editable: Optional[str] = None
+    copyable: Optional[str] = None

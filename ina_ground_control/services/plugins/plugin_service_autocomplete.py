@@ -492,6 +492,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         editable_expr = self._safe_jsonpath_parse(
             self.config.response_editable_key, "response_editable_key"
         )
+        copyable_expr = self._safe_jsonpath_parse(
+            self.config.response_copyable_key, "response_copyable_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -507,6 +510,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "categories_expr": categories_expr,
             "group_expr": group_expr,
             "editable_expr": editable_expr,
+            "copyable_expr": copyable_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -557,6 +561,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["editable_expr"]
                 else []
             ),
+            "copyable": (
+                expressions["copyable_expr"].find(data)
+                if expressions["copyable_expr"]
+                else []
+            ),
         }
 
     def _create_dto_from_extracted_data(
@@ -581,6 +590,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             categories=self._safe_extract_value(extracted_data["categories"], index),
             group=self._safe_extract_value(extracted_data["group"], index),
             editable=self._safe_extract_value(extracted_data["editable"], index),
+            copyable=self._safe_extract_value(extracted_data["copyable"], index),
         )
 
     def _build_transformed_data(
