@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ina_ground_control.models.step_model import AnnotationType, StepStatus
 
@@ -42,11 +42,7 @@ class StepDto(StepCreate):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
-        """
-            Config for reading attributes from other class.
-        """
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StepDetailDto(StepDto):

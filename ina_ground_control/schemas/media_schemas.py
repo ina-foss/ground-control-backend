@@ -47,11 +47,7 @@ class MediaDto(MediaCreate):
     id: int
     tasks: Optional[list["TaskBaseDto"]]
 
-    class Config:
-        from_attributes = True
-        """
-            Config for reading attributes from other class.
-        """
+    model_config = ConfigDict(from_attributes=True)
 
 
 from .task_schemas import TaskBaseDto

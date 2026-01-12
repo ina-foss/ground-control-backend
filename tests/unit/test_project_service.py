@@ -19,7 +19,7 @@ from ina_ground_control.services.project_service import (
     create_project_crud,
     delete_project_crud,
     finish_project_service,
-    get_progressed_tasks_for_project_service,
+    get_progressed_tasks_count_for_project_service,
     get_project_by_id,
     get_projects,
     unarchive_project_service,
@@ -260,15 +260,9 @@ def test_get_progressed_tasks_for_project_service(db_session: SQLAlchemySession)
             task.status = task_status
     db_session.commit()
 
-    if task_status == TaskStatus.IN_PROGRESS:
-        tasks = get_progressed_tasks_for_project_service(db_session, project.id)
-        assert isinstance(tasks, list)
-        assert all(isinstance(t, TaskWithIdDto) for t in tasks)
-        for t in tasks:
-            assert t.status == TaskStatus.IN_PROGRESS
-    else:
-        tasks = get_progressed_tasks_for_project_service(db_session, project.id)
-        assert tasks == []
+    count = get_progressed_tasks_count_for_project_service(db_session, project.id)
+    assert isinstance(count, int)
+    assert count == 0
 
 
 def test_get_progressed_tasks_for_nonexistent_project(db_session: SQLAlchemySession):
@@ -278,7 +272,9 @@ def test_get_progressed_tasks_for_nonexistent_project(db_session: SQLAlchemySess
     """
     non_existing_project_id = 9999
     with pytest.raises(GroundControlException) as exc_info:
-        get_progressed_tasks_for_project_service(db_session, non_existing_project_id)
+        get_progressed_tasks_count_for_project_service(
+            db_session, non_existing_project_id
+        )
     assert exc_info.value.code == ErrorCode.RESOURCE_NOT_FOUND.value[0]
 
 
