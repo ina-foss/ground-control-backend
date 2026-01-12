@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ina_ground_control.models.task_model import TaskDataType, TaskStatus
 
@@ -32,9 +32,7 @@ class TaskBaseDto(BaseModel):
     redundancy: int = 1
     priority: int = 0
 
-
-class Config:
-    from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaskWithIdDto(TaskBaseDto):
@@ -69,8 +67,7 @@ class TaskListDto(TaskCreateDto):
     media: Optional[MediaDto]
     annotations: list[AnnotationWithIdDto]
 
-    class Config:
-        orm_mode: True
+    model_config = ConfigDict(from_attributes=True)
 
 
 from .media_schemas import MediaDto

@@ -4,7 +4,7 @@ Defines base Data Transfer Object (DTO) classes for user-related data structures
 
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserBaseDto(BaseModel):
@@ -15,5 +15,4 @@ class UserBaseDto(BaseModel):
     email: EmailStr
     role: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

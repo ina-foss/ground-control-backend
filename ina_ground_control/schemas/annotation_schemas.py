@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.schemas.annotation_task_association import AnnotationTaskCreate
@@ -55,8 +55,4 @@ class AnnotationDto(AnnotationCreate):
     updated_at: Optional[datetime]
     validated_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
-        """
-            Config for reading attributes from other class.
-        """
+    model_config = ConfigDict(from_attributes=True)

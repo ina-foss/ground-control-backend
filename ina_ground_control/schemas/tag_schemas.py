@@ -2,7 +2,7 @@
 Defines Data Transfer Object (DTO) classes for tag-related data structures.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class TagCreate(BaseModel):
@@ -21,8 +21,4 @@ class TagDto(TagCreate):
 
     project_id: int
 
-    class Config:
-        from_attributes = True
-        """
-            Config for reading attributes from other class.
-        """
+    model_config = ConfigDict(from_attributes=True)

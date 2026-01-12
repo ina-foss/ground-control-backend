@@ -9,7 +9,7 @@ Functions:
 - delete_project_crud
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import Request
 from sqlalchemy import func
@@ -23,18 +23,14 @@ from ina_ground_control.models.project_model import Project, ProjectStatus
 from ina_ground_control.models.step_model import Step, StepStatus
 from ina_ground_control.models.task_model import Task, TaskStatus
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
-from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 
 
-def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
+def get_relevant_task_for_user(project, user_email: str):
     """
     Given a project and a user, return the first relevant task to annotate
     according to user role and annotation logic.
     """
-    if Permission.ADMIN_PROJECT.value in roles:
-        return project
-
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     all_filtered_tasks = []
     for step in project.steps:
         for task in step.tasks:
@@ -77,6 +73,7 @@ def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
         project.tasks_to_annotate = [all_filtered_tasks[0]]
     else:
         project.tasks_to_annotate = None
+
     return project
 
 
@@ -111,8 +108,10 @@ def get_projects(db: Session, request: Request, skip: int = 0, limit: int = 100)
     roles = current_user.roles
     user_email = current_user.email
 
-    for project in projects:
-        get_relevant_task_for_user(project, user_email, roles)
+    if Permission.ADMIN_PROJECT.value not in roles:
+        for project in projects:
+            get_relevant_task_for_user(project, user_email)
+
     return projects
 
 
@@ -134,9 +133,8 @@ def get_project_by_id_based_on_user_role(
 
     current_user = request.scope.get("user", {})
     user_email = current_user.email
-    roles = current_user.roles
 
-    project = get_relevant_task_for_user(project, user_email, roles)
+    project = get_relevant_task_for_user(project, user_email)
     return project
 
 
@@ -273,43 +271,38 @@ def finish_project_service(db: Session, project_id: int):
     return project
 
 
-def get_progressed_tasks_for_project_service(
-    db: Session, project_id: int
-) -> list[TaskWithIdDto]:
+def get_progressed_tasks_count_for_project_service(db: Session, project_id: int) -> int:
     """
-    Return all tasks in 'IN_PROGRESS' status for a given project.
+    Return number of tasks in 'IN_PROGRESS' status for a given project.
     """
     try:
-        project_exists = get_project_by_id(db, project_id)
-        if not project_exists:
-            logger.error("Project with id %d not found", project_id)
+        if not get_project_by_id(db, project_id):
             raise GroundControlException(
                 ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
             )
 
-        tasks = (
-            db.query(Task)
+        count = (
+            db.query(func.count(Task.id))
             .join(Step)
-            .join(Project)
-            .filter(Project.id == project_id, Task.status == TaskStatus.IN_PROGRESS)
-            .all()
+            .filter(
+                Step.project_id == project_id, Task.status == TaskStatus.IN_PROGRESS
+            )
+            .scalar()
         )
 
-        validated_tasks = [
-            TaskWithIdDto.model_validate(task, from_attributes=True) for task in tasks
-        ]
-
-        return validated_tasks
+        return count or 0
 
     except GroundControlException:
         raise
     except Exception as e:
         logger.error(
-            "Failed to retrieve in-progress tasks for project %d: %s", project_id, e
+            "Failed to retrieve progressed task count for project %d: %s",
+            project_id,
+            e,
         )
         raise GroundControlException(
             ErrorCode.GENERIC_CLIENT_ERROR,
-            details=f"Unexpected error while retrieving in-progress tasks for project {project_id}",
+            details="Unexpected error while retrieving task count",
         ) from e
 
 
