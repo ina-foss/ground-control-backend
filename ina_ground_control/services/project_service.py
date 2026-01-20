@@ -30,7 +30,7 @@ def get_relevant_task_for_user(project, user_email: str):
     Given a project and a user, return the first relevant task to annotate
     according to user role and annotation logic.
     """
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     all_filtered_tasks = []
     for step in project.steps:
         for task in step.tasks:
