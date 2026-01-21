@@ -32,3 +32,4 @@ class PluginAutocompleteValueDTO(BaseModel):
     group: Optional[str] = None
     editable: Optional[str] = None
     copyable: Optional[str] = None
+    tooltip: Optional[str] = None

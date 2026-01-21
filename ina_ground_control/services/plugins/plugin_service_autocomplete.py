@@ -495,6 +495,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         copyable_expr = self._safe_jsonpath_parse(
             self.config.response_copyable_key, "response_copyable_key"
         )
+        tooltip_expr = self._safe_jsonpath_parse(
+            self.config.response_tooltip_key, "response_tooltip_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -511,6 +514,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "group_expr": group_expr,
             "editable_expr": editable_expr,
             "copyable_expr": copyable_expr,
+            "tooltip_expr": tooltip_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -566,6 +570,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["copyable_expr"]
                 else []
             ),
+            "tooltip": (
+                expressions["tooltip_expr"].find(data)
+                if expressions["tooltip_expr"]
+                else []
+            ),
         }
 
     def _create_dto_from_extracted_data(
@@ -591,6 +600,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             group=self._safe_extract_value(extracted_data["group"], index),
             editable=self._safe_extract_value(extracted_data["editable"], index),
             copyable=self._safe_extract_value(extracted_data["copyable"], index),
+            tooltip=self._safe_extract_value(extracted_data["tooltip"], index),
         )
 
     def _build_transformed_data(
