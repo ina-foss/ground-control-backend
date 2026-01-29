@@ -91,7 +91,7 @@ def get_annotation_by_task_id(
     email = user.email
     roles = user.roles
 
-    if Permission.ADMIN_PROJECT.value in roles or user_email == "":
+    if Permission.REVIEW_ANNOTATION.value in roles or user_email == "":
         annotations = get_annotations_by_task_id_crud(
             db, task_id=task_id, direction=direction, user_email=user_email
         )
