@@ -12,33 +12,13 @@ Classes:
     Annotation (Base): SqlAlchemy model representing an annotation record in the database.
 """
 
-from enum import Enum as PyEnum
+from typing import Optional
 
-from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String
-from sqlalchemy.sql.expression import func
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column
 
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.models import Base
-
-
-class AnnotationStatus(PyEnum):
-    """
-    Enum representing the different statuses an annotation can have.
-
-    Attributes:
-
-        DRAFT (str): The annotation is in draft status.
-        IN_PROGRESS (str): The annotation is currently being worked on.
-        PENDING (str): The annotation is pending and awaiting further actions.
-        SKIPPED (str): The annotation was skipped.
-        DONE (str): The annotation has been completed.
-    """
-
-    DRAFT = "draft"
-    IN_PROGRESS = "in-progress"
-    PENDING = "pending"
-    SKIPPED = "skipped"
-    DONE = "done"
-    ARCHIVED = "archived"
 
 
 class Annotation(Base):
@@ -46,26 +26,29 @@ class Annotation(Base):
     Represents an annotation record in the database.
 
     Attributes:
-        id (Integer): The unique identifier of the annotation (Primary Key).
-        user_email (String): The email address of the author of the annotation.
-        result (String): The result of the annotation.
-        annotation_status (enumerate): The status of the annotation.
-        version (Integer): The version of the annotation.
-        created_at (DateTime): The timestamp when the annotation was created.
-        updated_at (DateTime): The timestamp when the annotation was last updated.
-        validated_at (DateTime): The timestamp when the annotation was validated.
-        task_id (Integer): The foreign key linking to the task associated with the annotation.
-
+        id (Mapped[int]): The unique identifier of the annotation (Primary Key).
+        user_email (Mapped[str]): The email address of the author of the annotation.
+        result (Mapped[Optional[dict]]): The result of the annotation.
+        annotation_status (Mapped[Status]): The status of the annotation.
+        archived_status (Mapped[Optional[Status]]): The archived status of the annotation.
+        version (Mapped[int]): The version of the annotation.
+        created_at (Mapped[DateTime]): The timestamp when the annotation was created.
+        updated_at (Mapped[Optional[DateTime]]): The timestamp when the annotation was last updated.
+        validated_at (Mapped[Optional[DateTime]]): The timestamp when the annotation was validated.
     """
 
     __tablename__ = "annotation"
 
-    id = Column(Integer, primary_key=True)
-    user_email = Column(String, ForeignKey("user.email"), nullable=False)
-    result = Column(JSON)
-    annotation_status = Column(Enum(AnnotationStatus))
-    archived_status = Column(Enum(AnnotationStatus), nullable=True, default=None)
-    version = Column(Integer)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime)
-    validated_at = Column(DateTime)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_email: Mapped[str] = mapped_column(
+        String, ForeignKey("user.email"), nullable=False
+    )
+    result: Mapped[Optional[dict]] = mapped_column(JSON)
+    annotation_status: Mapped[Status] = mapped_column(Enum(Status))
+    archived_status: Mapped[Optional[Status]] = mapped_column(
+        Enum(Status), nullable=True, default=None
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    updated_at: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)
+    validated_at: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)

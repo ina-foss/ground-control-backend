@@ -3,7 +3,8 @@ This module defines the TagProject model, which represents the association
 between a tag and a project in the database.
 """
 
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from ina_ground_control.models import Base
 
@@ -14,11 +15,15 @@ class TagProject(Base):
 
     Attributes:
     -----------
-    tag_key (String): Key of the tag.
-    project_id (Integer): Identifier of the project.
+    tag_key (Mapped[str]): Key of the tag (Primary Key).
+    project_id (Mapped[int]): Identifier of the project (Primary Key).
     """
 
     __tablename__ = "tag_project"
 
-    tag_key = Column(String, ForeignKey("tag.key"), primary_key=True)
-    project_id = Column(Integer, ForeignKey("project.id"), primary_key=True)
+    tag_key: Mapped[str] = mapped_column(
+        String, ForeignKey("tag.key"), primary_key=True
+    )
+    project_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("project.id"), primary_key=True
+    )

@@ -9,8 +9,8 @@ Classes:
     TaskComment (Base): SqlAlchemy model representing a taskComment record in the database.
 """
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.sql.expression import func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 from ina_ground_control.models import Base
 
@@ -20,16 +20,17 @@ class TaskComment(Base):
     Represents a taskComment record in the database.
 
     Attributes:
-        id (Integer): The unique identifier of the taskComment (Primary Key).
-        comment (String): The comment related to the task.
-        task_id (Integer): The foreign key linking to the concerned task.
-
+        id (Mapped[int]): The unique identifier of the taskComment (Primary Key).
+        comment (Mapped[str]): The comment related to the task.
+        task_id (Mapped[int]): The foreign key linking to the concerned task.
+        created_at (Mapped[DateTime]): The timestamp when the taskComment was created.
+        created_by (Mapped[str]): The email of the user who created the comment.
     """
 
     __tablename__ = "task_comment"
 
-    id = Column(Integer, primary_key=True)
-    comment = Column(String)
-    task_id = Column(Integer, ForeignKey("task.id"))
-    created_at = Column(DateTime, default=func.now())
-    created_by = Column(String, ForeignKey("user.email"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    comment: Mapped[str] = mapped_column(String)
+    task_id: Mapped[int] = mapped_column(ForeignKey("task.id"))
+    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    created_by: Mapped[str] = mapped_column(String, ForeignKey("user.email"))

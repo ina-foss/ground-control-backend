@@ -9,7 +9,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ina_ground_control.models.step_model import AnnotationType, StepStatus
+from ina_ground_control.constants.enums import AnnotationType, Status
 
 
 class StepCreate(BaseModel):
@@ -21,7 +21,7 @@ class StepCreate(BaseModel):
     description: Optional[str]
     annotation_type: AnnotationType
     pinned_at: Optional[datetime]
-    status: StepStatus
+    status: Status
     project_id: int
     redundancy: int = Field(default=1, description="Number of annotations per task")
     completeness_rate: float = Field(

@@ -17,6 +17,8 @@ Dependencies:
     - Business logic for project operations in `src.services.project_service`.
 """
 
+import time
+
 from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
@@ -48,6 +50,7 @@ from ina_ground_control.services.project_service import (
     get_project_parameters,
     get_projects,
     get_projects_count,
+    get_projects_summary,
     unarchive_project_service,
     update_project_crud,
 )
@@ -88,31 +91,29 @@ def read_projects_summary(
     limit: int = 100,
     db: Session = Depends(get_db),
 ) -> list[ProjectListDtoSummary]:
-    """Retrieve a list of projects with pagination support."""
-    # Get total count efficiently with a single COUNT query
-    total_count = get_projects_count(db)
+    """Retrieve a list of projects with pagination support (optimized)."""
+    start_total = time.perf_counter()
 
-    # Get paginated projects
-    projects = get_projects(db, request, skip=skip, limit=limit)
+    # Get total count efficiently with a single COUNT query
+    start = time.perf_counter()
+    total_count = get_projects_count(db)
+    logger.info("get_projects_count took %.3fs", time.perf_counter() - start)
+
+    # Get paginated projects with optimized query
+    start = time.perf_counter()
+    summaries = get_projects_summary(db, request, skip=skip, limit=limit)
+    logger.info("get_projects_summary took %.3fs", time.perf_counter() - start)
 
     response.headers["X-Total-Count"] = str(total_count)
-    return [
-        ProjectListDtoSummary(
-            id=project.id,
-            created_at=project.created_at,
-            created_by=project.created_by,
-            title=project.title,
-            description=project.description,
-            status=project.status,
-            steps_count=len(project.steps),
-            tasks_id_to_annotate=(
-                project.tasks_to_annotate[0].id
-                if hasattr(project, "tasks_to_annotate") and project.tasks_to_annotate
-                else None
-            ),
-        )
-        for project in projects
-    ]
+
+    start = time.perf_counter()
+    result = [ProjectListDtoSummary(**summary) for summary in summaries]
+    logger.info("Building response took %.3fs", time.perf_counter() - start)
+    logger.info(
+        "Total read_projects_summary took %.3fs", time.perf_counter() - start_total
+    )
+
+    return result
 
 
 @router.post("/project", response_model=ProjectDetailDto)

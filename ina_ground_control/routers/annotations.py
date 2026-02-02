@@ -11,9 +11,10 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
+from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.annotation_schemas import (
     AnnotationDto,
@@ -148,7 +149,7 @@ def finish_annotation(
 @router.get("/annotations", response_model=list[AnnotationDto])
 def get_all_annotations(
     user_email: str = Query(None, description="user_email"),
-    status: AnnotationStatus = Query(None, description="annotation_status"),
+    status: Status = Query(None, description="annotation_status"),
     project_id: int = Query(None, description="project id"),
     step_id: int = Query(None, description="step id"),
     start_created_at: datetime = Query(None, description="start create date"),

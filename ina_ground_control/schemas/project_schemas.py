@@ -9,7 +9,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from ina_ground_control.models.project_model import ProjectStatus
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
 from ina_ground_control.schemas.task_schemas import TaskWithIdDto
@@ -22,7 +22,7 @@ class ProjectBaseDto(BaseModel):
 
     title: Optional[str]
     description: Optional[str]
-    status: Optional[ProjectStatus]
+    status: Optional[Status]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
@@ -77,7 +77,7 @@ class ProjectListDtoSummary(BaseModel):
     title: str
     description: Optional[str]
     steps_count: int
-    status: Optional[ProjectStatus]
+    status: Optional[Status]
     created_at: Optional[datetime] = None
     tasks_id_to_annotate: Optional[list[int]] = None
 

@@ -9,8 +9,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from ina_ground_control.models.task_model import TaskDataType, TaskStatus
-
+from ..constants.enums import Status, TaskDataType
 from .annotation_schemas import AnnotationWithIdDto
 from .task_comment_schemas import TaskCommentDto
 
@@ -23,7 +22,7 @@ class TaskBaseDto(BaseModel):
     name: str
     instruction: Optional[str] = ""
     data_type: TaskDataType
-    status: TaskStatus
+    status: Status
     lead_time: Optional[int]
     step_id: int
     media_id: int
@@ -42,7 +41,7 @@ class TaskWithIdDto(TaskBaseDto):
 
     id: int
     created_at: Optional[datetime]
-    annotations: list[AnnotationWithIdDto]
+    annotations: list[AnnotationWithIdDto] = []
 
 
 class TaskCreateDto(TaskBaseDto):

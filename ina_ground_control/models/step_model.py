@@ -13,58 +13,23 @@ Classes:
     Step (Base): SqlAlchemy model representing a step record in the database.
 """
 
-from enum import Enum as PyEnum
+from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
-    Column,
     DateTime,
     Enum,
     Float,
     ForeignKey,
     Integer,
     String,
+    func,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql.expression import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ina_ground_control.constants.enums import AnnotationType, Status
 from ina_ground_control.models import Base
-
-
-class AnnotationType(PyEnum):
-    """
-    Enum representing the different types of annotations.
-
-    Attributes:
-        SEGMENTATION (str): The annotation type for segmentation tasks.
-        TRANSCRIPTION (str): The annotation type for transcription tasks.
-    """
-
-    SEGMENTATION = "segmentation"
-    TRANSCRIPTION = "transcription"
-    SPAN = "span"
-    AUTO_SUMMARY = "auto-summary"
-
-
-class StepStatus(PyEnum):
-    """
-    Enum representing the different status of a step.
-
-    Attributes:
-        DRAFT (str): The step is in draft status.
-        PENDING (str): The step is pending and awaiting further actions.
-        IN_PROGRESS (str): Currently being worked on.
-        SKIPPED (str): This step has been ignored.
-        DONE (str): Successfully completed.
-    """
-
-    DRAFT = "draft"
-    PENDING = "pending"
-    IN_PROGRESS = "in-progress"
-    SKIPPED = "skipped"
-    DONE = "done"
-    ARCHIVED = "archived"
 
 
 class Step(Base):
@@ -84,7 +49,7 @@ class Step(Base):
         project_id (Integer): The foreign key linking to the concerned project.
         tasks (relationship): Relationship to the Task model representing tasks within the step.
         plugins (relationship): Relationship to the Plugin model.
-        redundancy (Integer): Redundancy for each tasks of the step, can be modified inside the task (default: 1)
+        redundancy (Integer): Redundancy for each tasks of the step, can be modified inside the task (default: 1).
         completeness_rate (Float): Percentage of completeness (0-100).
         allow_empty_annotation (Boolean): Whether empty annotations are allowed (default: False).
         max_tasks_per_person (Integer): Maximum tasks per person (default: 1, must be at least 1).
@@ -92,23 +57,40 @@ class Step(Base):
 
     __tablename__ = "step"
 
-    id = Column(Integer, primary_key=True)
-    title = Column(String, nullable=False)
-    description = Column(String)
-    annotation_type = Column(Enum(AnnotationType), nullable=False)
-    status = Column(Enum(StepStatus), nullable=False)
-    archived_status = Column(Enum(StepStatus), nullable=True, default=None)
-    order = Column(Integer)
-    pinned_at = Column(DateTime)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
-    tasks = relationship("Task", backref="step", cascade="all, delete-orphan")
-    plugins = relationship("Plugin", backref="step", cascade="all, delete-orphan")
-    redundancy = Column(Integer, nullable=False, default=1)
-    completeness_rate = Column(Float, nullable=False, default=100.0)
-    allow_empty_annotation = Column(Boolean, nullable=False, default=True)
-    max_tasks_per_person = Column(Integer, nullable=False, default=1)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, default="")
+    annotation_type: Mapped[AnnotationType] = mapped_column(
+        Enum(AnnotationType), nullable=False
+    )
+    status: Mapped[Status] = mapped_column(Enum(Status), nullable=False)
+    archived_status: Mapped[Status | None] = mapped_column(Enum(Status), default=None)
+    order: Mapped[int | None] = mapped_column(Integer)
+    pinned_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=func.now(), onupdate=func.now()
+    )
+    project_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("project.id"), nullable=False
+    )
+    tasks: Mapped[list["Task"]] = relationship(
+        "Task", backref="step", cascade="all, delete-orphan"
+    )
+    plugins: Mapped[list["Plugin"]] = relationship(
+        "Plugin", backref="step", cascade="all, delete-orphan"
+    )
+    redundancy: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    completeness_rate: Mapped[float] = mapped_column(
+        Float, nullable=False, default=100.0
+    )
+    allow_empty_annotation: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True
+    )
+    max_tasks_per_person: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1
+    )
+
     __table_args__ = (
         CheckConstraint(
             "completeness_rate BETWEEN 0 AND 100", name="check_completeness_rate_range"

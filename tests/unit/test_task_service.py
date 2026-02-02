@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import sessionmaker
 
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import GroundControlException
 from ina_ground_control.models import Base
 from ina_ground_control.models.annotation_model import Annotation
@@ -15,18 +16,15 @@ from ina_ground_control.models.annotation_task_association import (
     AnnotationTask,
     InOutEnum,
 )
-from ina_ground_control.models.step_model import StepStatus
 from ina_ground_control.models.task_model import Task
 from ina_ground_control.schemas.annotation_schemas import (
     AnnotationFullCreate,
-    AnnotationStatus,
 )
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectStatus
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 from ina_ground_control.schemas.step_schemas import StepCreate
-from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskStatus
+from ina_ground_control.schemas.task_schemas import TaskCreateDto
 from ina_ground_control.services.annotation_service import (
     create_annotation_crud,
-    finish_annotation_crud,
 )
 from ina_ground_control.services.project_service import (
     create_project_crud,
@@ -91,7 +89,7 @@ task_data = {
     "instruction": "Test instruction",
     "data": {"key": "value"},
     "data_type": "ldd",
-    "status": TaskStatus.DRAFT,
+    "status": Status.DRAFT,
     "redundancy": 1,
     "lead_time": 1,
     "step_id": 1,
@@ -103,7 +101,7 @@ step_data_1 = {
     "title": "step 1",
     "description": "la premiere step",
     "annotation_type": "segmentation",
-    "status": StepStatus.DRAFT,
+    "status": Status.DRAFT,
     "pinned_at": "2022-12-27 08:26:49.219717",
     "project_id": 1,
     "allow_empty_annotation": True,
@@ -174,17 +172,17 @@ def test_update_task_status_crud(db_session: SQLAlchemySession):
     created_task = create_task_crud(TaskCreateDto(**task_data), db_session)
 
     task = get_task_by_id(db_session, created_task.id)
-    assert task.status != TaskStatus.DONE, "Task should be DONE yet"
+    assert task.status != Status.DONE, "Task should be DONE yet"
 
-    update_task_status_crud(db_session, created_task.id, TaskStatus.IN_PROGRESS)
-
-    task = get_task_by_id(db_session, created_task.id)
-    assert task.status == TaskStatus.IN_PROGRESS, "Task should be IN_PROGRESS now"
-
-    update_task_status_crud(db_session, created_task.id, TaskStatus.DONE)
+    update_task_status_crud(db_session, created_task.id, Status.IN_PROGRESS)
 
     task = get_task_by_id(db_session, created_task.id)
-    assert task.status == TaskStatus.DONE, "Task should be DONE now"
+    assert task.status == Status.IN_PROGRESS, "Task should be IN_PROGRESS now"
+
+    update_task_status_crud(db_session, created_task.id, Status.DONE)
+
+    task = get_task_by_id(db_session, created_task.id)
+    assert task.status == Status.DONE, "Task should be DONE now"
 
 
 def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
@@ -193,7 +191,7 @@ def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
         if expired
         else datetime.now(timezone.utc) + timedelta(days=1)
     )
-    task = Task(name="test", expiration_date=expiration_date, status=TaskStatus.PENDING)
+    task = Task(name="test", expiration_date=expiration_date, status=Status.PENDING)
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -201,7 +199,7 @@ def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
     # Ajout des annotations IN et OUT
     for direction in [InOutEnum.IN, InOutEnum.OUT]:
         annotation = Annotation(
-            annotation_status=AnnotationStatus.PENDING, user_email="test@test.fr"
+            annotation_status=Status.PENDING, user_email="test@test.fr"
         )
         db.add(annotation)
         db.commit()
@@ -218,27 +216,25 @@ def create_task_with_annotations(db: SQLAlchemySession, expired: bool = True):
 def test_recalculate_task_status(db_session: SQLAlchemySession):
     # Case 1: Task is DRAFT → should become PENDING if redundancy > 0
     task = create_task_crud(TaskCreateDto(**task_data), db_session)
-    task.status = TaskStatus.DRAFT
+    task.status = Status.DRAFT
     task.redundancy = 1  # ensure redundancy > 0
     db_session.commit()
 
     recalculate_task_status(db_session, task.id)
     task_refreshed = get_task_by_id(db_session, task.id)
-    assert task_refreshed.status == TaskStatus.PENDING
+    assert task_refreshed.status == Status.PENDING
 
     # Case 2: Task is PENDING → stays PENDING
     task_2 = create_task_crud(
-        TaskCreateDto(**{**task_data, "status": TaskStatus.PENDING}), db_session
+        TaskCreateDto(**{**task_data, "status": Status.PENDING}), db_session
     )
     recalculate_task_status(db_session, task_2.id)
     task_2_refreshed = get_task_by_id(db_session, task_2.id)
-    assert task_2_refreshed.status == TaskStatus.PENDING
+    assert task_2_refreshed.status == Status.PENDING
 
     # Case 3: Task is IN_PROGRESS → becomes DONE after enough DONE annotations
     task_3 = create_task_crud(
-        TaskCreateDto(
-            **{**task_data, "status": TaskStatus.IN_PROGRESS, "redundancy": 1}
-        ),
+        TaskCreateDto(**{**task_data, "status": Status.IN_PROGRESS, "redundancy": 1}),
         db_session,
     )
 
@@ -246,7 +242,7 @@ def test_recalculate_task_status(db_session: SQLAlchemySession):
     annotation_data = {
         "annotation": {
             "user_email": "user.email@ina.fr",
-            "annotation_status": AnnotationStatus.DONE,
+            "annotation_status": Status.DONE,
             "version": 1,
             "result": {"toto1": "test"},
         },
@@ -263,7 +259,7 @@ def test_recalculate_task_status(db_session: SQLAlchemySession):
     # Recalculate task status
     recalculate_task_status(db_session, task_3.id)
     task_3_refreshed = get_task_by_id(db_session, task_3.id)
-    assert task_3_refreshed.status == TaskStatus.DONE
+    assert task_3_refreshed.status == Status.DONE
 
 
 def test_recalculate_step_status(db_session):
@@ -272,9 +268,7 @@ def test_recalculate_step_status(db_session):
 
     # 1. All tasks PENDING -> Step should be PENDING
     create_task_crud(
-        TaskCreateDto(
-            **{**task_data, "status": TaskStatus.PENDING, "step_id": step.id}
-        ),
+        TaskCreateDto(**{**task_data, "status": Status.PENDING, "step_id": step.id}),
         db_session,
     )
     create_task_crud(
@@ -282,22 +276,22 @@ def test_recalculate_step_status(db_session):
             **{
                 **task_data,
                 "name": "task2",
-                "status": TaskStatus.PENDING,
+                "status": Status.PENDING,
                 "step_id": step.id,
             }
         ),
         db_session,
     )
     recalculate_step_status(db_session, step.id)
-    assert get_step_by_id(db_session, step.id).status == StepStatus.PENDING
+    assert get_step_by_id(db_session, step.id).status == Status.PENDING
 
     # 2. Some tasks DONE, some PENDING -> Step should be IN_PROGRESS
     create_task_crud(
-        TaskCreateDto(**{**task_data, "status": TaskStatus.DONE, "step_id": step.id}),
+        TaskCreateDto(**{**task_data, "status": Status.DONE, "step_id": step.id}),
         db_session,
     )
     recalculate_step_status(db_session, step.id)
-    assert get_step_by_id(db_session, step.id).status == StepStatus.IN_PROGRESS
+    assert get_step_by_id(db_session, step.id).status == Status.IN_PROGRESS
 
 
 def test_recalculate_project_status(db_session):
@@ -307,7 +301,7 @@ def test_recalculate_project_status(db_session):
     # STEP 1: All steps are PENDING → project should be PENDING
     step1 = create_step_crud(
         StepCreate(
-            **{**step_data_1, "project_id": project.id, "status": StepStatus.PENDING}
+            **{**step_data_1, "project_id": project.id, "status": Status.PENDING}
         ),
         db_session,
     )
@@ -317,27 +311,27 @@ def test_recalculate_project_status(db_session):
                 **step_data_1,
                 "name": "Step 2",
                 "project_id": project.id,
-                "status": StepStatus.PENDING,
+                "status": Status.PENDING,
             }
         ),
         db_session,
     )
 
     recalculate_project_status(db_session, project.id)
-    assert get_project_by_id(db_session, project.id).status == ProjectStatus.PENDING
+    assert get_project_by_id(db_session, project.id).status == Status.PENDING
 
     # STEP 2: One step is DONE, one is PENDING → project should be IN_PROGRESS
-    update_step_status_crud(db_session, step1, StepStatus.DONE)
+    update_step_status_crud(db_session, step1, Status.DONE)
     recalculate_project_status(db_session, project.id)
-    assert get_project_by_id(db_session, project.id).status == ProjectStatus.IN_PROGRESS
+    assert get_project_by_id(db_session, project.id).status == Status.IN_PROGRESS
 
     # STEP 3: All steps are DONE → project should be DONE
-    update_step_status_crud(db_session, step2, StepStatus.DONE)
+    update_step_status_crud(db_session, step2, Status.DONE)
     recalculate_project_status(db_session, project.id)
-    assert get_project_by_id(db_session, project.id).status == ProjectStatus.DONE
+    assert get_project_by_id(db_session, project.id).status == Status.DONE
 
     # STEP 4: All steps are SKIPPED or DRAFT → project should be PENDING
-    update_step_status_crud(db_session, step1, StepStatus.SKIPPED)
-    update_step_status_crud(db_session, step2, StepStatus.DRAFT)
+    update_step_status_crud(db_session, step1, Status.SKIPPED)
+    update_step_status_crud(db_session, step2, Status.DRAFT)
     recalculate_project_status(db_session, project.id)
-    assert get_project_by_id(db_session, project.id).status == ProjectStatus.IN_PROGRESS
+    assert get_project_by_id(db_session, project.id).status == Status.IN_PROGRESS

@@ -9,26 +9,12 @@ Classes:
     Media (Base): SqlAlchemy model representing a media record in the database.
 """
 
-from enum import Enum as PyEnum
-
-from sqlalchemy import Column, Enum, Integer, String
+from sqlalchemy import Enum, String
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ina_ground_control.constants.enums import MediaType
 from ina_ground_control.models import Base
-
-
-class MediaType(PyEnum):
-    """
-    Enum representing the different types a media can have.
-
-    Attributes:
-        MP4 (str): The media is a mp4 file.
-        HLD (str): The project is a hls file.
-    """
-
-    MP4 = "mp4"
-    HLS = "hls"
 
 
 class Media(Base):
@@ -36,20 +22,19 @@ class Media(Base):
     Represents a media record in the database.
 
     Attributes:
-        id (Integer): The unique identifier of the media (Primary Key).
-        url (String): The url of the media.
-        type (enumerate): the type of the media.
-        player_parameters (JSON): Configuration options for the media player.
-        details (JSON): Additional metadata or details about the media.
-        tasks (relationship): Relationship to the Task model representing tasks within the media.
-
+        id (Mapped[int]): The unique identifier of the media (Primary Key).
+        url (Mapped[str]): The URL of the media.
+        type (Mapped[MediaType]): The type of the media.
+        player_parameters (Mapped[JSON]): Configuration options for the media player.
+        details (Mapped[JSON]): Additional metadata or details about the media.
+        tasks (Mapped[Relationship]): Relationship to the Task model representing tasks within the media.
     """
 
     __tablename__ = "media"
 
-    id = Column(Integer, primary_key=True)
-    url = Column(String, nullable=False)
-    type = Column(Enum(MediaType), nullable=False)
-    player_parameters = Column(JSON, nullable=True)
-    details = Column(JSON, nullable=True)
-    tasks = relationship("Task", backref="media", cascade="all")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    url: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[MediaType] = mapped_column(Enum(MediaType), nullable=False)
+    player_parameters: Mapped[JSON | None] = mapped_column(JSON, nullable=True)
+    details: Mapped[JSON | None] = mapped_column(JSON, nullable=True)
+    tasks: Mapped[list["Task"]] = relationship("Task", backref="media", cascade="all")
