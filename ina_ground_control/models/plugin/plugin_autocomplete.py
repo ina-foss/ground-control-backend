@@ -21,6 +21,7 @@ class PluginConfigAutoComplete(PluginConfigBase):
         response_id_key (str): JSONPath to extract the result ID from the response.
         response_ext_id_key (str): JSONPath to extract the external ID from the response.
         response_label_key (str): JSONPath to extract the label from the response.
+        response_tag_label_key (str): JSONPath to extract the tag label from the response.
         response_image_key (str): JSONPath to extract the image URL.
         response_description_key (str): JSONPath to extract a textual description.
     """
@@ -29,6 +30,7 @@ class PluginConfigAutoComplete(PluginConfigBase):
     response_id_key: Optional[str] = None
     response_ext_id_key: Optional[str] = None
     response_label_key: Optional[str] = None
+    response_tag_label_key: Optional[str] = None
     response_image_key: Optional[str] = None
     response_description_key: Optional[str] = None
     response_categories_key: Optional[str] = None

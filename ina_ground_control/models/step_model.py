@@ -1,3 +1,4 @@
+# pylint: disable=unsubscriptable-object
 """
 Define the SqlAlchemy models and enums for the project management application.
 

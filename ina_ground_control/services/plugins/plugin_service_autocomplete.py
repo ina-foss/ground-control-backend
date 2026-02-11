@@ -285,6 +285,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         id_expr = jsonpath_parse(self.config.response_id_key)
         ext_id_expr = jsonpath_parse(self.config.response_ext_id_key)
         label_expr = jsonpath_parse(self.config.response_label_key)
+        tag_label_expr = jsonpath_parse(self.config.response_tag_label_key)
         image_expr = (
             jsonpath_parse(self.config.response_image_key)
             if self.config.response_image_key
@@ -310,6 +311,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "ids": id_expr.find(data),
             "ext_ids": ext_id_expr.find(data),
             "labels": label_expr.find(data),
+            "tag_labels": tag_label_expr.find(data),
             "images": image_expr.find(data) if image_expr else [],
             "descriptions": description_expr.find(data) if description_expr else [],
             "categories": categories_expr.find(data) if categories_expr else [],
@@ -331,6 +333,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         ids = extracted_data["ids"]
         ext_ids = extracted_data["ext_ids"]
         labels = extracted_data["labels"]
+        tag_labels = extracted_data["tag_labels"]
         images = extracted_data["images"]
         descriptions = extracted_data["descriptions"]
         categories = extracted_data["categories"]
@@ -346,6 +349,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                         ext_ids[i].value if i < len(ext_ids) and ext_ids[i] else None
                     ),
                     label=labels[i].value if i < len(labels) and labels[i] else None,
+                    tag_label=(
+                        tag_labels[i].value
+                        if i < len(tag_labels) and tag_labels[i]
+                        else None
+                    ),
                     image=images[i].value if i < len(images) and images[i] else None,
                     description=(
                         descriptions[i].value
@@ -477,6 +485,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         label_expr = self._safe_jsonpath_parse(
             self.config.response_label_key, "response_label_key"
         )
+        tag_label_expr = self._safe_jsonpath_parse(
+            self.config.response_tag_label_key, "response_tag_label_key"
+        )
         image_expr = self._safe_jsonpath_parse(
             self.config.response_image_key, "response_image_key"
         )
@@ -508,6 +519,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "id_expr": id_expr,
             "ext_id_expr": ext_id_expr,
             "label_expr": label_expr,
+            "tag_label_expr": tag_label_expr,
             "image_expr": image_expr,
             "description_expr": description_expr,
             "categories_expr": categories_expr,
@@ -538,6 +550,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "labels": (
                 expressions["label_expr"].find(data)
                 if expressions["label_expr"]
+                else []
+            ),
+            "tag_labels": (
+                expressions["tag_label_expr"].find(data)
+                if expressions["tag_label_expr"]
                 else []
             ),
             "images": (
@@ -594,6 +611,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             id=self._safe_extract_value(extracted_data["ids"], index),
             ext_id=self._safe_extract_value(extracted_data["ext_ids"], index),
             label=self._safe_extract_value(extracted_data["labels"], index),
+            tag_label=self._safe_extract_value(extracted_data["tag_labels"], index),
             image=self._safe_extract_value(extracted_data["images"], index),
             description=self._safe_extract_value(extracted_data["descriptions"], index),
             categories=self._safe_extract_value(extracted_data["categories"], index),
