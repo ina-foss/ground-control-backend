@@ -17,15 +17,11 @@ from ina_ground_control.models.annotation_task_association import (
     InOutEnum,
 )
 from ina_ground_control.models.task_model import Task
-from ina_ground_control.schemas.annotation_schemas import (
-    AnnotationFullCreate,
-)
+from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 from ina_ground_control.schemas.step_schemas import StepCreate
 from ina_ground_control.schemas.task_schemas import TaskCreateDto
-from ina_ground_control.services.annotation_service import (
-    create_annotation_crud,
-)
+from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.project_service import (
     create_project_crud,
     get_project_by_id,

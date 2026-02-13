@@ -53,7 +53,7 @@ class Project(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
     status: Mapped[Status] = mapped_column(Enum(Status), nullable=False)
-    archived_status: Mapped[Status | None] = mapped_column(
+    previous_status: Mapped[Status | None] = mapped_column(
         Enum(Status), nullable=True, default=None
     )
     distribution_mode: Mapped[DistributionMode | None] = mapped_column(

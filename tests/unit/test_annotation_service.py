@@ -64,7 +64,7 @@ def test_skip_annotation_crud_not_found(db_session: Session):
     Should raise exception if annotation not found
     """
     with pytest.raises(GroundControlException):
-        skip_annotation_crud(db_session, 9999)
+        skip_annotation_crud(db_session, 9999, "admin@localhost.com")
 
 
 # --------------------------------------------------------------------

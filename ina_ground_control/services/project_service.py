@@ -511,19 +511,19 @@ def archive_project_service(db: Session, project_id: int):
         logger.info("Archiving project %d...", project_id)
 
         # Archive project
-        project.archived_status = project.status
+        project.previous_status = project.status
         project.status = Status.ARCHIVED
 
         for step in project.steps:
-            step.archived_status = step.status
+            step.previous_status = step.status
             step.status = Status.ARCHIVED
 
             for task in step.tasks:
-                task.archived_status = task.status
+                task.previous_status = task.status
                 task.status = Status.ARCHIVED
 
                 for annotation in getattr(task, "annotations", []):
-                    annotation.archived_status = annotation.annotation_status
+                    annotation.previous_status = annotation.annotation_status
                     annotation.annotation_status = Status.ARCHIVED
 
         db.commit()
@@ -546,7 +546,7 @@ def archive_project_service(db: Session, project_id: int):
 def unarchive_project_service(db: Session, project_id: int):
     """
     Unarchive a previously archived project and all its related entities.
-    Reverts their statuses from 'ARCHIVED' back to the saved archived_status values.
+    Reverts their statuses from 'ARCHIVED' back to the saved previous_status values.
 
     :param db: SQLAlchemy session object.
     :param project_id: ID of the project to restore.
@@ -571,20 +571,20 @@ def unarchive_project_service(db: Session, project_id: int):
 
         logger.info("Restoring archived project %d...", project_id)
 
-        project.status = project.archived_status
-        project.archived_status = None
+        project.status = project.previous_status
+        project.previous_status = None
 
         for step in project.steps:
-            step.status = step.archived_status
-            step.archived_status = None
+            step.status = step.previous_status
+            step.previous_status = None
 
             for task in step.tasks:
-                task.status = task.archived_status
-                task.archived_status = None
+                task.status = task.previous_status
+                task.previous_status = None
 
                 for annotation in getattr(task, "annotations", []):
-                    annotation.annotation_status = annotation.archived_status
-                    annotation.archived_status = None
+                    annotation.annotation_status = annotation.previous_status
+                    annotation.previous_status = None
 
         db.commit()
         db.refresh(project)

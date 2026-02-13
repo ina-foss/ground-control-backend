@@ -120,11 +120,15 @@ def update_annotation_result(
 
 
 @router.patch("/annotation/skip/{annotation_id}", response_model=AnnotationDto)
-def skip_annotation(annotation_id: int, db: Session = Depends(get_db)) -> AnnotationDto:
+def skip_annotation(
+    request: Request, annotation_id: int, db: Session = Depends(get_db)
+) -> AnnotationDto:
     """
     skip an annotation
     """
-    annotation = skip_annotation_crud(db, annotation_id)
+    user = request.scope.get("user", {})
+    email = user.email
+    annotation = skip_annotation_crud(db, annotation_id, email)
     recalculate_task_status(db, annotation.task[0].id)
     return annotation
 

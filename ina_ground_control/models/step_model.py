@@ -65,7 +65,7 @@ class Step(Base):
         Enum(AnnotationType), nullable=False
     )
     status: Mapped[Status] = mapped_column(Enum(Status), nullable=False)
-    archived_status: Mapped[Status | None] = mapped_column(Enum(Status), default=None)
+    previous_status: Mapped[Status | None] = mapped_column(Enum(Status), default=None)
     order: Mapped[int | None] = mapped_column(Integer)
     pinned_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())

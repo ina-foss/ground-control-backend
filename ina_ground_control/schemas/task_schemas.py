@@ -23,6 +23,7 @@ class TaskBaseDto(BaseModel):
     instruction: Optional[str] = ""
     data_type: TaskDataType
     status: Status
+    previous_status: Optional[Status] = None
     lead_time: Optional[int]
     step_id: int
     media_id: int

@@ -61,7 +61,7 @@ class Task(Base):
     instruction: Mapped[str | None] = mapped_column(String, default="")
     data_type: Mapped[TaskDataType | None] = mapped_column(Enum(TaskDataType))
     status: Mapped[Status | None] = mapped_column(Enum(Status))
-    archived_status: Mapped[Status | None] = mapped_column(Enum(Status), default=None)
+    previous_status: Mapped[Status | None] = mapped_column(Enum(Status), default=None)
     documentation: Mapped[str | None] = mapped_column(String)
     lead_time: Mapped[int | None] = mapped_column(Integer)
     expiration_date: Mapped[datetime | None] = mapped_column(DateTime, default=None)

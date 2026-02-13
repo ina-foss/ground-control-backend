@@ -30,6 +30,7 @@ class AnnotationWithIdDto(AnnotationBase):
 
     id: int
     created_at: Optional[datetime]
+    skipped_by: Optional[str]
 
 
 class AnnotationCreate(AnnotationBase):

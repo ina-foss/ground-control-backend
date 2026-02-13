@@ -162,7 +162,9 @@ def udpate_annotation_result_crud(
     return db_annotation
 
 
-def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
+def skip_annotation_crud(
+    db: Session, annotation_id: int, skipped_by: str
+) -> Annotation:
     """
     If the project configuration authorizes it, change the status of the annotation object to `skipped`.
 
@@ -210,11 +212,15 @@ def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
                 ErrorCode.GENERIC_CLIENT_ERROR,
                 details="Skipping annotation is not allowed because 'allow_skip' is set to False in the project configuration",
             )
-
-        db_annotation.annotation_status = Status.SKIPPED
+        task.previous_status = task.status
         task.status = Status.SKIPPED
-        db_annotation.updated_at = func.now()
-
+        task.updated_at = func.now()
+        if task.annotations:
+            for annotation in task.annotations:
+                annotation.previous_status = annotation.annotation_status
+                annotation.annotation_status = Status.SKIPPED
+                db_annotation.skipped_by = skipped_by
+                annotation.updated_at = func.now()
         db.commit()
         db.refresh(db_annotation)
 

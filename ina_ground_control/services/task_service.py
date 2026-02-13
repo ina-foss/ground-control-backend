@@ -129,14 +129,44 @@ def update_task_status_crud(db: Session, task_id: int, status: Status) -> Task:
             id=task_id,
         )
 
-    if task.status == Status.SKIPPED:
-        if task.annotations:
-            for annotation in task.annotations:
-                db.delete(annotation)
-            db.commit()
-
     task.status = status
     task.updated_at = func.now()
+    db.commit()
+    db.refresh(task)
+    recalculate_step_status(db, task.step_id)
+    return task
+
+
+def activate_task_crud(db: Session, task_id: int) -> Task:
+    """
+    Activate a task.
+    - DRAFT      -> PENDING
+    - SKIPPED    -> restore to previous_status (fallback to PENDING)
+      and restore annotations to their previous status
+    """
+    task = get_task_by_id(db, task_id)
+    if not task:
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            resource="Task",
+            id=task_id,
+        )
+
+    if task.status == Status.DRAFT:
+        task.status = Status.PENDING
+        task.updated_at = func.now()
+
+    elif task.status == Status.SKIPPED:
+        for annotation in task.annotations or []:
+            annotation.annotation_status = annotation.previous_status
+            annotation.previous_status = None
+            annotation.skipped_by = None
+            annotation.updated_at = func.now()
+
+        task.status = task.previous_status
+        task.previous_status = None
+        task.updated_at = func.now()
+
     db.commit()
     db.refresh(task)
     recalculate_step_status(db, task.step_id)

@@ -30,7 +30,7 @@ class Annotation(Base):
         user_email (Mapped[str]): The email address of the author of the annotation.
         result (Mapped[Optional[dict]]): The result of the annotation.
         annotation_status (Mapped[Status]): The status of the annotation.
-        archived_status (Mapped[Optional[Status]]): The archived status of the annotation.
+        previous_status (Mapped[Optional[Status]]): The archived status of the annotation.
         version (Mapped[int]): The version of the annotation.
         created_at (Mapped[DateTime]): The timestamp when the annotation was created.
         updated_at (Mapped[Optional[DateTime]]): The timestamp when the annotation was last updated.
@@ -45,9 +45,10 @@ class Annotation(Base):
     )
     result: Mapped[Optional[dict]] = mapped_column(JSON)
     annotation_status: Mapped[Status] = mapped_column(Enum(Status))
-    archived_status: Mapped[Optional[Status]] = mapped_column(
+    previous_status: Mapped[Optional[Status]] = mapped_column(
         Enum(Status), nullable=True, default=None
     )
+    skipped_by: Mapped[str] = mapped_column(String, nullable=True, default=None)
     version: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[Optional[DateTime]] = mapped_column(DateTime, nullable=True)

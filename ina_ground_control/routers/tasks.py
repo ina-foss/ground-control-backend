@@ -44,6 +44,7 @@ from ina_ground_control.schemas.task_schemas import (
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import (
+    activate_task_crud,
     create_task_crud,
     delete_task_crud,
     get_task_by_id,
@@ -212,4 +213,10 @@ def delete_task(
 @router.post("/task/{task_id}/status", response_model=TaskListDto)
 def update_task_status(task_id: int, status: Status, db: Session = Depends(get_db)):
     task = update_task_status_crud(db, task_id, status)
+    return task
+
+
+@router.post("/task/{task_id}/activate", response_model=TaskListDto)
+def activate_task(task_id: int, db: Session = Depends(get_db)):
+    task = activate_task_crud(db, task_id)
     return task

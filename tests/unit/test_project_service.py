@@ -286,17 +286,17 @@ def test_archive_project_service_success(db_session: SQLAlchemySession):
     archived_project = archive_project_service(db_session, project.id)
 
     assert archived_project.status == Status.ARCHIVED
-    assert archived_project.archived_status == Status.DRAFT
+    assert archived_project.previous_status == Status.DRAFT
 
     for step in archived_project.steps:
         assert step.status == Status.ARCHIVED
-        assert step.archived_status == Status.DRAFT
+        assert step.previous_status == Status.DRAFT
         for task in step.tasks:
             assert task.status == Status.ARCHIVED
-            assert task.archived_status == Status.DRAFT
+            assert task.previous_status == Status.DRAFT
             for annotation in task.annotations:
                 assert annotation.status == Status.ARCHIVED
-                assert annotation.archived_status == Status.DRAFT
+                assert annotation.previous_status == Status.DRAFT
 
     refreshed = get_project_by_id(db_session, project.id)
     assert refreshed.status == Status.ARCHIVED
@@ -352,26 +352,26 @@ def test_unarchive_project_service_success(db_session: SQLAlchemySession):
     archived_project = archive_project_service(db_session, project.id)
 
     assert archived_project.status == Status.ARCHIVED
-    assert archived_project.archived_status == Status.DRAFT
+    assert archived_project.previous_status == Status.DRAFT
 
     unarchived_project = unarchive_project_service(db_session, project.id)
 
     assert unarchived_project.status == Status.DRAFT
-    assert unarchived_project.archived_status is None
+    assert unarchived_project.previous_status is None
 
     for step in unarchived_project.steps:
         assert step.status == Status.DRAFT
-        assert step.archived_status is None
+        assert step.previous_status is None
         for task in step.tasks:
             assert task.status == Status.DRAFT
-            assert task.archived_status is None
+            assert task.previous_status is None
             for annotation in task.annotations:
                 assert annotation.annotation_status == Status.DRAFT
-                assert annotation.archived_status is None
+                assert annotation.previous_status is None
 
     refreshed = get_project_by_id(db_session, project.id)
     assert refreshed.status == Status.DRAFT
-    assert refreshed.archived_status is None
+    assert refreshed.previous_status is None
 
 
 def test_unarchive_project_not_found(db_session: SQLAlchemySession):
