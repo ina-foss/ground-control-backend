@@ -56,6 +56,7 @@ class Action(str, Enum):
     GET_ANNOTATIONS_BY_ID = "get_annotations_by_id"
     UPDATE_ANNOTATION_RESULT = "update_annotation_result"
     FINISH_ANNOTATION = "finish_annotation"
+    REVIEW_ANNOTATION = "review"
     # Media
     # Plugin
     SEARCH_PLUGINS = "search_plugins"
@@ -103,6 +104,8 @@ class Permission(str, Enum):
     :type UPDATE_ANNOTATION_RESULT: str
     :ivar FINISH_ANNOTATION: Permission string to finish an annotation.
     :type FINISH_ANNOTATION: str
+    :ivar REVIEW_ANNOTATION: Permission string to view someone else's annotation.
+    :type REVIEW_ANNOTATION: str
     :ivar READ_MEDIA: Permission string to read media.
     :type READ_MEDIA: str
     :ivar CREATE_MEDIA: Permission string to create media.
@@ -197,6 +200,9 @@ class Permission(str, Enum):
     UPDATE_ANNOTATION_RESULT = f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.UPDATE_ANNOTATION_RESULT.value}"
     FINISH_ANNOTATION = (
         f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.FINISH_ANNOTATION.value}"
+    )
+    REVIEW_ANNOTATION = (
+        f"{GROUND_CONTROL}:{Resource.ANNOTATION.value}:{Action.REVIEW_ANNOTATION.value}"
     )
     # Media
     READ_MEDIA = f"{GROUND_CONTROL}:{Resource.MEDIA.value}:{Action.READ.value}"

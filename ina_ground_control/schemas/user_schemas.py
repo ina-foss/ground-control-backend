@@ -7,6 +7,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
+from pydantic import ConfigDict
+
 from .annotation_schemas import AnnotationCreate
 from .project_schemas import ProjectDetailDto
 from .task_schemas import TaskListDto
@@ -22,8 +24,7 @@ class UserDto(UserBaseDto):
     annotations: list[AnnotationCreate] = []
     created_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserWithTasksDto(UserDto):

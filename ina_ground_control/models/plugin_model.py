@@ -14,62 +14,17 @@ Features:
 - The `Plugin` model ensures that the `name` field is in lowercase and does not contain
 spaces using database-level constraints.
 - Additional validation for the `configData` JSON field can be added to ensure it includes
- required keys like `type` (string) and
-  `datasource` (valid URL), either in the application logic or as part of database constraints.
+required keys like `type` (string) and `datasource` (valid URL), either in the application logic or as part of database constraints.
 """
 
+# pylint: disable=unsubscriptable-object
 import re
-from enum import Enum as PyEnum
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    CheckConstraint,
-    Column,
-    Enum,
-    ForeignKey,
-    Integer,
-    String,
-)
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import JSON, Boolean, CheckConstraint, Enum, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
+from ina_ground_control.constants.enums import DisplayZone, TypePlugin
 from ina_ground_control.models import Base
-
-
-class TypePlugin(str, PyEnum):
-    """
-        Enum representing the different plugin types.
-
-        Values:
-            LABEL: Label plugin
-            AUTOCOMPLETE: List with autocomplete functionality.
-            LIST_ITEMS: Displays tags and list of items.
-            SUGGESTION_LIST: Interactive suggestion block.
-    .       INPUT_LABEL: Simple text input field.
-    """
-
-    LABEL = "label"  # Représente un plugin label
-    AUTOCOMPLETE = "autocomplete"  # Présente une liste avec auto-complétion
-    LIST_ITEMS = "listitems"  # Affiche des tags et une liste d'éléments
-    SUGGESTION_LIST = "suggestionlist"  # Bloc de suggestions interactives
-    INPUT_LABEL = "inputlabel"  # Affiche un champ de saisie de texte simple
-
-
-class DisplayZone(str, PyEnum):
-    """
-    Enum representing the different display zones available for a plugin.
-
-    Attributes:
-        BLOC (str): Represents a standalone block zone.
-        SPAN_MODAL_LEFT (str): Represents a modal that spans the left side.
-        SPAN_MODAL_RIGHT (str): Represents a modal that spans the right side.
-        GROUP_MODAL (str): Represents a grouped modal zone for multiple plugins.
-    """
-
-    BLOC = "bloc"
-    SPAN_MODAL_LEFT = "span_modal_left"
-    SPAN_MODAL_RIGHT = "span_modal_right"
-    GROUP_MODAL = "group_modal"
 
 
 class Plugin(Base):
@@ -77,12 +32,12 @@ class Plugin(Base):
     Represents a plugin configuration record in the database.
 
     Attributes:
-        id (Integer): The unique identifier (Primary Key).
-        name (String): The name of the configuration. Must be in lowercase and must not contain spaces.
-        type (Enum): The type of plugin configuration.
-        step_id (Integer): The foreign key linking to the step table.
-        configData (JSON): Additional configuration data.
-        display_config (JSON): Additional configuration for display zone .
+        id (Mapped[int]): The unique identifier (Primary Key).
+        name (Mapped[str]): The name of the configuration. Must be in lowercase and must not contain spaces.
+        type (Mapped[TypePlugin]): The type of plugin configuration.
+        step_id (Mapped[int]): The foreign key linking to the step table.
+        config_data (Mapped[dict]): Additional configuration data.
+        display_config (Mapped[dict | None]): Additional configuration for the display zone.
     Table constraints:
         - "check_name_lowercase": Ensures the 'name' field is always in lowercase.
         - "check_name_no_spaces": Ensures the 'name' field does not contain spaces.
@@ -90,22 +45,28 @@ class Plugin(Base):
 
     __tablename__ = "plugin"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    data_categories = Column(String)
-    type = Column(Enum(TypePlugin))
-    display_zone = Column(Enum(DisplayZone))
-    step_id = Column(Integer, ForeignKey("step.id"))
-    available_plugins = Column(JSON, nullable=True)
-    config_data = Column(JSON)
-    display_config = Column(JSON, nullable=True)
-    enable_search = Column(Boolean, default=False, nullable=True)
-    data_property = Column(String, nullable=True)
-    parent_id = Column(Integer, ForeignKey("plugin.id"), nullable=True)
-    parent = relationship("Plugin", back_populates="children", remote_side=[id])
-    children = relationship(
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    data_categories: Mapped[str] = mapped_column(String)
+    type: Mapped[TypePlugin] = mapped_column(Enum(TypePlugin))
+    display_zone: Mapped[DisplayZone] = mapped_column(Enum(DisplayZone))
+    step_id: Mapped[int] = mapped_column(ForeignKey("step.id"))
+    available_plugins: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    config_data: Mapped[dict] = mapped_column(JSON)
+    display_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    enable_search: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
+    data_property: Mapped[str | None] = mapped_column(String, nullable=True)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("plugin.id"), nullable=True
+    )
+
+    parent: Mapped["Plugin"] = relationship(
+        "Plugin", back_populates="children", remote_side="Plugin.id"
+    )
+    children: Mapped[list["Plugin"]] = relationship(
         "Plugin", back_populates="parent", cascade="all, delete-orphan", lazy="joined"
     )
+
     __table_args__ = (
         CheckConstraint("name = LOWER(name)", name="check_name_lowercase"),
         CheckConstraint("name NOT LIKE '% %'", name="check_name_no_spaces"),

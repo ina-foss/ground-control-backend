@@ -64,13 +64,13 @@ the [Configuration section in README.md](../README.md#configuration) for availab
 Start the development stack:
 
 ```bash
-  docker compose -f .dev/services.yml up -d
+  docker compose -f .dev/app.yml up -d
 ```
 
 Stop the development stack:
 
 ```bash
-  docker compose -f .dev/services.yml down
+  docker compose -f .dev/app.yml down
 ```
 
 ### Running the Application

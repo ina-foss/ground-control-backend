@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 
 from ina_ground_control import logger
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.step_model import Step, StepStatus
+from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepCreate
 
 
@@ -104,7 +105,7 @@ def get_steps(db: Session, skip: int = 0, limit: int = 100):
 
 
 def finish_step_crud(db: Session, step: Step) -> Step:
-    step.status = StepStatus.DONE
+    step.status = Status.DONE
     step.validated_at = func.now()
     step.updated_at = func.now()
     db.commit()
@@ -112,7 +113,7 @@ def finish_step_crud(db: Session, step: Step) -> Step:
     return step
 
 
-def update_step_status_crud(db: Session, step: Step, status: StepStatus) -> Step:
+def update_step_status_crud(db: Session, step: Step, status: Status) -> Step:
     step.status = status
     step.updated_at = func.now()
     db.commit()

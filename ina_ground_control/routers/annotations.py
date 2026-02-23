@@ -11,9 +11,10 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
+from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.annotation_schemas import (
     AnnotationDto,
@@ -91,7 +92,7 @@ def get_annotation_by_task_id(
     email = user.email
     roles = user.roles
 
-    if Permission.ADMIN_PROJECT.value in roles or user_email == "":
+    if Permission.REVIEW_ANNOTATION.value in roles or user_email == "":
         annotations = get_annotations_by_task_id_crud(
             db, task_id=task_id, direction=direction, user_email=user_email
         )
@@ -119,11 +120,15 @@ def update_annotation_result(
 
 
 @router.patch("/annotation/skip/{annotation_id}", response_model=AnnotationDto)
-def skip_annotation(annotation_id: int, db: Session = Depends(get_db)) -> AnnotationDto:
+def skip_annotation(
+    request: Request, annotation_id: int, db: Session = Depends(get_db)
+) -> AnnotationDto:
     """
     skip an annotation
     """
-    annotation = skip_annotation_crud(db, annotation_id)
+    user = request.scope.get("user", {})
+    email = user.email
+    annotation = skip_annotation_crud(db, annotation_id, email)
     recalculate_task_status(db, annotation.task[0].id)
     return annotation
 
@@ -148,7 +153,7 @@ def finish_annotation(
 @router.get("/annotations", response_model=list[AnnotationDto])
 def get_all_annotations(
     user_email: str = Query(None, description="user_email"),
-    status: AnnotationStatus = Query(None, description="annotation_status"),
+    status: Status = Query(None, description="annotation_status"),
     project_id: int = Query(None, description="project id"),
     step_id: int = Query(None, description="step id"),
     start_created_at: datetime = Query(None, description="start create date"),

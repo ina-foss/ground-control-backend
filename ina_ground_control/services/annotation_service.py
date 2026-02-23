@@ -17,14 +17,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 
 from ina_ground_control import logger
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.annotation_model import Annotation, AnnotationStatus
+from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import (
     AnnotationTask,
     InOutEnum,
 )
 from ina_ground_control.models.step_model import Step
-from ina_ground_control.models.task_model import Task, TaskStatus
+from ina_ground_control.models.task_model import Task
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 
 ERROR_MESSAGE_FAILED_ANNOTATION = "Failed to retrieve annotation with id: %s"
@@ -107,7 +108,7 @@ def get_annotations_by_task_id_crud(
     task_id: int,
     user_email: str | None,
     direction: InOutEnum,
-    status: AnnotationStatus | list[AnnotationStatus] | None = None,
+    status: Status | list[Status] | None = None,
 ) -> list[Annotation]:
     """
     Return all the annotation objects whose attribute "task_id" matches the argument.
@@ -161,7 +162,9 @@ def udpate_annotation_result_crud(
     return db_annotation
 
 
-def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
+def skip_annotation_crud(
+    db: Session, annotation_id: int, skipped_by: str
+) -> Annotation:
     """
     If the project configuration authorizes it, change the status of the annotation object to `skipped`.
 
@@ -191,7 +194,7 @@ def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
                 id=annotation_id,
             )
 
-        if db_annotation.annotation_status == AnnotationStatus.SKIPPED:
+        if db_annotation.annotation_status == Status.SKIPPED:
             logger.info("Annotation %d is already skipped", annotation_id)
             raise GroundControlException(
                 ErrorCode.GENERIC_OPERATION_FAILED,
@@ -209,11 +212,15 @@ def skip_annotation_crud(db: Session, annotation_id: int) -> Annotation:
                 ErrorCode.GENERIC_CLIENT_ERROR,
                 details="Skipping annotation is not allowed because 'allow_skip' is set to False in the project configuration",
             )
-
-        db_annotation.annotation_status = AnnotationStatus.SKIPPED
-        task.status = TaskStatus.SKIPPED
-        db_annotation.updated_at = func.now()
-
+        task.previous_status = task.status
+        task.status = Status.SKIPPED
+        task.updated_at = func.now()
+        if task.annotations:
+            for annotation in task.annotations:
+                annotation.previous_status = annotation.annotation_status
+                annotation.annotation_status = Status.SKIPPED
+                db_annotation.skipped_by = skipped_by
+                annotation.updated_at = func.now()
         db.commit()
         db.refresh(db_annotation)
 
@@ -239,7 +246,7 @@ def finish_annotation_crud(
 ) -> Annotation:
     db_annotation = get_annotations_by_id_crud(db, annotation_id)
     db_annotation.result = result
-    db_annotation.annotation_status = AnnotationStatus.DONE
+    db_annotation.annotation_status = Status.DONE
     db_annotation.validated_at = func.now()
     db_annotation.updated_at = func.now()
     db.commit()
@@ -250,7 +257,7 @@ def finish_annotation_crud(
 def get_all_annotations_crud(
     db: Session,
     user_email: Optional[str] = None,
-    status: Optional[AnnotationStatus] = None,
+    status: Optional[Status] = None,
     project_id: Optional[int] = None,
     step_id: Optional[int] = None,
     start_created_at: Optional[datetime] = None,

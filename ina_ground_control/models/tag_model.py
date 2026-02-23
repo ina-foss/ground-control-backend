@@ -9,7 +9,8 @@ Classes:
     Tag (Base): SqlAlchemy model representing a tag record in the database.
 """
 
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from ina_ground_control.models import Base
 
@@ -19,14 +20,14 @@ class Tag(Base):
     Represents a tag record in the database.
 
     Attributes:
-        key (String): The unique identifier of the media (Primary Key).
-        value (String): The value of the tag.
-        projects (relationship): Relationship to the Project model representing projects within the tag.
+        key (Mapped[str]): The unique identifier of the media (Primary Key).
+        value (Mapped[str]): The value of the tag.
+        project_id (Mapped[int | None]): ForeignKey relationship to the Project model.
 
     """
 
     __tablename__ = "tag"
 
-    key = Column(String, primary_key=True)
-    value = Column(String)
-    project_id = Column(Integer, ForeignKey("project.id"))
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[str] = mapped_column(String)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("project.id"))

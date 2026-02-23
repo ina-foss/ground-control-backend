@@ -285,6 +285,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         id_expr = jsonpath_parse(self.config.response_id_key)
         ext_id_expr = jsonpath_parse(self.config.response_ext_id_key)
         label_expr = jsonpath_parse(self.config.response_label_key)
+        tag_label_expr = jsonpath_parse(self.config.response_tag_label_key)
         image_expr = (
             jsonpath_parse(self.config.response_image_key)
             if self.config.response_image_key
@@ -300,14 +301,21 @@ class PluginServiceAutoComplete(PluginServiceBase):
             if self.config.response_categories_key
             else None
         )
+        editable_expr = (
+            jsonpath_parse(self.config.response_editable_key)
+            if self.config.response_editable_key
+            else None
+        )
 
         return {
             "ids": id_expr.find(data),
             "ext_ids": ext_id_expr.find(data),
             "labels": label_expr.find(data),
+            "tag_labels": tag_label_expr.find(data),
             "images": image_expr.find(data) if image_expr else [],
             "descriptions": description_expr.find(data) if description_expr else [],
             "categories": categories_expr.find(data) if categories_expr else [],
+            "editable": editable_expr.find(data) if editable_expr else [],
         }
 
     def _transform_to_dto_list(
@@ -325,6 +333,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         ids = extracted_data["ids"]
         ext_ids = extracted_data["ext_ids"]
         labels = extracted_data["labels"]
+        tag_labels = extracted_data["tag_labels"]
         images = extracted_data["images"]
         descriptions = extracted_data["descriptions"]
         categories = extracted_data["categories"]
@@ -340,6 +349,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                         ext_ids[i].value if i < len(ext_ids) and ext_ids[i] else None
                     ),
                     label=labels[i].value if i < len(labels) and labels[i] else None,
+                    tag_label=(
+                        tag_labels[i].value
+                        if i < len(tag_labels) and tag_labels[i]
+                        else None
+                    ),
                     image=images[i].value if i < len(images) and images[i] else None,
                     description=(
                         descriptions[i].value
@@ -471,6 +485,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         label_expr = self._safe_jsonpath_parse(
             self.config.response_label_key, "response_label_key"
         )
+        tag_label_expr = self._safe_jsonpath_parse(
+            self.config.response_tag_label_key, "response_tag_label_key"
+        )
         image_expr = self._safe_jsonpath_parse(
             self.config.response_image_key, "response_image_key"
         )
@@ -483,6 +500,15 @@ class PluginServiceAutoComplete(PluginServiceBase):
         group_expr = self._safe_jsonpath_parse(
             self.config.response_group_key, "response_group_key"
         )
+        editable_expr = self._safe_jsonpath_parse(
+            self.config.response_editable_key, "response_editable_key"
+        )
+        copyable_expr = self._safe_jsonpath_parse(
+            self.config.response_copyable_key, "response_copyable_key"
+        )
+        tooltip_expr = self._safe_jsonpath_parse(
+            self.config.response_tooltip_key, "response_tooltip_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -493,10 +519,14 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "id_expr": id_expr,
             "ext_id_expr": ext_id_expr,
             "label_expr": label_expr,
+            "tag_label_expr": tag_label_expr,
             "image_expr": image_expr,
             "description_expr": description_expr,
             "categories_expr": categories_expr,
             "group_expr": group_expr,
+            "editable_expr": editable_expr,
+            "copyable_expr": copyable_expr,
+            "tooltip_expr": tooltip_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -522,6 +552,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["label_expr"]
                 else []
             ),
+            "tag_labels": (
+                expressions["tag_label_expr"].find(data)
+                if expressions["tag_label_expr"]
+                else []
+            ),
             "images": (
                 expressions["image_expr"].find(data)
                 if expressions["image_expr"]
@@ -540,6 +575,21 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "group": (
                 expressions["group_expr"].find(data)
                 if expressions["group_expr"]
+                else []
+            ),
+            "editable": (
+                expressions["editable_expr"].find(data)
+                if expressions["editable_expr"]
+                else []
+            ),
+            "copyable": (
+                expressions["copyable_expr"].find(data)
+                if expressions["copyable_expr"]
+                else []
+            ),
+            "tooltip": (
+                expressions["tooltip_expr"].find(data)
+                if expressions["tooltip_expr"]
                 else []
             ),
         }
@@ -561,10 +611,14 @@ class PluginServiceAutoComplete(PluginServiceBase):
             id=self._safe_extract_value(extracted_data["ids"], index),
             ext_id=self._safe_extract_value(extracted_data["ext_ids"], index),
             label=self._safe_extract_value(extracted_data["labels"], index),
+            tag_label=self._safe_extract_value(extracted_data["tag_labels"], index),
             image=self._safe_extract_value(extracted_data["images"], index),
             description=self._safe_extract_value(extracted_data["descriptions"], index),
             categories=self._safe_extract_value(extracted_data["categories"], index),
             group=self._safe_extract_value(extracted_data["group"], index),
+            editable=self._safe_extract_value(extracted_data["editable"], index),
+            copyable=self._safe_extract_value(extracted_data["copyable"], index),
+            tooltip=self._safe_extract_value(extracted_data["tooltip"], index),
         )
 
     def _build_transformed_data(

@@ -17,6 +17,8 @@ Dependencies:
     - Business logic for project operations in `src.services.project_service`.
 """
 
+import time
+
 from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
@@ -33,21 +35,22 @@ from ina_ground_control.schemas.project_schemas import (
     ProjectBaseDto,
     ProjectDetailDto,
     ProjectListDto,
+    ProjectListDtoSummary,
     ProjectParametersResponse,
     ProjectWithIdDto,
 )
-from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 from ina_ground_control.services.project_service import (
     archive_project_service,
     create_project_crud,
     delete_project_crud,
     finish_project_service,
-    get_progressed_tasks_for_project_service,
+    get_progressed_tasks_count_for_project_service,
     get_project_by_id,
     get_project_by_id_based_on_user_role,
     get_project_parameters,
     get_projects,
     get_projects_count,
+    get_projects_summary,
     unarchive_project_service,
     update_project_crud,
 )
@@ -75,6 +78,42 @@ def read_projects(
 
     response.headers["X-Total-Count"] = str(total_count)
     return projects
+
+
+@router.get(
+    "/projects/summary",
+    response_model=list[ProjectListDtoSummary],
+)
+def read_projects_summary(
+    response: Response,
+    request: Request,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+) -> list[ProjectListDtoSummary]:
+    """Retrieve a list of projects with pagination support (optimized)."""
+    start_total = time.perf_counter()
+
+    # Get total count efficiently with a single COUNT query
+    start = time.perf_counter()
+    total_count = get_projects_count(db)
+    logger.info("get_projects_count took %.3fs", time.perf_counter() - start)
+
+    # Get paginated projects with optimized query
+    start = time.perf_counter()
+    summaries = get_projects_summary(db, request, skip=skip, limit=limit)
+    logger.info("get_projects_summary took %.3fs", time.perf_counter() - start)
+
+    response.headers["X-Total-Count"] = str(total_count)
+
+    start = time.perf_counter()
+    result = [ProjectListDtoSummary(**summary) for summary in summaries]
+    logger.info("Building response took %.3fs", time.perf_counter() - start)
+    logger.info(
+        "Total read_projects_summary took %.3fs", time.perf_counter() - start_total
+    )
+
+    return result
 
 
 @router.post("/project", response_model=ProjectDetailDto)
@@ -190,9 +229,11 @@ def finish_project(
     return project
 
 
-@router.post("/{project_id}/progressed_tasks", response_model=list[TaskWithIdDto])
-def get_progressed_tasks_for_project(project_id: int, db: Session = Depends(get_db)):
-    return get_progressed_tasks_for_project_service(db, project_id)
+@router.post("/{project_id}/progressed_tasks/count", response_model=int)
+def get_progressed_tasks_count_for_project(
+    project_id: int, db: Session = Depends(get_db)
+):
+    return get_progressed_tasks_count_for_project_service(db, project_id)
 
 
 @router.post("/{project_id}/archive", response_model=ProjectWithIdDto)

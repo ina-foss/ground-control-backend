@@ -31,6 +31,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
@@ -38,12 +39,12 @@ from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.task_schemas import (
     TaskBaseDto,
     TaskListDto,
-    TaskStatus,
     TaskWithIdDto,
 )
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import (
+    activate_task_crud,
     create_task_crud,
     delete_task_crud,
     get_task_by_id,
@@ -120,7 +121,7 @@ def task_inject(
 
         # Optionally activate task
         if activate:
-            update_task_status_crud(db, created_task.id, TaskStatus.PENDING)
+            update_task_status_crud(db, created_task.id, Status.PENDING)
 
         # Create Annotation
         annotation.association.task_id = created_task.id
@@ -210,6 +211,12 @@ def delete_task(
 
 
 @router.post("/task/{task_id}/status", response_model=TaskListDto)
-def update_task_status(task_id: int, status: TaskStatus, db: Session = Depends(get_db)):
+def update_task_status(task_id: int, status: Status, db: Session = Depends(get_db)):
     task = update_task_status_crud(db, task_id, status)
+    return task
+
+
+@router.post("/task/{task_id}/activate", response_model=TaskListDto)
+def activate_task(task_id: int, db: Session = Depends(get_db)):
+    task = activate_task_crud(db, task_id)
     return task

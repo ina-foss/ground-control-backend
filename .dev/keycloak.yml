@@ -7,6 +7,7 @@ services:
     volumes:
       - ./realm-config:/opt/keycloak/data/import
       - ./realm-config/keycloak-health-check.sh:/opt/keycloak/health-check.sh
+      - keycloak-data:/opt/keycloak/data
     environment:
       - KC_DB=dev-file
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
@@ -28,3 +29,6 @@ services:
       start_period: 10s
     labels:
       org.springframework.boot.ignore: true
+
+volumes:
+  keycloak-data:

@@ -3,12 +3,9 @@
 import pytest
 from sqlalchemy.orm import Session as SQLAlchemySession
 
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
-from ina_ground_control.models.project_model import ProjectStatus
-from ina_ground_control.models.step_model import StepStatus
-from ina_ground_control.models.task_model import TaskStatus
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
 from ina_ground_control.schemas.step_schemas import StepCreate
@@ -19,7 +16,7 @@ from ina_ground_control.services.project_service import (
     create_project_crud,
     delete_project_crud,
     finish_project_service,
-    get_progressed_tasks_for_project_service,
+    get_progressed_tasks_count_for_project_service,
     get_project_by_id,
     get_projects,
     unarchive_project_service,
@@ -47,7 +44,7 @@ task_data = {
     "instruction": "Test instruction",
     "data": {"key": "value"},
     "data_type": "ldd",
-    "status": TaskStatus.DRAFT,
+    "status": Status.DRAFT,
     "redundancy": 1,
     "lead_time": 1,
     "step_id": 1,
@@ -59,7 +56,7 @@ step_data_1 = {
     "title": "step 1",
     "description": "la premiere step",
     "annotation_type": "segmentation",
-    "status": StepStatus.DRAFT,
+    "status": Status.DRAFT,
     "pinned_at": "2022-12-27 08:26:49.219717",
     "project_id": 1,
     "allow_empty_annotation": True,
@@ -72,7 +69,7 @@ step_data_1 = {
 annotation_data = {
     "annotation": {
         "user_email": "user.email@ina.fr",
-        "annotation_status": AnnotationStatus.IN_PROGRESS,
+        "annotation_status": Status.IN_PROGRESS,
         "version": 1,
         "result": {"toto1": "test", "toto2": "test", "toto3": "test"},
     },
@@ -236,15 +233,15 @@ def test_finish_project_service(db_session: SQLAlchemySession):
     step = project.steps[0] if project.steps else None
     if step:
         for task in step.tasks:
-            task.status = TaskStatus.DRAFT
+            task.status = Status.DRAFT
     db_session.commit()
     finish_project_service(db_session, project.id)
     retrieved_project = get_project_by_id(db_session, project.id)
-    assert retrieved_project.status == ProjectStatus.DONE
+    assert retrieved_project.status == Status.DONE
     for step in retrieved_project.steps:
-        assert step.status == StepStatus.DONE
+        assert step.status == Status.DONE
         for task in step.tasks:
-            assert task.status == TaskStatus.DONE
+            assert task.status == Status.DONE
 
 
 def test_get_progressed_tasks_for_project_service(db_session: SQLAlchemySession):
@@ -252,7 +249,7 @@ def test_get_progressed_tasks_for_project_service(db_session: SQLAlchemySession)
     Test that get_progressed_tasks_for_project_service returns only tasks
     with IN_PROGRESS status for a given project.
     """
-    task_status = TaskStatus.DONE
+    task_status = Status.DONE
     project = create_project_crud(db_session, ProjectBaseDto(**project_data))
 
     for step in project.steps:
@@ -260,15 +257,9 @@ def test_get_progressed_tasks_for_project_service(db_session: SQLAlchemySession)
             task.status = task_status
     db_session.commit()
 
-    if task_status == TaskStatus.IN_PROGRESS:
-        tasks = get_progressed_tasks_for_project_service(db_session, project.id)
-        assert isinstance(tasks, list)
-        assert all(isinstance(t, TaskWithIdDto) for t in tasks)
-        for t in tasks:
-            assert t.status == TaskStatus.IN_PROGRESS
-    else:
-        tasks = get_progressed_tasks_for_project_service(db_session, project.id)
-        assert tasks == []
+    count = get_progressed_tasks_count_for_project_service(db_session, project.id)
+    assert isinstance(count, int)
+    assert count == 0
 
 
 def test_get_progressed_tasks_for_nonexistent_project(db_session: SQLAlchemySession):
@@ -278,7 +269,9 @@ def test_get_progressed_tasks_for_nonexistent_project(db_session: SQLAlchemySess
     """
     non_existing_project_id = 9999
     with pytest.raises(GroundControlException) as exc_info:
-        get_progressed_tasks_for_project_service(db_session, non_existing_project_id)
+        get_progressed_tasks_count_for_project_service(
+            db_session, non_existing_project_id
+        )
     assert exc_info.value.code == ErrorCode.RESOURCE_NOT_FOUND.value[0]
 
 
@@ -292,21 +285,21 @@ def test_archive_project_service_success(db_session: SQLAlchemySession):
     create_annotation_crud(db_session, AnnotationFullCreate(**annotation_data))
     archived_project = archive_project_service(db_session, project.id)
 
-    assert archived_project.status == ProjectStatus.ARCHIVED
-    assert archived_project.archived_status == ProjectStatus.DRAFT
+    assert archived_project.status == Status.ARCHIVED
+    assert archived_project.previous_status == Status.DRAFT
 
     for step in archived_project.steps:
-        assert step.status == StepStatus.ARCHIVED
-        assert step.archived_status == StepStatus.DRAFT
+        assert step.status == Status.ARCHIVED
+        assert step.previous_status == Status.DRAFT
         for task in step.tasks:
-            assert task.status == TaskStatus.ARCHIVED
-            assert task.archived_status == TaskStatus.DRAFT
+            assert task.status == Status.ARCHIVED
+            assert task.previous_status == Status.DRAFT
             for annotation in task.annotations:
-                assert annotation.status == AnnotationStatus.ARCHIVED
-                assert annotation.archived_status == AnnotationStatus.DRAFT
+                assert annotation.status == Status.ARCHIVED
+                assert annotation.previous_status == Status.DRAFT
 
     refreshed = get_project_by_id(db_session, project.id)
-    assert refreshed.status == ProjectStatus.ARCHIVED
+    assert refreshed.status == Status.ARCHIVED
 
 
 def test_archive_project_service_not_found(db_session: SQLAlchemySession):
@@ -324,7 +317,7 @@ def test_archive_project_service_already_archived(db_session: SQLAlchemySession)
     Test that trying to archive an already archived project raises an error.
     """
     project = create_project_crud(db_session, ProjectBaseDto(**project_data))
-    project.status = ProjectStatus.ARCHIVED
+    project.status = Status.ARCHIVED
     db_session.commit()
 
     with pytest.raises(GroundControlException) as exc:
@@ -338,7 +331,7 @@ def test_archive_project_service_done_project(db_session: SQLAlchemySession):
     Test that trying to archive a completed (DONE) project raises an error.
     """
     project = create_project_crud(db_session, ProjectBaseDto(**project_data))
-    project.status = ProjectStatus.DONE
+    project.status = Status.DONE
     db_session.commit()
 
     with pytest.raises(GroundControlException) as exc:
@@ -358,27 +351,27 @@ def test_unarchive_project_service_success(db_session: SQLAlchemySession):
 
     archived_project = archive_project_service(db_session, project.id)
 
-    assert archived_project.status == ProjectStatus.ARCHIVED
-    assert archived_project.archived_status == ProjectStatus.DRAFT
+    assert archived_project.status == Status.ARCHIVED
+    assert archived_project.previous_status == Status.DRAFT
 
     unarchived_project = unarchive_project_service(db_session, project.id)
 
-    assert unarchived_project.status == ProjectStatus.DRAFT
-    assert unarchived_project.archived_status is None
+    assert unarchived_project.status == Status.DRAFT
+    assert unarchived_project.previous_status is None
 
     for step in unarchived_project.steps:
-        assert step.status == StepStatus.DRAFT
-        assert step.archived_status is None
+        assert step.status == Status.DRAFT
+        assert step.previous_status is None
         for task in step.tasks:
-            assert task.status == TaskStatus.DRAFT
-            assert task.archived_status is None
+            assert task.status == Status.DRAFT
+            assert task.previous_status is None
             for annotation in task.annotations:
-                assert annotation.annotation_status == AnnotationStatus.DRAFT
-                assert annotation.archived_status is None
+                assert annotation.annotation_status == Status.DRAFT
+                assert annotation.previous_status is None
 
     refreshed = get_project_by_id(db_session, project.id)
-    assert refreshed.status == ProjectStatus.DRAFT
-    assert refreshed.archived_status is None
+    assert refreshed.status == Status.DRAFT
+    assert refreshed.previous_status is None
 
 
 def test_unarchive_project_not_found(db_session: SQLAlchemySession):
@@ -388,7 +381,7 @@ def test_unarchive_project_not_found(db_session: SQLAlchemySession):
 
 
 def test_unarchive_done_project(db_session: SQLAlchemySession):
-    project_data["status"] = ProjectStatus.DONE
+    project_data["status"] = Status.DONE
     project = create_project_crud(db_session, ProjectBaseDto(**project_data))
     with pytest.raises(GroundControlException) as exc:
         unarchive_project_service(db_session, project.id)

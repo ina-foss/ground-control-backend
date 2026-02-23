@@ -485,6 +485,78 @@
           "clientRole": true,
           "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
           "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000001",
+          "name": "ground-control:project:admin",
+          "description": "Administrate a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000002",
+          "name": "ground-control:project:finish",
+          "description": "Finish a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000003",
+          "name": "ground-control:annotation:review",
+          "description": "Review an annotation",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000004",
+          "name": "ground-control:task:delete",
+          "description": "Delete a task",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000005",
+          "name": "ground-control:task:activate",
+          "description": "Activate a task",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000006",
+          "name": "ground-control:task:update_expiration_date",
+          "description": "Update task expiration date",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000007",
+          "name": "ground-control:project:unarchive",
+          "description": "Unarchive a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
+        },
+        {
+          "id": "a1b2c3d4-1111-4aaa-b111-000000000008",
+          "name": "ground-control:project:archive",
+          "description": "Archive a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "e8ead713-f166-41cf-8e96-d34a8e705ab8",
+          "attributes": {}
         }
       ],
       "realm-management": [
@@ -1066,6 +1138,78 @@
           "id": "bf08be3a-31d0-4cf7-9a8a-b486c76ca24d",
           "name": "ground-control:step:delete",
           "description": "Delete step",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000001",
+          "name": "ground-control:project:admin",
+          "description": "Administrate a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000002",
+          "name": "ground-control:project:finish",
+          "description": "Finish a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000003",
+          "name": "ground-control:annotation:review",
+          "description": "Review an annotation",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000004",
+          "name": "ground-control:task:delete",
+          "description": "Delete a task",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000005",
+          "name": "ground-control:task:activate",
+          "description": "Activate a task",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000006",
+          "name": "ground-control:task:update_expiration_date",
+          "description": "Update task expiration date",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000007",
+          "name": "ground-control:project:unarchive",
+          "description": "Unarchive a project",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",
+          "attributes": {}
+        },
+        {
+          "id": "b2c3d4e5-2222-4bbb-c222-000000000008",
+          "name": "ground-control:project:archive",
+          "description": "Archive a project",
           "composite": false,
           "clientRole": true,
           "containerId": "6e8deddb-b4d6-4e2e-b389-b397d3f74fcd",

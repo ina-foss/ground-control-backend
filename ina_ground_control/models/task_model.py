@@ -13,56 +13,24 @@ Classes:
     Task (Base): SqlAlchemy model representing a task record in the database.
 """
 
-from enum import Enum as PyEnum
+# pylint: disable=unsubscriptable-object
+from datetime import datetime
 
 from sqlalchemy import (
     CheckConstraint,
-    Column,
     DateTime,
     Enum,
     ForeignKey,
     Integer,
     String,
+    and_,
+    func,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import and_
-from sqlalchemy.sql.expression import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ina_ground_control.constants.enums import Status, TaskDataType
 from ina_ground_control.models import Base
 from ina_ground_control.models.annotation_task_association import AnnotationTask
-
-
-class TaskDataType(PyEnum):
-    """
-    Enum representing the different datatypes of tasks.
-
-    Attributes:
-        LDD (str): The annotation type for ldd tasks.
-        AMALIA (str): The annotation type for amalia tasks.
-    """
-
-    LDD = "ldd"
-    AMALIA = "amalia"
-
-
-class TaskStatus(PyEnum):
-    """
-    Enum representing the different status of a task.
-
-    Attributes:
-        DRAFT (str): The task is in draft status.
-        PENDING (str): The task is pending and awaiting further actions.
-        IN_PROGRESS (str): Currently being worked on.
-        SKIPPED (str): This task has been ignored.
-        DONE (str): Successfully completed.
-    """
-
-    DRAFT = "draft"
-    PENDING = "pending"
-    IN_PROGRESS = "in-progress"
-    SKIPPED = "skipped"
-    DONE = "done"
-    ARCHIVED = "archived"
 
 
 class Task(Base):
@@ -73,39 +41,40 @@ class Task(Base):
         id (Integer): The unique identifier of the task (Primary Key).
         name (String): The name of the task.
         instruction (String): Instructions for completing the task.
-        data_type (enumerate): The data type of the task.
-        status (enumerate): The status of the task.
-        lead_time (Integer) : lead time of the task.
+        data_type (TaskDataType): The data type of the task.
+        status (Status): The status of the task.
+        lead_time (Integer): Lead time of the task.
         created_at (DateTime): The timestamp when the task was created.
         updated_at (DateTime): The timestamp when the task was last updated.
-
         step_id (Integer): The foreign key linking to the step of the task.
         media_id (Integer): The foreign key linking to the media the task belongs to.
         annotations (relationship): Relationship to the Annotation model representing annotations
-         for the task.
+            for the task.
         task_comments (relationship): Relationship to the TaskComment model representing task_comments
-         for the task.
+            for the task.
     """
 
     __tablename__ = "task"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    instruction = Column(String)
-    data_type = Column(Enum(TaskDataType))  # , nullable=False
-    status = Column(Enum(TaskStatus))
-    archived_status = Column(Enum(TaskStatus), nullable=True, default=None)
-    documentation = Column(String)
-    lead_time = Column(Integer)
-    expiration_date = Column(DateTime, nullable=True, default=None)
-    redundancy = Column(Integer, nullable=False, default=1)
-    priority = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    step_id = Column(Integer, ForeignKey("step.id"))
-    media_id = Column(Integer, ForeignKey("media.id"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    instruction: Mapped[str | None] = mapped_column(String, default="")
+    data_type: Mapped[TaskDataType | None] = mapped_column(Enum(TaskDataType))
+    status: Mapped[Status | None] = mapped_column(Enum(Status))
+    previous_status: Mapped[Status | None] = mapped_column(Enum(Status), default=None)
+    documentation: Mapped[str | None] = mapped_column(String)
+    lead_time: Mapped[int | None] = mapped_column(Integer)
+    expiration_date: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    redundancy: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=func.now(), onupdate=func.now()
+    )
+    step_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("step.id"))
+    media_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("media.id"))
 
-    annotations = relationship(
+    annotations: Mapped[list["Annotation"]] = relationship(
         "Annotation",
         secondary=AnnotationTask.__table__,
         primaryjoin=and_(
@@ -117,12 +86,12 @@ class Task(Base):
         single_parent=True,
     )
 
-    task_comments = relationship(
+    task_comments: Mapped[list["TaskComment"]] = relationship(
         "TaskComment", backref="task", cascade="all, delete-orphan"
     )
 
     __table_args__ = (
-        CheckConstraint("redundancy >= 1", name="check_redundancy_min"),  # Min 1 person
+        CheckConstraint("redundancy >= 1", name="check_redundancy_min"),
         CheckConstraint(
             "priority BETWEEN 0 AND 100", name="check_priority_range"
         ),  # 0 to 100

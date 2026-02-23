@@ -89,7 +89,7 @@ The application uses environment-based configuration through the [`settings.py`]
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GC_DB_SERVER` | "postgresql" | Database server type |
+| `GC_DB_SERVER` | "postgresql+psycopg2" | Database server type |
 | `GC_DB_HOSTNAME` | "localhost" | Database host |
 | `GC_DB_DATABASE` | "ground_control_db" | Database name |
 | `GC_DB_USERNAME` | "postgres" | Database username |

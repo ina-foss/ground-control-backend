@@ -7,9 +7,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from ina_ground_control.models.step_model import AnnotationType, StepStatus
+from ina_ground_control.constants.enums import AnnotationType, Status
 
 
 class StepCreate(BaseModel):
@@ -21,7 +21,7 @@ class StepCreate(BaseModel):
     description: Optional[str]
     annotation_type: AnnotationType
     pinned_at: Optional[datetime]
-    status: StepStatus
+    status: Status
     project_id: int
     redundancy: int = Field(default=1, description="Number of annotations per task")
     completeness_rate: float = Field(
@@ -42,11 +42,7 @@ class StepDto(StepCreate):
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
-        """
-            Config for reading attributes from other class.
-        """
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StepDetailDto(StepDto):

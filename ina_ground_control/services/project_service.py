@@ -9,39 +9,38 @@ Functions:
 - delete_project_crud
 """
 
-from datetime import datetime
+import time
+from datetime import UTC, datetime
 
 from fastapi import Request
-from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ina_ground_control import logger
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.models.annotation_model import AnnotationStatus
-from ina_ground_control.models.project_model import Project, ProjectStatus
-from ina_ground_control.models.step_model import Step, StepStatus
-from ina_ground_control.models.task_model import Task, TaskStatus
+from ina_ground_control.models.annotation_model import Annotation
+from ina_ground_control.models.annotation_task_association import AnnotationTask
+from ina_ground_control.models.project_model import Project
+from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.task_model import Task
 from ina_ground_control.schemas.project_schemas import ProjectBaseDto
-from ina_ground_control.schemas.task_schemas import TaskWithIdDto
 
 
-def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
+def get_relevant_task_for_user(project, user_email: str):
     """
     Given a project and a user, return the first relevant task to annotate
     according to user role and annotation logic.
     """
-    if Permission.ADMIN_PROJECT.value in roles:
-        return project
-
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
     all_filtered_tasks = []
     for step in project.steps:
         for task in step.tasks:
             # Condition 1: tasks in progress by this user
             if any(
                 ann.user_email == user_email
-                and ann.annotation_status == AnnotationStatus.IN_PROGRESS
+                and ann.annotation_status == Status.IN_PROGRESS
                 for ann in task.annotations
             ):
                 all_filtered_tasks.append(task)
@@ -52,11 +51,11 @@ def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
             other_anns_in_progress = [
                 ann
                 for ann in task.annotations
-                if ann.annotation_status == AnnotationStatus.IN_PROGRESS
+                if ann.annotation_status == Status.IN_PROGRESS
                 and ann.user_email != user_email
             ]
             if (
-                task.status == TaskStatus.IN_PROGRESS
+                task.status == Status.IN_PROGRESS
                 and len(other_anns_in_progress) < task.redundancy
             ):
                 all_filtered_tasks.append(task)
@@ -64,7 +63,7 @@ def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
                 break
 
             # Condition 3: pending tasks and prioritize expired pending
-            if task.status == TaskStatus.PENDING:
+            if task.status == Status.PENDING:
                 if task.expiration_date and task.expiration_date <= now:
                     all_filtered_tasks.insert(0, task)
                 else:
@@ -77,6 +76,7 @@ def get_relevant_task_for_user(project, user_email: str, roles: list[str]):
         project.tasks_to_annotate = [all_filtered_tasks[0]]
     else:
         project.tasks_to_annotate = None
+
     return project
 
 
@@ -93,14 +93,192 @@ def get_projects_count(db: Session) -> int:
     return db.query(func.count(Project.id)).scalar()
 
 
+def get_projects_summary(
+    db: Session, request: Request, skip: int = 0, limit: int = 100
+):
+    """
+    Optimized query for project summary - only fetches required fields.
+    Uses a subquery for steps_count instead of loading all steps.
+    """
+    start = time.perf_counter()
+
+    # Subquery for steps count
+    steps_count_subquery = (
+        select(func.count(Step.id))
+        .where(Step.project_id == Project.id)
+        .correlate(Project)
+        .scalar_subquery()
+    )
+
+    # Fetch only the columns we need plus the steps count
+    results = (
+        db.query(
+            Project.id,
+            Project.created_at,
+            Project.created_by,
+            Project.title,
+            Project.description,
+            Project.status,
+            steps_count_subquery.label("steps_count"),
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    logger.info("DB query (summary) took %.3fs", time.perf_counter() - start)
+
+    current_user = request.scope.get("user", {})
+    roles = current_user.roles
+    user_email = current_user.email
+    is_admin = Permission.ADMIN_PROJECT.value in roles
+
+    # For non-admin users, fetch relevant tasks separately
+    project_ids = [r.id for r in results]
+    tasks_by_project = {}
+
+    if not is_admin and project_ids:
+        start = time.perf_counter()
+        tasks_by_project = _get_relevant_tasks_for_projects(db, project_ids, user_email)
+        logger.info(
+            "get_relevant_tasks_for_projects took %.3fs", time.perf_counter() - start
+        )
+
+    # Build summary objects
+    summaries = []
+    for row in results:
+        task_ids = tasks_by_project.get(row.id) if not is_admin else None
+        summaries.append(
+            {
+                "id": row.id,
+                "created_at": row.created_at,
+                "created_by": row.created_by,
+                "title": row.title,
+                "description": row.description,
+                "status": row.status,
+                "steps_count": row.steps_count or 0,
+                "tasks_id_to_annotate": task_ids,
+            }
+        )
+
+    return summaries
+
+
+def _get_relevant_tasks_for_projects(
+    db: Session, project_ids: list[int], user_email: str
+) -> dict[int, list[int]]:
+    """
+    Efficiently fetch one relevant task per project for a user.
+    Returns a dict mapping project_id -> [task_id] or empty list.
+    """
+    now = datetime.now(UTC).replace(tzinfo=None)
+    result = {}
+
+    # Query 1: Tasks in progress by this user (highest priority)
+    in_progress_by_user = (
+        db.query(Task.id, Step.project_id)
+        .join(Step, Task.step_id == Step.id)
+        .join(AnnotationTask, Task.id == AnnotationTask.task_id)
+        .join(Annotation, AnnotationTask.annotation_id == Annotation.id)
+        .filter(
+            Step.project_id.in_(project_ids),
+            Annotation.user_email == user_email,
+            Annotation.annotation_status == Status.IN_PROGRESS,
+        )
+        .all()
+    )
+
+    for task_id, project_id in in_progress_by_user:
+        if project_id not in result:
+            result[project_id] = [task_id]
+
+    # Projects that still need a task
+    remaining_projects = [pid for pid in project_ids if pid not in result]
+
+    if remaining_projects:
+        # Query 2: Tasks with insufficient redundancy
+        # Subquery: count of in-progress annotations by other users
+        other_ann_count = (
+            select(func.count(Annotation.id))
+            .select_from(AnnotationTask)
+            .join(Annotation, AnnotationTask.annotation_id == Annotation.id)
+            .where(
+                AnnotationTask.task_id == Task.id,
+                Annotation.annotation_status == Status.IN_PROGRESS,
+                Annotation.user_email != user_email,
+            )
+            .correlate(Task)
+            .scalar_subquery()
+        )
+
+        in_progress_tasks = (
+            db.query(Task.id, Step.project_id)
+            .join(Step, Task.step_id == Step.id)
+            .filter(
+                Step.project_id.in_(remaining_projects),
+                Task.status == Status.IN_PROGRESS,
+                other_ann_count < Task.redundancy,
+            )
+            .all()
+        )
+
+        for task_id, project_id in in_progress_tasks:
+            if project_id not in result:
+                result[project_id] = [task_id]
+
+    # Update remaining projects list
+    remaining_projects = [pid for pid in project_ids if pid not in result]
+
+    if remaining_projects:
+        # Query 3: Pending tasks (prioritize expired ones)
+        pending_tasks = (
+            db.query(Task.id, Step.project_id, Task.expiration_date)
+            .join(Step, Task.step_id == Step.id)
+            .filter(
+                Step.project_id.in_(remaining_projects),
+                Task.status == Status.PENDING,
+            )
+            .all()
+        )
+
+        for task_id, project_id, expiration_date in pending_tasks:
+            if project_id not in result:
+                result[project_id] = [task_id]
+            elif expiration_date and expiration_date <= now:
+                # Expired task takes priority
+                result[project_id] = [task_id]
+
+    return result
+
+
 def get_projects(db: Session, request: Request, skip: int = 0, limit: int = 100):
-    projects = db.query(Project).offset(skip).limit(limit).all()
+    start = time.perf_counter()
+    projects = (
+        db.query(Project)
+        .options(
+            selectinload(Project.steps)
+            .selectinload(Step.tasks)
+            .selectinload(Task.annotations),
+            selectinload(Project.medias),
+            selectinload(Project.tags),
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    logger.info("DB query took %.3fs", time.perf_counter() - start)
+
     current_user = request.scope.get("user", {})
     roles = current_user.roles
     user_email = current_user.email
 
-    for project in projects:
-        get_relevant_task_for_user(project, user_email, roles)
+    if Permission.ADMIN_PROJECT.value not in roles:
+        start = time.perf_counter()
+        for project in projects:
+            get_relevant_task_for_user(project, user_email)
+        logger.info(
+            "get_relevant_task_for_user loop took %.3fs", time.perf_counter() - start
+        )
+
     return projects
 
 
@@ -122,9 +300,8 @@ def get_project_by_id_based_on_user_role(
 
     current_user = request.scope.get("user", {})
     user_email = current_user.email
-    roles = current_user.roles
 
-    project = get_relevant_task_for_user(project, user_email, roles)
+    project = get_relevant_task_for_user(project, user_email)
     return project
 
 
@@ -204,7 +381,7 @@ def delete_project_crud(db: Session, project_id: int):
     return db_project
 
 
-def update_project_status_crud(db: Session, project_id: int, status: ProjectStatus):
+def update_project_status_crud(db: Session, project_id: int, status: Status):
     project = get_project_by_id(db, project_id)
     project.status = status
     project.updated_at = func.now()
@@ -237,7 +414,7 @@ def finish_project_service(db: Session, project_id: int):
         raise GroundControlException(
             ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
         )
-    if project.status == ProjectStatus.DONE:
+    if project.status == Status.DONE:
         logger.warning("Project %d is already DONE", project_id)
         raise GroundControlException(
             ErrorCode.BAD_REQUEST,
@@ -245,59 +422,52 @@ def finish_project_service(db: Session, project_id: int):
             resource="project",
             id_part=f" with id {project_id} (already marked as DONE)",
         )
-    project.status = ProjectStatus.DONE
+    project.status = Status.DONE
     project.updated_at = func.now()
     for step in project.steps:
-        step.status = StepStatus.DONE
+        step.status = Status.DONE
         step.updated_at = func.now()
         for task in step.tasks:
-            task.status = TaskStatus.DONE
+            task.status = Status.DONE
             task.updated_at = func.now()
             for annotation in getattr(task, "annotations", []):
-                annotation.annotation_status = AnnotationStatus.DONE
+                annotation.annotation_status = Status.DONE
                 annotation.updated_at = func.now()
     db.commit()
     db.refresh(project)
     return project
 
 
-def get_progressed_tasks_for_project_service(
-    db: Session, project_id: int
-) -> list[TaskWithIdDto]:
+def get_progressed_tasks_count_for_project_service(db: Session, project_id: int) -> int:
     """
-    Return all tasks in 'IN_PROGRESS' status for a given project.
+    Return number of tasks in 'IN_PROGRESS' status for a given project.
     """
     try:
-        project_exists = get_project_by_id(db, project_id)
-        if not project_exists:
-            logger.error("Project with id %d not found", project_id)
+        if not get_project_by_id(db, project_id):
             raise GroundControlException(
                 ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
             )
 
-        tasks = (
-            db.query(Task)
+        count = (
+            db.query(func.count(Task.id))
             .join(Step)
-            .join(Project)
-            .filter(Project.id == project_id, Task.status == TaskStatus.IN_PROGRESS)
-            .all()
+            .filter(Step.project_id == project_id, Task.status == Status.IN_PROGRESS)
+            .scalar()
         )
 
-        validated_tasks = [
-            TaskWithIdDto.model_validate(task, from_attributes=True) for task in tasks
-        ]
-
-        return validated_tasks
+        return count or 0
 
     except GroundControlException:
         raise
     except Exception as e:
         logger.error(
-            "Failed to retrieve in-progress tasks for project %d: %s", project_id, e
+            "Failed to retrieve progressed task count for project %d: %s",
+            project_id,
+            e,
         )
         raise GroundControlException(
             ErrorCode.GENERIC_CLIENT_ERROR,
-            details=f"Unexpected error while retrieving in-progress tasks for project {project_id}",
+            details="Unexpected error while retrieving task count",
         ) from e
 
 
@@ -318,7 +488,7 @@ def archive_project_service(db: Session, project_id: int):
                 ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
             )
 
-        if project.status == ProjectStatus.DONE:
+        if project.status == Status.DONE:
             logger.warning(
                 "Project %d is DONE; cannot archive a finished project.", project_id
             )
@@ -329,7 +499,7 @@ def archive_project_service(db: Session, project_id: int):
                 id_part=f" with id {project_id} (already marked as DONE, cannot be archived)",
             )
 
-        if project.status == ProjectStatus.ARCHIVED:
+        if project.status == Status.ARCHIVED:
             logger.warning("Project %d is already ARCHIVED", project_id)
             raise GroundControlException(
                 ErrorCode.BAD_REQUEST,
@@ -341,20 +511,20 @@ def archive_project_service(db: Session, project_id: int):
         logger.info("Archiving project %d...", project_id)
 
         # Archive project
-        project.archived_status = project.status
-        project.status = ProjectStatus.ARCHIVED
+        project.previous_status = project.status
+        project.status = Status.ARCHIVED
 
         for step in project.steps:
-            step.archived_status = step.status
-            step.status = StepStatus.ARCHIVED
+            step.previous_status = step.status
+            step.status = Status.ARCHIVED
 
             for task in step.tasks:
-                task.archived_status = task.status
-                task.status = TaskStatus.ARCHIVED
+                task.previous_status = task.status
+                task.status = Status.ARCHIVED
 
                 for annotation in getattr(task, "annotations", []):
-                    annotation.archived_status = annotation.annotation_status
-                    annotation.annotation_status = AnnotationStatus.ARCHIVED
+                    annotation.previous_status = annotation.annotation_status
+                    annotation.annotation_status = Status.ARCHIVED
 
         db.commit()
         db.refresh(project)
@@ -376,7 +546,7 @@ def archive_project_service(db: Session, project_id: int):
 def unarchive_project_service(db: Session, project_id: int):
     """
     Unarchive a previously archived project and all its related entities.
-    Reverts their statuses from 'ARCHIVED' back to the saved archived_status values.
+    Reverts their statuses from 'ARCHIVED' back to the saved previous_status values.
 
     :param db: SQLAlchemy session object.
     :param project_id: ID of the project to restore.
@@ -390,7 +560,7 @@ def unarchive_project_service(db: Session, project_id: int):
                 ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
             )
 
-        if project.status != ProjectStatus.ARCHIVED:
+        if project.status != Status.ARCHIVED:
             logger.warning("Project %d is not archived; cannot restore.", project_id)
             raise GroundControlException(
                 ErrorCode.BAD_REQUEST,
@@ -401,20 +571,20 @@ def unarchive_project_service(db: Session, project_id: int):
 
         logger.info("Restoring archived project %d...", project_id)
 
-        project.status = project.archived_status
-        project.archived_status = None
+        project.status = project.previous_status
+        project.previous_status = None
 
         for step in project.steps:
-            step.status = step.archived_status
-            step.archived_status = None
+            step.status = step.previous_status
+            step.previous_status = None
 
             for task in step.tasks:
-                task.status = task.archived_status
-                task.archived_status = None
+                task.status = task.previous_status
+                task.previous_status = None
 
                 for annotation in getattr(task, "annotations", []):
-                    annotation.annotation_status = annotation.archived_status
-                    annotation.archived_status = None
+                    annotation.annotation_status = annotation.previous_status
+                    annotation.previous_status = None
 
         db.commit()
         db.refresh(project)

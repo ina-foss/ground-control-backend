@@ -25,7 +25,7 @@ services:
       - GC_LOG_LEVEL=info
 
       # Database Configuration
-      - GC_DB_SERVER=postgresql
+      - GC_DB_SERVER=postgresql+psycopg2
       - GC_DB_HOSTNAME=postgresql
       - GC_DB_DATABASE=ground_control_db
       - GC_DB_USERNAME=postgres

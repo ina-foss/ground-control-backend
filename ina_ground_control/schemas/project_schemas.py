@@ -7,9 +7,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from ina_ground_control.models.project_model import ProjectStatus
+from ina_ground_control.constants.enums import Status
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.step_schemas import StepDetailDto, StepDto
 from ina_ground_control.schemas.task_schemas import TaskWithIdDto
@@ -22,7 +22,7 @@ class ProjectBaseDto(BaseModel):
 
     title: Optional[str]
     description: Optional[str]
-    status: Optional[ProjectStatus]
+    status: Optional[Status]
     is_published: Optional[bool]
     empty_annotations: Optional[bool]
     allow_skip: Optional[bool]
@@ -30,8 +30,7 @@ class ProjectBaseDto(BaseModel):
     pinned_at: Optional[datetime]
     created_by: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectWithIdDto(ProjectBaseDto):
@@ -70,6 +69,17 @@ class ProjectListDto(ProjectWithIdDto):
     steps: Optional[list["StepDetailDto"]] = []
     # Non-admin users get a "single task" [0]
     tasks_to_annotate: Optional[list["TaskWithIdDto"]] = None
+
+
+class ProjectListDtoSummary(BaseModel):
+    id: int
+    created_by: str
+    title: str
+    description: Optional[str]
+    steps_count: int
+    status: Optional[Status]
+    created_at: Optional[datetime] = None
+    tasks_id_to_annotate: Optional[list[int]] = None
 
 
 class ProjectParametersResponse(BaseModel):

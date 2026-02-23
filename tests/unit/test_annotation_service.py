@@ -4,8 +4,8 @@ from datetime import datetime
 import pytest
 from sqlalchemy.orm import Session
 
+from ina_ground_control.constants.enums import Status as AnnotationStatus
 from ina_ground_control.exception.exceptions import GroundControlException
-from ina_ground_control.models.annotation_model import AnnotationStatus
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.services.annotation_service import (
     finish_annotation_crud,
@@ -64,7 +64,7 @@ def test_skip_annotation_crud_not_found(db_session: Session):
     Should raise exception if annotation not found
     """
     with pytest.raises(GroundControlException):
-        skip_annotation_crud(db_session, 9999)
+        skip_annotation_crud(db_session, 9999, "admin@localhost.com")
 
 
 # --------------------------------------------------------------------
