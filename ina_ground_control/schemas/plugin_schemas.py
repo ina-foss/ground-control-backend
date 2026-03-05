@@ -63,6 +63,7 @@ class DisplayConfig(BaseModel):
     order: Optional[int] = None
     main_plugin: Optional[bool] = False
     label: Optional[str] = None
+    default_value: Optional[str] = None
 
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True, extra="ignore"

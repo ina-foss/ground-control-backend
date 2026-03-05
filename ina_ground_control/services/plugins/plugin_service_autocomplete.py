@@ -199,7 +199,6 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 for item in data.get("search", []):
                     entity_id = item["id"]
                     image_url = self.get_wikidata_image(entity_id)
-
                     results.append(
                         PluginAutocompleteValueDTO(
                             id=entity_id,
@@ -207,9 +206,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                             label=item.get("label"),
                             description=item.get("description"),
                             image=image_url,
+                            link=item.get("url"),
                         )
                     )
-
                 return results
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)
@@ -306,6 +305,11 @@ class PluginServiceAutoComplete(PluginServiceBase):
             if self.config.response_editable_key
             else None
         )
+        link_expr = (
+            jsonpath_parse(self.config.response_link_key)
+            if self.config.response_link_key
+            else None
+        )
 
         return {
             "ids": id_expr.find(data),
@@ -316,6 +320,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "descriptions": description_expr.find(data) if description_expr else [],
             "categories": categories_expr.find(data) if categories_expr else [],
             "editable": editable_expr.find(data) if editable_expr else [],
+            "link": link_expr.find(data) if link_expr else [],
         }
 
     def _transform_to_dto_list(
@@ -337,6 +342,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
         images = extracted_data["images"]
         descriptions = extracted_data["descriptions"]
         categories = extracted_data["categories"]
+        links = extracted_data["links"]
 
         num_results = len(ids)
         transformed_data = []
@@ -365,6 +371,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                         if i < len(categories) and categories[i]
                         else None
                     ),
+                    links=(links[i].value if i < len(links) and links[i] else None),
                 )
             )
 
@@ -509,6 +516,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         tooltip_expr = self._safe_jsonpath_parse(
             self.config.response_tooltip_key, "response_tooltip_key"
         )
+        link_expr = self._safe_jsonpath_parse(
+            self.config.response_link_key, "response_link_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -527,6 +537,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "editable_expr": editable_expr,
             "copyable_expr": copyable_expr,
             "tooltip_expr": tooltip_expr,
+            "link_expr": link_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -592,6 +603,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["tooltip_expr"]
                 else []
             ),
+            "link": (
+                expressions["link_expr"].find(data) if expressions["link_expr"] else []
+            ),
         }
 
     def _create_dto_from_extracted_data(
@@ -619,6 +633,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             editable=self._safe_extract_value(extracted_data["editable"], index),
             copyable=self._safe_extract_value(extracted_data["copyable"], index),
             tooltip=self._safe_extract_value(extracted_data["tooltip"], index),
+            link=self._safe_extract_value(extracted_data["link"], index),
         )
 
     def _build_transformed_data(
