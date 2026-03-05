@@ -75,3 +75,6 @@ services:
       service: keycloak
     networks:
       - ground-control-network
+
+volumes:
+      keycloak-data:
