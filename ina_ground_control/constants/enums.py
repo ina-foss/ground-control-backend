@@ -41,6 +41,7 @@ class MediaType(str, Enum):
 
     MP4 = "mp4"
     HLS = "hls"
+    MP3 = "mp3"
 
 
 class TypePlugin(str, Enum):
