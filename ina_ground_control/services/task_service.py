@@ -4,9 +4,9 @@ This module provides CRUD operations for tasks.
 It includes functions to retrieve a task by ID, create a new task, and update an existing task.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.orm import Session
 
 from ina_ground_control import logger
@@ -135,6 +135,38 @@ def update_task_status_crud(db: Session, task_id: int, status: Status) -> Task:
     db.refresh(task)
     recalculate_step_status(db, task.step_id)
     return task
+
+
+def update_tasks_status_crud(
+    db: Session, tasks_id: List[int], status: Status
+) -> List[int]:
+    """
+    Batch update task status.
+    Returns list of task IDs that were successfully updated.
+    Assumes all tasks belong to the same step.
+    """
+    if not tasks_id:
+        return []
+
+    # Get step_id from any task
+    step = db.query(Task.step_id).filter(Task.id.in_(tasks_id)).first()
+    if not step:
+        return []
+
+    # Update + return updated task IDs
+    result = db.execute(
+        update(Task)
+        .where(Task.id.in_(tasks_id))
+        .values(status=status, updated_at=func.now())
+        .returning(Task.id)
+    )
+
+    updated_task_ids = [row.id for row in result]
+    db.commit()
+
+    # Recalculate once (same step)
+    recalculate_step_status(db, step.step_id)
+    return updated_task_ids
 
 
 def activate_task_crud(db: Session, task_id: int) -> Task:
