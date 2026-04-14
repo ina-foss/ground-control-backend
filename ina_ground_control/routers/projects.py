@@ -211,6 +211,10 @@ def delete_project(
 @router.get("/{project_id}/parameters", response_model=ProjectParametersResponse)
 def read_project_parameters(project_id: int, db: Session = Depends(get_db)):
     parameters = get_project_parameters(db, project_id)
+    if parameters is None:
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Project", id=project_id
+        )
     return parameters
 
 
