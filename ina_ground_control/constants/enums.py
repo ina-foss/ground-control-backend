@@ -115,6 +115,7 @@ class AnnotationType(str, Enum):
     TRANSCRIPTION = "transcription"
     SPAN = "span"
     AUTO_SUMMARY = "auto-summary"
+    VIDEO_SEGMENTATION = "video-segmentation"
 
 
 class TaskDataType(str, Enum):
