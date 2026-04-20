@@ -61,6 +61,7 @@ class TypePlugin(str, Enum):
     LIST_ITEMS = "listitems"  # Affiche des tags et une liste d'éléments
     SUGGESTION_LIST = "suggestionlist"  # Bloc de suggestions interactives
     INPUT_LABEL = "inputlabel"  # Affiche un champ de saisie de texte simple
+    ENTITY_LIST_INPUT = "entitylistinput"  # Affiche une ligne  avec un champ de saisie simple et une liste de choix
 
 
 class DisplayZone(str, Enum):
