@@ -10,7 +10,7 @@ Functions:
 """
 
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from fastapi import Request
 from sqlalchemy import asc, case, func, select
@@ -33,7 +33,7 @@ def get_relevant_task_for_user(project, user_email: str):
     Given a project and a user, return the first relevant task to annotate
     according to user role and annotation logic.
     """
-    now = datetime.now(UTC).replace(tzinfo=None)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     high_priority_tasks = []  # user in-progress
     medium_priority_tasks = []  # available in-progress
@@ -82,7 +82,7 @@ def get_relevant_task_for_user(project, user_email: str):
         key=lambda t: (
             t.expiration_date is None,
             t.expiration_date > now if t.expiration_date else True,
-            t.expiration_date or datetime.max.replace(tzinfo=UTC),
+            t.expiration_date or datetime.max.replace(tzinfo=timezone.utc),
         )
     )
 
@@ -181,7 +181,7 @@ def _get_relevant_tasks_for_projects(
     Efficiently fetch one relevant task per project for a user.
     Returns a dict mapping project_id -> [task_id] or empty list.
     """
-    now = datetime.now(UTC).replace(tzinfo=None)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     result = {}
 
     # Query 1: Tasks in progress by this user (highest priority)
