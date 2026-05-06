@@ -64,6 +64,7 @@ class DisplayConfig(BaseModel):
     main_plugin: Optional[bool] = False
     label: Optional[str] = None
     default_value: Optional[str] = None
+    is_verifiable: Optional[bool] = False
 
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True, extra="ignore"

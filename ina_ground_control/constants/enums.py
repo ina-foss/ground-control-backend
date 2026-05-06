@@ -109,6 +109,7 @@ class Status(str, Enum):
     SKIPPED = "skipped"
     DONE = "done"
     ARCHIVED = "archived"
+    VERIFIED = "verified"
 
 
 class AnnotationType(str, Enum):
