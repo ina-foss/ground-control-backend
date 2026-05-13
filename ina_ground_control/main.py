@@ -5,8 +5,10 @@ Ground control application, including routes, middleware, and configuration.
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi_keycloak_middleware import (
     AuthorizationMethod,
     KeycloakConfiguration,
@@ -127,6 +129,17 @@ app.add_exception_handler(GroundControlException, default_exception_handler)
 app.add_exception_handler(
     GroundControlRequestValidationError, default_exception_handler
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(
+        "422 Unprocessable Entity on %s %s — errors: %s",
+        request.method,
+        request.url.path,
+        exc.errors(),
+    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 def custom_openapi():

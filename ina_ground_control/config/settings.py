@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     db_password: str = ""
     db_port: int = 5432
 
+    # Plugin secret encryption (Fernet key — generate with:
+    # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+    secret_encryption_key: str = ""
+
     # SSO settings
     sso_url: str = "http://localhost:9080"
     sso_realm: str = "ground_control"
