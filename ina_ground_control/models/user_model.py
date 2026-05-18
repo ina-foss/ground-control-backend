@@ -59,3 +59,6 @@ class UserInfo(BaseModel):
 
     email: Optional[str] = None
     roles: List[str] = []
+
+from ina_ground_control.models.project_model import Project
+from ina_ground_control.models.annotation_model import Annotation

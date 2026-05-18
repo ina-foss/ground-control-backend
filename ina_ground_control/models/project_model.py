@@ -22,7 +22,9 @@ from ina_ground_control.constants.enums import DistributionMode, Status
 from ina_ground_control.models import Base
 from ina_ground_control.models.media_projet_association import MediaProject
 from ina_ground_control.models.tag_project_association import TagProject
-
+from ina_ground_control.models.media_model import Media
+from ina_ground_control.models.user_model import User
+from ina_ground_control.models.step_model import Step
 
 class Project(Base):
     """
@@ -74,7 +76,7 @@ class Project(Base):
         backref="projects",
         cascade="all",
     )
-    tags: Mapped[list["Tag"]] = relationship(
+    tags: Mapped[list["TagProject"]] = relationship(
         "Tag",
         secondary=TagProject.__table__,
         backref="project",

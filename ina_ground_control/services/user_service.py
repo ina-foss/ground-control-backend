@@ -47,7 +47,7 @@ def create_user_crud(db: Session, user: UserBaseDto) -> User:
     return db_user
 
 
-def get_user_by_email_crud(db: Session, email: EmailStr) -> User:
+def get_user_by_email_crud(db: Session, email: EmailStr) -> User | None :
     """
     Retrieve a specific user given their email.
 
