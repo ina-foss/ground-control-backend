@@ -182,7 +182,7 @@ def custom_openapi():
         raise
 
 
-app.openapi = custom_openapi
+app.openapi = custom_openapi  # type: ignore[method-assign]
 # Initialize Telemetry Service
 telemetry = TelemetryService(
     app, sql_alchemy_engine=get_engine(str(settings.get_db_connection_string()))

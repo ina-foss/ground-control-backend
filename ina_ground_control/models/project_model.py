@@ -25,6 +25,7 @@ from ina_ground_control.models.tag_project_association import TagProject
 from ina_ground_control.models.media_model import Media
 from ina_ground_control.models.user_model import User
 from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.tag_model import Tag
 
 class Project(Base):
     """
@@ -76,7 +77,7 @@ class Project(Base):
         backref="projects",
         cascade="all",
     )
-    tags: Mapped[list["TagProject"]] = relationship(
+    tags: Mapped[list["Tag"]] = relationship(
         "Tag",
         secondary=TagProject.__table__,
         backref="project",

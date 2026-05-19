@@ -115,7 +115,7 @@ class PluginWithIdDto(PluginCreate):
     """
 
     id: int
-    children: Optional[List["PluginWithIdDto"]] = [] # type: ignore[override]
+    children: Optional[List["PluginWithIdDto"]] = []  # type: ignore[assignment]
 
 
 PluginWithIdDto.model_rebuild()

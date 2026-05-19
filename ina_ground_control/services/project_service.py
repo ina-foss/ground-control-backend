@@ -251,7 +251,7 @@ def _get_relevant_tasks_for_projects(
             .order_by(
                 Step.project_id,  # group by project
                 case(
-                    (Task.expiration_date is None, 1),  # NULLs last
+                    (Task.expiration_date.is_(None), 1),  # NULLs last
                     else_=0,
                 ),
                 case(

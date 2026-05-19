@@ -23,7 +23,7 @@ from ina_ground_control.utils.crypto import SecretCipher, get_secret_cipher
 
 def request_auth_token(
     token_url: str, client_id: str, client_secret: str
-) -> OAuth2Client:
+) -> str:
     try:
         oauth2client = OAuth2Client(
             token_endpoint=token_url,

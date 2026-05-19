@@ -69,7 +69,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="gc_",
         extra="ignore",
-        dotenv_prefix="gc_",
         env_file=(".env", ".env.local", ".env.prod"),
     )
 

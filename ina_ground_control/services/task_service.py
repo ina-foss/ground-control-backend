@@ -13,7 +13,7 @@ from ina_ground_control import logger
 from ina_ground_control.constants.enums import InOutEnum, Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.task_model import Task
-from ina_ground_control.schemas.task_schemas import TaskCreateDto
+from ina_ground_control.schemas.task_schemas import TaskBaseDto
 from ina_ground_control.services.annotation_service import (
     get_annotations_by_task_id_crud,
 )
@@ -47,18 +47,19 @@ def get_task_by_id(db: Session, task_id: int) -> Task:
     return task
 
 
-def create_task_crud(task: TaskCreateDto, db: Session):
+def create_task_crud(task: TaskBaseDto, db: Session):
     """
     Create a new task in the database.
 
     Attributes:
-        task (TaskCreateDto): The task data transfer object containing task details.
+        task (TaskBaseDto): The task data transfer object containing task details.
         db (Session): The database session used for querying.
 
     Returns:
         Task: The newly created Task object.
     """
     db_task = Task(**task.model_dump())
+    assert db_task.step_id is not None
     step = get_step_by_id(db, db_task.step_id)
     db_task.redundancy = step.redundancy
     db.add(db_task)
@@ -104,6 +105,7 @@ def delete_task_crud(db: Session, task: Task):
     if task is not None:
         db.delete(task)
         db.commit()
+        assert task.step_id is not None
         recalculate_step_status(db, task.step_id)
     return task
 
@@ -133,6 +135,7 @@ def update_task_status_crud(db: Session, task_id: int, status: Status) -> Task:
     task.updated_at = func.now()
     db.commit()
     db.refresh(task)
+    assert task.step_id is not None
     recalculate_step_status(db, task.step_id)
     return task
 
@@ -165,6 +168,7 @@ def update_tasks_status_crud(
     db.commit()
 
     # Recalculate once (same step)
+    assert step.step_id is not None
     recalculate_step_status(db, step.step_id)
     return updated_task_ids
 
@@ -190,17 +194,20 @@ def activate_task_crud(db: Session, task_id: int) -> Task:
 
     elif task.status == Status.SKIPPED:
         for annotation in task.annotations or []:
+            assert annotation.previous_status is not None
             annotation.annotation_status = annotation.previous_status
             annotation.previous_status = None
-            annotation.skipped_by = None
-            annotation.updated_at = func.now()
+            annotation.skipped_by = None  # type: ignore[assignment]
+            annotation.updated_at = func.now()  # type: ignore[assignment]
 
+        assert task.previous_status is not None
         task.status = task.previous_status
         task.previous_status = None
         task.updated_at = func.now()
 
     db.commit()
     db.refresh(task)
+    assert task.step_id is not None
     recalculate_step_status(db, task.step_id)
     return task
 
@@ -244,6 +251,7 @@ def recalculate_task_status(db: Session, task_id: int):
     if task.status != new_status:
         print(f"🔄 Updating Task {task.id} status: {task.status} → {new_status}")
         update_task_status_crud(db, task.id, new_status)
+        assert task.step_id is not None
         recalculate_step_status(db, task.step_id)
 
 
