@@ -20,8 +20,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ina_ground_control.constants.enums import DistributionMode, Status
 from ina_ground_control.models import Base
+from ina_ground_control.models.media_model import Media
 from ina_ground_control.models.media_projet_association import MediaProject
+from ina_ground_control.models.step_model import Step
+from ina_ground_control.models.tag_model import Tag
 from ina_ground_control.models.tag_project_association import TagProject
+from ina_ground_control.models.user_model import User
 
 
 class Project(Base):

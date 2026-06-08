@@ -160,3 +160,81 @@ Apply migrations to database:
 ```bash
 uv run alembic upgrade head
 ```
+
+---
+
+## Plugin Secret Encryption
+
+Plugin `client_secret` values (OAuth2 credentials stored in the database) are encrypted at rest using **Fernet** symmetric encryption (AES-128-CBC + HMAC-SHA256) from the `cryptography` package.
+
+### How it works
+
+| Step | Where | What happens |
+|---|---|---|
+| **Save** | `plugin_service.create_plugin_crud` | `client_secret` is encrypted before the JSON config is written to the database |
+| **Use** | `plugin_service.request_auth_token` | Secret is decrypted before being passed to `OAuth2Client` |
+| **Use** | `PluginServiceAutoComplete._get_access_token` | Secret is decrypted before being passed to `OAuth2Client` |
+
+Encrypted values are stored with a `fernet:` prefix (e.g. `fernet:gAAAAAB...`). Values without this prefix are passed through unchanged — this ensures **backward compatibility** with secrets already stored in plaintext.
+
+### Setup
+
+Generate a Fernet key:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Add it to `.env.local`:
+
+```
+GC_SECRET_ENCRYPTION_KEY=<generated-key>
+```
+
+### The `SecretCipher` class
+
+The encryption logic lives in `ina_ground_control/utils/crypto.py`. The class is designed for full testability — it takes the key as a constructor argument, with no dependency on application settings:
+
+```python
+from cryptography.fernet import Fernet
+from ina_ground_control.utils.crypto import SecretCipher
+
+key = Fernet.generate_key().decode()
+cipher = SecretCipher(key)
+
+encrypted = cipher.encrypt("my-secret")   # "fernet:gAAAAAB..."
+plain     = cipher.decrypt(encrypted)     # "my-secret"
+plain     = cipher.decrypt("legacy")      # "legacy"  ← passthrough, no prefix
+```
+
+Use `get_secret_cipher()` in application code to get an instance pre-loaded from settings:
+
+```python
+from ina_ground_control.utils.crypto import get_secret_cipher
+
+cipher = get_secret_cipher()
+plain  = cipher.decrypt(config.client_secret)
+```
+
+### Writing tests
+
+Instantiate `SecretCipher` directly with a test key — no environment variable or settings mock needed:
+
+```python
+from cryptography.fernet import Fernet
+from ina_ground_control.utils.crypto import SecretCipher
+
+def test_encrypt_decrypt_roundtrip():
+    cipher = SecretCipher(Fernet.generate_key().decode())
+    secret = "my-test-secret"
+    assert cipher.decrypt(cipher.encrypt(secret)) == secret
+
+def test_plaintext_passthrough():
+    cipher = SecretCipher(Fernet.generate_key().decode())
+    assert cipher.decrypt("legacy-plain") == "legacy-plain"
+
+def test_is_encrypted():
+    cipher = SecretCipher(Fernet.generate_key().decode())
+    assert SecretCipher.is_encrypted(cipher.encrypt("x")) is True
+    assert SecretCipher.is_encrypted("plain") is False
+```

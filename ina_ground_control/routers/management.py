@@ -13,9 +13,8 @@ Routes:
 """
 
 from http import HTTPStatus
-from http.client import HTTPException
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import PlainTextResponse
 from prometheus_client import generate_latest
 from pydantic import BaseModel

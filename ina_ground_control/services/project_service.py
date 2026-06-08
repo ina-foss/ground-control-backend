@@ -10,10 +10,10 @@ Functions:
 """
 
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from fastapi import Request
-from sqlalchemy import func, select
+from sqlalchemy import asc, case, func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ina_ground_control import logger
@@ -33,50 +33,61 @@ def get_relevant_task_for_user(project, user_email: str):
     Given a project and a user, return the first relevant task to annotate
     according to user role and annotation logic.
     """
-    now = datetime.now(UTC).replace(tzinfo=None)
-    all_filtered_tasks = []
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    high_priority_tasks = []  # user in-progress
+    medium_priority_tasks = []  # available in-progress
+    pending_tasks = []  # pending tasks
+
     for step in project.steps:
         for task in step.tasks:
-            # Condition 1: tasks in progress by this user
+
+            # Condition 1: tasks in progress by this user (HIGHEST priority)
             if any(
                 ann.user_email == user_email
                 and ann.annotation_status == Status.IN_PROGRESS
                 for ann in task.annotations
             ):
-                all_filtered_tasks.append(task)
+                high_priority_tasks.append(task)
                 # TODO: => continue
                 break
 
-            # Condition 2: insufficient redundancy or expired pending
+            # Condition 2: insufficient redundancy (MEDIUM priority)
             other_anns_in_progress = [
                 ann
                 for ann in task.annotations
                 if ann.annotation_status == Status.IN_PROGRESS
                 and ann.user_email != user_email
             ]
+
             if (
                 task.status == Status.IN_PROGRESS
                 and len(other_anns_in_progress) < task.redundancy
             ):
-                all_filtered_tasks.append(task)
+                medium_priority_tasks.append(task)
                 # TODO: => continue
                 break
 
-            # Condition 3: pending tasks and prioritize expired pending
+            # Condition 3: pending tasks
             if task.status == Status.PENDING:
-                if task.expiration_date and task.expiration_date <= now:
-                    all_filtered_tasks.insert(0, task)
-                else:
-                    all_filtered_tasks.append(task)
-    # TODO:
-    # In the future, we may use `step.max_tasks_per_person` (or a project-level limit)
-    # to determine how many tasks to assign per user for a given project.
-    # For now, we only return the first relevant task available for the user.
-    if all_filtered_tasks:
-        project.tasks_to_annotate = [all_filtered_tasks[0]]
-    else:
-        project.tasks_to_annotate = None
+                pending_tasks.append(task)
 
+    # ✅ Sort pending tasks:
+    # Order:
+    # 1. Expired first
+    # 2. Then closest expiration date
+    # 3. Then no expiration last
+
+    pending_tasks.sort(
+        key=lambda t: (
+            t.expiration_date is None,
+            t.expiration_date > now if t.expiration_date else True,
+            t.expiration_date or datetime.max.replace(tzinfo=timezone.utc),
+        )
+    )
+
+    all_filtered_tasks = high_priority_tasks + medium_priority_tasks + pending_tasks
+    project.tasks_to_annotate = [all_filtered_tasks[0]] if all_filtered_tasks else None
     return project
 
 
@@ -170,7 +181,7 @@ def _get_relevant_tasks_for_projects(
     Efficiently fetch one relevant task per project for a user.
     Returns a dict mapping project_id -> [task_id] or empty list.
     """
-    now = datetime.now(UTC).replace(tzinfo=None)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     result = {}
 
     # Query 1: Tasks in progress by this user (highest priority)
@@ -237,9 +248,20 @@ def _get_relevant_tasks_for_projects(
                 Step.project_id.in_(remaining_projects),
                 Task.status == Status.PENDING,
             )
+            .order_by(
+                Step.project_id,  # group by project
+                case(
+                    (Task.expiration_date.is_(None), 1),  # NULLs last
+                    else_=0,
+                ),
+                case(
+                    (Task.expiration_date <= now, 0),  # expired first
+                    else_=1,
+                ),
+                asc(Task.expiration_date),
+            )
             .all()
         )
-
         for task_id, project_id, expiration_date in pending_tasks:
             if project_id not in result:
                 result[project_id] = [task_id]

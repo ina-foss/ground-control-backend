@@ -41,6 +41,7 @@ class MediaType(str, Enum):
 
     MP4 = "mp4"
     HLS = "hls"
+    MP3 = "mp3"
 
 
 class TypePlugin(str, Enum):
@@ -60,6 +61,8 @@ class TypePlugin(str, Enum):
     LIST_ITEMS = "listitems"  # Affiche des tags et une liste d'éléments
     SUGGESTION_LIST = "suggestionlist"  # Bloc de suggestions interactives
     INPUT_LABEL = "inputlabel"  # Affiche un champ de saisie de texte simple
+    ENTITY_LIST_INPUT = "entitylistinput"  # Affiche une ligne  avec un champ de saisie simple et une liste de choix
+    MULTISELECT_OPTIONS = "multiselectoptions"  # Affiche une ligne  avec un bouton qui affiche une liste a cocher et une liste deroulante
 
 
 class DisplayZone(str, Enum):
@@ -69,12 +72,14 @@ class DisplayZone(str, Enum):
     Attributes:
         BLOC (str): Represents a standalone block zone.
         SPAN_MODAL_LEFT (str): Represents a modal that spans the left side.
+        SPAN_MODAL_LEFT_SEGMENT (str): Represents a modal that spans the left side.
         SPAN_MODAL_RIGHT (str): Represents a modal that spans the right side.
         GROUP_MODAL (str): Represents a grouped modal zone for multiple plugins.
     """
 
     BLOC = "bloc"
     SPAN_MODAL_LEFT = "span_modal_left"
+    SPAN_MODAL_LEFT_SEGMENT = "span_modal_left_segment"
     SPAN_MODAL_RIGHT = "span_modal_right"
     GROUP_MODAL = "group_modal"
 
@@ -104,6 +109,7 @@ class Status(str, Enum):
     SKIPPED = "skipped"
     DONE = "done"
     ARCHIVED = "archived"
+    VERIFIED = "verified"
 
 
 class AnnotationType(str, Enum):
@@ -115,6 +121,7 @@ class AnnotationType(str, Enum):
     TRANSCRIPTION = "transcription"
     SPAN = "span"
     AUTO_SUMMARY = "auto-summary"
+    VIDEO_SEGMENTATION = "video-segmentation"
 
 
 class TaskDataType(str, Enum):

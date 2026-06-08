@@ -15,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ina_ground_control.constants.enums import MediaType
 from ina_ground_control.models import Base
+from ina_ground_control.models.task_model import Task
 
 
 class Media(Base):

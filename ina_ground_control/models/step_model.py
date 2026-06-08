@@ -31,6 +31,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ina_ground_control.constants.enums import AnnotationType, Status
 from ina_ground_control.models import Base
+from ina_ground_control.models.plugin_model import Plugin
+from ina_ground_control.models.task_model import Task
 
 
 class Step(Base):

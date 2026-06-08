@@ -38,6 +38,7 @@ class PluginConfigAutoComplete(PluginConfigBase):
     response_editable_key: Optional[str] = None
     response_copyable_key: Optional[str] = None
     response_tooltip_key: Optional[str] = None
+    response_link_key: Optional[str] = None
 
     # Use ConfigDict for configuration
     model_config = ConfigDict(

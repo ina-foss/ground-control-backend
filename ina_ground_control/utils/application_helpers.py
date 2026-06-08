@@ -1,7 +1,9 @@
 """Helper utilities for the MCP server."""
 
 import importlib
+import importlib.metadata
 import logging
+import logging.config
 import os
 from pathlib import Path
 

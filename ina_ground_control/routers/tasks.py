@@ -19,7 +19,7 @@ Configuration:
     `src` module.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, Query
 from fastapi_keycloak_middleware import (
@@ -44,12 +44,12 @@ from ina_ground_control.schemas.task_schemas import (
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import (
-    activate_task_crud,
     create_task_crud,
     delete_task_crud,
     get_task_by_id,
     update_data_task_crud,
     update_task_status_crud,
+    update_tasks_status_crud,
 )
 
 router = APIRouter(tags=["task"])
@@ -216,7 +216,13 @@ def update_task_status(task_id: int, status: Status, db: Session = Depends(get_d
     return task
 
 
-@router.post("/task/{task_id}/activate", response_model=TaskListDto)
-def activate_task(task_id: int, db: Session = Depends(get_db)):
-    task = activate_task_crud(db, task_id)
-    return task
+@router.post("/tasks/status", response_model=List[int])
+def update_tasks_status(
+    tasks_id: List[int],
+    status: Status,
+    db: Session = Depends(get_db),
+):
+    """
+    update tasks status list of tasks.
+    """
+    return update_tasks_status_crud(db, tasks_id, status)

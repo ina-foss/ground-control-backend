@@ -10,14 +10,13 @@ authors = [
     { name = "HOUNAIDA REKIK", email = "hrekik-prestataire@ina.fr" },
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 keywords = ["ground-truth", "machine-learning", "data-processing", "fastapi"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Framework :: FastAPI",
@@ -28,29 +27,29 @@ dependencies = [
     "python-dateutil>=2.8.0",
     # Ground Control specific dependencies
     "h11==0.16.0",
-    "fastapi==0.115.4",
+    "fastapi==0.135.2",
     "pydantic>=2.10,<3.0.0",
     # Remove pinned pydantic-core - let pydantic manage its own core version
     "pydantic[email]",
     "sqlalchemy>=2.0.35",
-    "uvicorn[standard]==0.34.2",
+    "uvicorn[standard]==0.42.0",
     "psycopg2-binary",
-    "requests==2.31.0",
-    "fastapi-keycloak-middleware==1.2.0",
+    "requests>=2.32.0",
+    "fastapi-keycloak-middleware==1.4.0",
     "python-dotenv==1.0.1",
-    "alembic==1.16.2",
-    "alembic-postgresql-enum==1.7.0",
-    "jsonpath-ng==1.7.0",
-    "opentelemetry-api==1.31.0",
-    "opentelemetry-sdk==1.31.0",
-    "opentelemetry-exporter-prometheus==0.52b0",
-    "opentelemetry-instrumentation-fastapi==0.52b0",
-    "opentelemetry-instrumentation-sqlalchemy==0.52b0",
+    "alembic==1.18.4",
+    "alembic-postgresql-enum==1.10.0",
+    "jsonpath-ng==1.8.0",
+    "opentelemetry-api==1.40.0",
+    "opentelemetry-sdk==1.40.0",
+    "opentelemetry-exporter-prometheus==0.61b0",
+    "opentelemetry-instrumentation-fastapi==0.61b0",
+    "opentelemetry-instrumentation-sqlalchemy==0.61b0",
     "pydantic-settings>=2.10.1",
-    "requests-oauth2client==1.7.0",
+    "requests-oauth2client==1.8.0",
     "sparqlwrapper>=2.0.0",
     "httpx==0.28.1",
-    "pytest-asyncio>=1.0.0",
+    "cryptography>=45.0.4",
 ]
 
 [project.optional-dependencies]
@@ -83,11 +82,12 @@ Documentation = "https://git.infra.sas.ina/ia/code/ground-control/docs.git"
 "Bug Tracker" = "https://git.infra.sas.ina/ia/code/ground-control/backend/issues"
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-source = "vcs"
+source = "code"
+path = "_version_scheme.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ina_ground_control"]
@@ -97,15 +97,19 @@ packages = ["ina_ground_control"]
 dev-dependencies = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+    "pytest-asyncio>=1.0.0",
     "black>=23.0.0",
     "isort>=5.12.0",
     "flake8>=6.0.0",
     "pylint>=3.0.0",
-    "pre-commit>=3.0.0"
+    "pre-commit>=3.0.0",
+    "mypy>=2.1.0",
+    "types-requests>=2.33.0.20260518",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
+asyncio_mode = "auto"
 addopts = [
     "--cov=ina_ground_control",
     "--cov-report=html",
@@ -120,10 +124,19 @@ markers = [
     "unit: marks tests as unit tests",
 ]
 
-# Move asyncio_mode to a separate section
-[tool.pytest_asyncio]
-asyncio_mode = "auto"
+[tool.mypy]
+exclude = [
+  "^alembic/",
+  ".*/alembic/.*",
+]
 
+[[tool.mypy.overrides]]
+module = "fastapi_keycloak_middleware.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "jsonpath_ng.*"
+ignore_missing_imports = true
 
 [tool.black]
 line-length = 88

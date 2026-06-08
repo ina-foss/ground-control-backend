@@ -53,6 +53,7 @@ class StepDetailDto(StepDto):
     """
 
     tasks: Optional[list["TaskWithIdDto"]]
+    plugins: Optional[list["PluginWithIdDto"]]
 
 
 class StepProjectDto(BaseModel):

@@ -8,7 +8,8 @@ import logging
 
 import requests
 from jsonpath_ng.ext import parse as jsonpath_parse
-from requests.exceptions import RequestException
+from requests.exceptions import HTTPError, RequestException
+from requests_oauth2client import OAuth2Client
 
 from ina_ground_control import logger
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
@@ -20,6 +21,7 @@ from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import (
 )
 from ina_ground_control.models.plugin.plugin_base import DataTypeEnum, PluginConfigType
 from ina_ground_control.services.plugins.plugin_service_base import PluginServiceBase
+from ina_ground_control.utils.crypto import get_secret_cipher
 
 logger = logging.getLogger(__name__)
 PLUGIN_GLOBAL_TIMEOUT = 10
@@ -47,6 +49,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
         parse(response) -> list[PluginAutocompleteValueDTO]:
             Parses the HTTP response into a list of `PluginAutocompleteValueDTO` objects.
     """
+
+    config: PluginConfigAutoComplete
 
     def __init__(self, config: PluginConfigAutoComplete):
         """
@@ -97,6 +101,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "props": "claims",
             "format": "json",
         }
+        if not self.config.data_source:
+            return None
         try:
             details = requests.get(
                 self.config.data_source,
@@ -112,6 +118,42 @@ class PluginServiceAutoComplete(PluginServiceBase):
         except (RequestException, ValueError, KeyError) as e:
             logger.warning("Failed to fetch image for entity %s: %s", entity_id, e)
         return None
+
+    def _get_access_token(self) -> str | None:
+        """
+        Fetch an OAuth2 access token using client credentials if auth config is present.
+
+        Returns:
+            str | None: The access token string, or None if no auth config is set.
+
+        Raises:
+            GroundControlException: If the token request fails.
+        """
+        if not (
+            self.config.token_url
+            and self.config.client_id
+            and self.config.client_secret
+        ):
+            return None
+        try:
+            logger.info(
+                "Requesting token — url=%s client_id=%s",
+                self.config.token_url,
+                self.config.client_id,
+            )
+            oauth2client = OAuth2Client(
+                token_endpoint=self.config.token_url,
+                client_id=self.config.client_id,
+                client_secret=get_secret_cipher().decrypt(self.config.client_secret),
+            )
+            token_response = oauth2client.client_credentials()
+            return token_response.access_token
+        except Exception as e:
+            logger.error("Failed to fetch access token: %s", str(e))
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details="Failed to obtain access token from the token endpoint.",
+            ) from e
 
     def search(self, query: str) -> list[PluginAutocompleteValueDTO]:
         """
@@ -132,8 +174,28 @@ class PluginServiceAutoComplete(PluginServiceBase):
             RuntimeError: For unexpected errors or failed HTTP requests.
         """
         try:
+            if not self.config.data_source:
+                raise GroundControlException(
+                    ErrorCode.GENERIC_CLIENT_ERROR,
+                    details="Plugin configuration is missing 'data_source'.",
+                )
             no_verify = True
             headers = {"Content-Type": "application/json"}
+
+            access_token = self._get_access_token()
+            if access_token:
+                headers["Authorization"] = f"Bearer {access_token}"
+                logger.info(
+                    "Access token obtained — Authorization header: Bearer %s...",
+                    str(access_token)[:20],
+                )
+            else:
+                logger.warning(
+                    "No auth config found for plugin (token_url=%s, client_id=%s) — "
+                    "request will be sent without Authorization header.",
+                    self.config.token_url,
+                    self.config.client_id,
+                )
 
             # Handle PLUGIN_REQUEST_POST (e.g., Elasticsearch)
             if self.config.type == PluginConfigType.PLUGIN_REQUEST_POST:
@@ -174,7 +236,10 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
                 logger.info("Sending GET request to data source: %s", data_source)
                 response = requests.get(
-                    data_source, timeout=PLUGIN_GLOBAL_TIMEOUT, verify=no_verify
+                    data_source,
+                    headers=headers,
+                    timeout=PLUGIN_GLOBAL_TIMEOUT,
+                    verify=no_verify,
                 )
             # Handle PLUGIN_WIKIDATA
             elif self.config.type == PluginConfigType.PLUGIN_WIKIDATA:
@@ -199,7 +264,6 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 for item in data.get("search", []):
                     entity_id = item["id"]
                     image_url = self.get_wikidata_image(entity_id)
-
                     results.append(
                         PluginAutocompleteValueDTO(
                             id=entity_id,
@@ -207,9 +271,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                             label=item.get("label"),
                             description=item.get("description"),
                             image=image_url,
+                            link=item.get("url"),
                         )
                     )
-
                 return results
             else:
                 logger.error("Unsupported plugin type: %s", self.config.type)
@@ -226,14 +290,27 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 return data
 
             else:
-                logger.warning("Unexpected HTTP status code %d", response.status_code)
+                logger.warning(
+                    "Unexpected HTTP status code %d — response body: %s",
+                    response.status_code,
+                    response.text[:500],
+                )
                 response.raise_for_status()
+                return []
+
+        except HTTPError as http_exc:
+            status_code = http_exc.response.status_code
+            logger.error("HTTP request failed: %s", str(http_exc))
+            raise GroundControlException(
+                ErrorCode.GENERIC_CLIENT_ERROR,
+                details=f"Data source returned HTTP {status_code}.",
+            ) from http_exc
 
         except RequestException as req_exc:
             logger.error("HTTP request failed: %s", str(req_exc))
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
-                details="Failed to fetch autocomplete results from the data source.",
+                details="Failed to connect to the data source.",
             ) from req_exc
 
         except Exception as exc:
@@ -272,104 +349,6 @@ class PluginServiceAutoComplete(PluginServiceBase):
             logger.error("Failed to parse JSON response: %s", e)
             return None
 
-    def _extract_jsonpath_results(self, data: dict) -> dict:
-        """
-        Extract data using JSONPath expressions from configuration.
-
-        Args:
-            data (dict): The JSON data to extract from.
-
-        Returns:
-            dict: Dictionary containing extracted lists for each field.
-        """
-        id_expr = jsonpath_parse(self.config.response_id_key)
-        ext_id_expr = jsonpath_parse(self.config.response_ext_id_key)
-        label_expr = jsonpath_parse(self.config.response_label_key)
-        tag_label_expr = jsonpath_parse(self.config.response_tag_label_key)
-        image_expr = (
-            jsonpath_parse(self.config.response_image_key)
-            if self.config.response_image_key
-            else None
-        )
-        description_expr = (
-            jsonpath_parse(self.config.response_description_key)
-            if self.config.response_description_key
-            else None
-        )
-        categories_expr = (
-            jsonpath_parse(self.config.response_categories_key)
-            if self.config.response_categories_key
-            else None
-        )
-        editable_expr = (
-            jsonpath_parse(self.config.response_editable_key)
-            if self.config.response_editable_key
-            else None
-        )
-
-        return {
-            "ids": id_expr.find(data),
-            "ext_ids": ext_id_expr.find(data),
-            "labels": label_expr.find(data),
-            "tag_labels": tag_label_expr.find(data),
-            "images": image_expr.find(data) if image_expr else [],
-            "descriptions": description_expr.find(data) if description_expr else [],
-            "categories": categories_expr.find(data) if categories_expr else [],
-            "editable": editable_expr.find(data) if editable_expr else [],
-        }
-
-    def _transform_to_dto_list(
-        self, extracted_data: dict
-    ) -> list[PluginAutocompleteValueDTO]:
-        """
-        Transform extracted JSONPath results into DTO objects.
-
-        Args:
-            extracted_data (dict): Dictionary containing extracted data lists.
-
-        Returns:
-            list[PluginAutocompleteValueDTO]: List of transformed DTO objects.
-        """
-        ids = extracted_data["ids"]
-        ext_ids = extracted_data["ext_ids"]
-        labels = extracted_data["labels"]
-        tag_labels = extracted_data["tag_labels"]
-        images = extracted_data["images"]
-        descriptions = extracted_data["descriptions"]
-        categories = extracted_data["categories"]
-
-        num_results = len(ids)
-        transformed_data = []
-
-        for i in range(num_results):
-            transformed_data.append(
-                PluginAutocompleteValueDTO(
-                    id=ids[i].value if i < len(ids) and ids[i] else None,
-                    ext_id=(
-                        ext_ids[i].value if i < len(ext_ids) and ext_ids[i] else None
-                    ),
-                    label=labels[i].value if i < len(labels) and labels[i] else None,
-                    tag_label=(
-                        tag_labels[i].value
-                        if i < len(tag_labels) and tag_labels[i]
-                        else None
-                    ),
-                    image=images[i].value if i < len(images) and images[i] else None,
-                    description=(
-                        descriptions[i].value
-                        if i < len(descriptions) and descriptions[i]
-                        else None
-                    ),
-                    categories=(
-                        categories[i].value
-                        if i < len(categories) and categories[i]
-                        else None
-                    ),
-                )
-            )
-
-        return transformed_data
-
     def _should_filter_results(self, query: str, transformed_data: list) -> bool:
         """
         Determine if results should be filtered based on query.
@@ -390,6 +369,8 @@ class PluginServiceAutoComplete(PluginServiceBase):
         if not transformed_data:
             return False
 
+        if not isinstance(self.config.search_query, str):
+            return False
         first_item_attr = getattr(transformed_data[0], self.config.search_query, None)
         return isinstance(first_item_attr, str)
 
@@ -436,7 +417,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 return expr_results[index]
         return None
 
-    def _safe_jsonpath_parse(self, expression: str, field_name: str):
+    def _safe_jsonpath_parse(self, expression: str | None, field_name: str):
         """
         Safely parse JSONPath expression with better error handling.
 
@@ -509,6 +490,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
         tooltip_expr = self._safe_jsonpath_parse(
             self.config.response_tooltip_key, "response_tooltip_key"
         )
+        link_expr = self._safe_jsonpath_parse(
+            self.config.response_link_key, "response_link_key"
+        )
         if not id_expr:
             raise GroundControlException(
                 ErrorCode.GENERIC_CLIENT_ERROR,
@@ -527,6 +511,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "editable_expr": editable_expr,
             "copyable_expr": copyable_expr,
             "tooltip_expr": tooltip_expr,
+            "link_expr": link_expr,
         }
 
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
@@ -592,6 +577,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 if expressions["tooltip_expr"]
                 else []
             ),
+            "link": (
+                expressions["link_expr"].find(data) if expressions["link_expr"] else []
+            ),
         }
 
     def _create_dto_from_extracted_data(
@@ -619,6 +607,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
             editable=self._safe_extract_value(extracted_data["editable"], index),
             copyable=self._safe_extract_value(extracted_data["copyable"], index),
             tooltip=self._safe_extract_value(extracted_data["tooltip"], index),
+            link=self._safe_extract_value(extracted_data["link"], index),
         )
 
     def _build_transformed_data(

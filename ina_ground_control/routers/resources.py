@@ -42,7 +42,7 @@ def get_transcription(
 ):
     """Get transcriptions from PX"""
 
-    base_url = settings.player_expert.base_url
+    base_url = settings.player_expert.base_url  # type: ignore[attr-defined]
 
     params = {
         "pluginName": plugin_name,
@@ -55,14 +55,14 @@ def get_transcription(
 
     params = {k: v for k, v in params.items() if v is not None}
 
-    headers = {"Authorization": f"Bearer {settings.player_expert.token}"}
+    headers = {"Authorization": f"Bearer {settings.player_expert.token}"}  # type: ignore[attr-defined]
 
     # Specify a timeout to prevent indefinite hanging
     response = requests.get(
         url=base_url,
         params=params,
         headers=headers,
-        verify=settings.player_expert.verify_tls,
+        verify=settings.player_expert.verify_tls,  # type: ignore[attr-defined]
         timeout=10,
     )
 

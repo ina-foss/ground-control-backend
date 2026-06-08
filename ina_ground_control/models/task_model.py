@@ -30,7 +30,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ina_ground_control.constants.enums import Status, TaskDataType
 from ina_ground_control.models import Base
+from ina_ground_control.models.annotation_model import Annotation
 from ina_ground_control.models.annotation_task_association import AnnotationTask
+from ina_ground_control.models.task_comment_model import TaskComment
 
 
 class Task(Base):

@@ -18,19 +18,17 @@ from ina_ground_control.schemas.plugin_schemas import PluginCreate
 from ina_ground_control.services.plugins.plugin_service_autocomplete import (
     PluginServiceAutoComplete,
 )
+from ina_ground_control.utils.crypto import SecretCipher, get_secret_cipher
 
 
-def request_auth_token(
-    token_url: str, client_id: str, client_secret: str
-) -> OAuth2Client:
+def request_auth_token(token_url: str, client_id: str, client_secret: str) -> str:
     try:
         oauth2client = OAuth2Client(
             token_endpoint=token_url,
             client_id=client_id,
             client_secret=client_secret,
-            testing=True,
         )
-        token_response = oauth2client.fetch_token()
+        token_response = oauth2client.client_credentials()
         return token_response.access_token
     except Exception as e:
         logger.error("Error requesting Keycloak token via OAuth2Client: %s", str(e))
@@ -54,7 +52,9 @@ def create_plugin_crud(plugin: PluginCreate, db: Session):
     config = plugin.config_data
 
     if config.token_url and config.client_id and config.client_secret:
-        request_auth_token(config.token_url, config.client_id, config.client_secret)
+        cipher = get_secret_cipher()
+        plain_secret = cipher.decrypt(config.client_secret)
+        request_auth_token(config.token_url, config.client_id, plain_secret)
         try:
             logger.info(
                 "Successfully connected to protected resource: %s", config.data_source
@@ -68,6 +68,17 @@ def create_plugin_crud(plugin: PluginCreate, db: Session):
             ) from e
 
     plugin_data = plugin.model_dump()
+
+    # Encrypt client_secret before persisting to the database.
+    # Skip if the value is already encrypted (e.g. update sending back the stored value).
+    raw_secret = (
+        plugin_data.get("config_data", {}).get("client_secret")
+        if isinstance(plugin_data.get("config_data"), dict)
+        else None
+    )
+    if raw_secret and not SecretCipher.is_encrypted(raw_secret):
+        cipher = get_secret_cipher()
+        plugin_data["config_data"]["client_secret"] = cipher.encrypt(raw_secret)
     children_data = plugin_data.pop("children", [])
     children_models = [Plugin(**child) for child in children_data]
     db_plugin = Plugin(**plugin_data)

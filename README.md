@@ -1,4 +1,4 @@
-# Ground Control
+Met# Ground Control
 
 Ground Control is an audio/video corpus annotation application developed by [INA](http://www.ina.fr) and distributed under an MIT license.
 It is partially funded by BPI as part of the France 2030 [ArGiMi project](https://www.ina.fr/institut-national-audiovisuel/research/argimi-project).
@@ -104,6 +104,24 @@ The application uses environment-based configuration through the [`settings.py`]
 | `GC_SSO_REALM` | "ground_control" | Keycloak realm name |
 | `GC_SSO_CLIENT_ID` | "internal" | OAuth2 client identifier |
 | `GC_SSO_CLIENT_SECRET` | "internal" | OAuth2 client secret |
+
+### Plugin Secret Encryption
+
+Plugin `client_secret` values are encrypted at rest using Fernet (AES-128-CBC + HMAC-SHA256).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GC_SECRET_ENCRYPTION_KEY` | `""` | Fernet key used to encrypt plugin client secrets in the database |
+
+Generate a key and add it to `.env.local`:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Add to .env.local:
+# GC_SECRET_ENCRYPTION_KEY=<generated-key>
+```
+
+> Secrets already stored in plaintext (without the `fernet:` prefix) are read as-is — no migration required.
 
 ### Environment Files
 

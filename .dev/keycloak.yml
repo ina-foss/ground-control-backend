@@ -29,6 +29,3 @@ services:
       start_period: 10s
     labels:
       org.springframework.boot.ignore: true
-
-volumes:
-  keycloak-data:

@@ -5,8 +5,10 @@ Ground control application, including routes, middleware, and configuration.
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi_keycloak_middleware import (
     AuthorizationMethod,
     KeycloakConfiguration,
@@ -129,6 +131,17 @@ app.add_exception_handler(
 )
 
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(
+        "422 Unprocessable Entity on %s %s — errors: %s",
+        request.method,
+        request.url.path,
+        exc.errors(),
+    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -169,7 +182,7 @@ def custom_openapi():
         raise
 
 
-app.openapi = custom_openapi
+app.openapi = custom_openapi  # type: ignore[method-assign]
 # Initialize Telemetry Service
 telemetry = TelemetryService(
     app, sql_alchemy_engine=get_engine(str(settings.get_db_connection_string()))
