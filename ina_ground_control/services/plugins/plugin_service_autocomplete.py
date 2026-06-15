@@ -254,9 +254,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     "type": "item",
                     "search": query,
                 }
-                logger.info(
-                    "Searching Wikidata entities for query: %s", query
-                )  # NOSONAR
+                logger.info("Searching Wikidata entities")
                 response = requests.get(
                     self.config.data_source,
                     params=params,
@@ -290,9 +288,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 data = self.parse(response)
 
                 if not data:
-                    logger.warning(
-                        "Parsed response is empty for query: %s", query
-                    )  # NOSONAR
+                    logger.warning("Parsed response is empty")
 
                 return data
 
