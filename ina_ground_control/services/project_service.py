@@ -21,7 +21,10 @@ from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.annotation_model import Annotation
-from ina_ground_control.models.annotation_task_association import AnnotationTask
+from ina_ground_control.models.annotation_task_association import (
+    AnnotationTask,
+    InOutEnum,
+)
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.models.task_model import Task
@@ -183,7 +186,19 @@ def _get_relevant_tasks_for_projects(
     """
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     result = {}
-
+    user_done_annotation_exists = (
+        select(1)
+        .select_from(AnnotationTask)
+        .join(Annotation, AnnotationTask.annotation_id == Annotation.id)
+        .where(
+            AnnotationTask.task_id == Task.id,
+            Annotation.user_email == user_email,
+            AnnotationTask.direction == InOutEnum.OUT,
+            Annotation.annotation_status == Status.DONE,
+        )
+        .correlate(Task)
+        .exists()
+    )
     # Query 1: Tasks in progress by this user (highest priority)
     in_progress_by_user = (
         db.query(Task.id, Step.project_id)
@@ -194,6 +209,8 @@ def _get_relevant_tasks_for_projects(
             Step.project_id.in_(project_ids),
             Annotation.user_email == user_email,
             Annotation.annotation_status == Status.IN_PROGRESS,
+            AnnotationTask.direction == InOutEnum.OUT,
+            ~user_done_annotation_exists,
         )
         .all()
     )
@@ -204,7 +221,6 @@ def _get_relevant_tasks_for_projects(
 
     # Projects that still need a task
     remaining_projects = [pid for pid in project_ids if pid not in result]
-
     if remaining_projects:
         # Query 2: Tasks with insufficient redundancy
         # Subquery: count of in-progress annotations by other users
@@ -215,6 +231,7 @@ def _get_relevant_tasks_for_projects(
             .where(
                 AnnotationTask.task_id == Task.id,
                 Annotation.annotation_status == Status.IN_PROGRESS,
+                AnnotationTask.direction == InOutEnum.OUT,
                 Annotation.user_email != user_email,
             )
             .correlate(Task)
@@ -228,17 +245,16 @@ def _get_relevant_tasks_for_projects(
                 Step.project_id.in_(remaining_projects),
                 Task.status == Status.IN_PROGRESS,
                 other_ann_count < Task.redundancy,
+                ~user_done_annotation_exists,  # exclude tasks already completed by this user
             )
             .all()
         )
-
         for task_id, project_id in in_progress_tasks:
             if project_id not in result:
                 result[project_id] = [task_id]
 
     # Update remaining projects list
     remaining_projects = [pid for pid in project_ids if pid not in result]
-
     if remaining_projects:
         # Query 3: Pending tasks (prioritize expired ones)
         pending_tasks = (
@@ -247,6 +263,7 @@ def _get_relevant_tasks_for_projects(
             .filter(
                 Step.project_id.in_(remaining_projects),
                 Task.status == Status.PENDING,
+                ~user_done_annotation_exists,
             )
             .order_by(
                 Step.project_id,  # group by project
@@ -268,7 +285,6 @@ def _get_relevant_tasks_for_projects(
             elif expiration_date and expiration_date <= now:
                 # Expired task takes priority
                 result[project_id] = [task_id]
-
     return result
 
 

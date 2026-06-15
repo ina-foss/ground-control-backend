@@ -12,6 +12,7 @@ from ina_ground_control.schemas.step_schemas import StepCreate
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskWithIdDto
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.project_service import (
+    _get_relevant_tasks_for_projects,
     archive_project_service,
     create_project_crud,
     delete_project_crud,
@@ -386,3 +387,78 @@ def test_unarchive_done_project(db_session: SQLAlchemySession):
     with pytest.raises(GroundControlException) as exc:
         unarchive_project_service(db_session, project.id)
     assert exc.value.code == ErrorCode.BAD_REQUEST.name
+
+
+def test_get_relevant_tasks_excludes_done_tasks_for_current_user(
+    db_session: SQLAlchemySession,
+):
+    project = create_project_crud(
+        db_session,
+        ProjectBaseDto(**project_data),
+    )
+
+    step = create_step_crud(
+        StepCreate(
+            **{
+                **step_data_1,
+                "project_id": project.id,
+            }
+        ),
+        db_session,
+    )
+
+    # Task already completed by the current user
+    task_1 = create_task_crud(
+        TaskCreateDto(
+            **{
+                **task_data,
+                "name": "task_1",
+                "step_id": step.id,
+                "status": Status.IN_PROGRESS,
+                "redundancy": 1,
+            }
+        ),
+        db_session,
+    )
+
+    # Task still available
+    task_2 = create_task_crud(
+        TaskCreateDto(
+            **{
+                **task_data,
+                "name": "task_2",
+                "step_id": step.id,
+                "status": Status.IN_PROGRESS,
+                "redundancy": 1,
+            }
+        ),
+        db_session,
+    )
+
+    # User already completed task_1
+    create_annotation_crud(
+        db_session,
+        AnnotationFullCreate(
+            annotation={
+                "user_email": "user.email@ina.fr",
+                "annotation_status": Status.DONE,
+                "version": 1,
+                "result": {},
+            },
+            association={
+                "annotation_id": 0,
+                "task_id": task_1.id,
+                "direction": InOutEnum.OUT,
+            },
+        ),
+    )
+
+    result = _get_relevant_tasks_for_projects(
+        db_session,
+        [project.id],
+        "user.email@ina.fr",
+    )
+
+    assert project.id in result
+    assert task_1.id not in result[project.id]
+    assert result[project.id] == [task_2.id]

@@ -129,7 +129,7 @@ def get_annotations_by_task_id_crud(
         )
     )
 
-    if user_email is not None and user_email != "":
+    if user_email is not None and user_email != "" and direction != InOutEnum.IN:
         query = query.filter(Annotation.user_email == user_email)
     if status is not None:
         if isinstance(status, list):
