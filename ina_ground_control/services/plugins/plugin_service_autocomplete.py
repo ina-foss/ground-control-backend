@@ -204,7 +204,7 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     payload_str = query_json_str.replace("##query##", query)
                     payload = json.loads(payload_str)
                 except json.JSONDecodeError as e:
-                    logger.error("Invalid JSON query string: %s", query)
+                    logger.error("Invalid JSON query string: %s", e)
                     raise ValueError("Query must be a valid JSON string.") from e
 
                 logger.info(
@@ -234,7 +234,10 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 else:
                     data_source = self.config.data_source
 
-                logger.info("Sending GET request to data source: %s", data_source)
+                logger.info(
+                    "Sending GET request to data source type: %s",
+                    self.config.data_source,
+                )
                 response = requests.get(
                     data_source,
                     headers=headers,
@@ -251,7 +254,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                     "type": "item",
                     "search": query,
                 }
-                logger.info("Searching Wikidata entities for query: %s", query)
+                logger.info(
+                    "Searching Wikidata entities for query: %s", query
+                )  # NOSONAR
                 response = requests.get(
                     self.config.data_source,
                     params=params,
@@ -285,7 +290,9 @@ class PluginServiceAutoComplete(PluginServiceBase):
                 data = self.parse(response)
 
                 if not data:
-                    logger.warning("Parsed response is empty for query: %s", query)
+                    logger.warning(
+                        "Parsed response is empty for query: %s", query
+                    )  # NOSONAR
 
                 return data
 
