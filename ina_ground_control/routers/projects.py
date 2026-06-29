@@ -19,7 +19,7 @@ Dependencies:
 
 import time
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
     CheckPermissions,
@@ -40,6 +40,7 @@ from ina_ground_control.schemas.project_schemas import (
     ProjectWithIdDto,
 )
 from ina_ground_control.services.project_service import (
+    _get_relevant_tasks_for_projects,
     archive_project_service,
     create_project_crud,
     delete_project_crud,
@@ -268,3 +269,32 @@ def unarchive_project(
 ):
     project = unarchive_project_service(db, project_id)
     return project
+
+
+@router.get("/project/{project_id}/relevant-task")
+def get_relevant_task_for_project(
+    project_id: int,
+    request: Request,
+    user_email: str = Query(None, description="user_email"),
+    db: Session = Depends(get_db),
+):
+    """
+    Get relevant tasks for a project:
+    - Admin / debug can pass user_email explicitly
+    - Otherwise uses authenticated user from token
+    """
+
+    user = request.scope.get("user", {})
+    email = user.email
+    final_email = user_email if user_email else email
+
+    result = _get_relevant_tasks_for_projects(
+        db=db,
+        project_ids=[project_id],
+        user_email=final_email,
+    )
+
+    return {
+        "project_id": project_id,
+        "task_ids": result.get(project_id, []),
+    }
