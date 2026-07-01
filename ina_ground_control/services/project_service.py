@@ -28,7 +28,7 @@ from ina_ground_control.models.annotation_task_association import (
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.models.task_model import Task
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectUpdateDto
 
 
 def get_relevant_task_for_user(project, user_email: str):
@@ -380,24 +380,36 @@ def create_project_crud(db: Session, project: ProjectBaseDto):
     return db_project
 
 
-def update_project_crud(db: Session, project: ProjectBaseDto, project_id: int):
+def update_project_crud(
+    db: Session,
+    project: ProjectUpdateDto,
+    project_id: int,
+    updated_by: str,
+):
     """
     Update an existing project in the database.
-
-    Parameters:
-    db (Session): The database session used for querying.
-    project (ProjectBaseDto): The project data transfer object containing updated project details.
-    project_id (int): The unique identifier of the project to update.
-
-    Returns:
-    Project: The updated Project object if the project exists, otherwise None.
+    Only updates provided (non-None) fields.
     """
-    db_project = db.query(Project).filter(Project.id == project_id).first()
-    if db_project is not None:
-        for key, value in project.model_dump().items():
-            setattr(db_project, key, value)
-        db.commit()
-        db.refresh(db_project)
+    db_project = get_project_by_id(db, project_id)
+    if not db_project:
+        logger.error("Failed to retrieve project with id: %d", project_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            resource="Project",
+            id=project_id,
+        )
+    update_data = project.model_dump(exclude_unset=True)
+
+    # ✅ add audit fields correctly (DICT syntax)
+    update_data["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
+    update_data["updated_by"] = updated_by
+
+    for key, value in update_data.items():
+        setattr(db_project, key, value)
+
+    db.commit()
+    db.refresh(db_project)
+
     return db_project
 
 

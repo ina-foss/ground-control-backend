@@ -32,12 +32,13 @@ from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.step_model import Step
-from ina_ground_control.schemas.step_schemas import StepCreate, StepDto
+from ina_ground_control.schemas.step_schemas import StepCreate, StepDto, StepSummaryDto
 from ina_ground_control.services.step_service import (
     create_step_crud,
     delete_step_crud,
     get_step_by_id,
     get_steps,
+    get_steps_by_project_id,
     update_data_step_crud,
 )
 
@@ -143,3 +144,14 @@ def read_steps(
     """Retrieve a list of steps with pagination support."""
     steps = get_steps(db, skip=skip, limit=limit)
     return steps
+
+
+@router.get(
+    "/projects/{project_id}/steps",
+    response_model=list[StepSummaryDto],
+)
+def read_project_steps(
+    project_id: int,
+    db: Session = Depends(get_db),
+) -> list[StepSummaryDto]:
+    return get_steps_by_project_id(db, project_id)

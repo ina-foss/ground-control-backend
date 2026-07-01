@@ -71,7 +71,8 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
     created_by: Mapped[str | None] = mapped_column(String, ForeignKey("user.email"))
-
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    updated_by: Mapped[str | None] = mapped_column(String, default=None)
     medias: Mapped[list["Media"]] = relationship(
         "Media",
         secondary=MediaProject.__table__,
