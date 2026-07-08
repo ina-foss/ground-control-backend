@@ -11,7 +11,7 @@ from ina_ground_control import logger
 from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.step_model import Step
-from ina_ground_control.schemas.step_schemas import StepCreate
+from ina_ground_control.schemas.step_schemas import StepCreate, StepSummaryDto
 
 
 def get_step_by_id(db: Session, step_id: int) -> Step:
@@ -32,6 +32,25 @@ def get_step_by_id(db: Session, step_id: int) -> Step:
             ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id
         )
     return step
+
+
+def get_steps_by_project_id(db: Session, project_id: int) -> list[StepSummaryDto]:
+    steps = (
+        db.query(
+            Step.id,
+            Step.annotation_type,
+        )
+        .filter(Step.project_id == project_id)
+        .all()
+    )
+
+    return [
+        StepSummaryDto(
+            id=step.id,
+            annotation_type=step.annotation_type,
+        )
+        for step in steps
+    ]
 
 
 def create_step_crud(step: StepCreate, db: Session):

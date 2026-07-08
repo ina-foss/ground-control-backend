@@ -7,7 +7,7 @@ from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.annotation_task_association import InOutEnum
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
-from ina_ground_control.schemas.project_schemas import ProjectBaseDto
+from ina_ground_control.schemas.project_schemas import ProjectBaseDto, ProjectUpdateDto
 from ina_ground_control.schemas.step_schemas import StepCreate
 from ina_ground_control.schemas.task_schemas import TaskCreateDto, TaskWithIdDto
 from ina_ground_control.services.annotation_service import create_annotation_crud
@@ -19,7 +19,6 @@ from ina_ground_control.services.project_service import (
     finish_project_service,
     get_progressed_tasks_count_for_project_service,
     get_project_by_id,
-    get_projects,
     unarchive_project_service,
     update_project_crud,
 )
@@ -82,78 +81,6 @@ annotation_data = {
 }
 
 
-def test_get_projects(db_session: SQLAlchemySession, monkeypatch):
-    """
-    Test to retrieve all the projects in the database, including task assignment
-    logic based on user role.
-    """
-    # Create test projects
-    project_data_1 = {
-        "title": "Test Project 1",
-        "description": "Test description 1",
-        "status": "draft",
-        "annotation_type": "segmentation",
-        "is_published": True,
-        "allow_skip": True,
-        "control_weights": 10,
-        "empty_annotations": True,
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "created_by": "john@example.com",
-    }
-    project_data_2 = {
-        "title": "Test Project 2",
-        "description": "Test description 2",
-        "status": "draft",
-        "annotation_type": "segmentation",
-        "is_published": True,
-        "allow_skip": True,
-        "control_weights": 10,
-        "empty_annotations": True,
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "created_by": "jane@example.com",
-    }
-
-    created_project_1 = create_project_crud(
-        db_session, ProjectBaseDto(**project_data_1)
-    )
-    created_project_2 = create_project_crud(
-        db_session, ProjectBaseDto(**project_data_2)
-    )
-
-    # Mock a request with a current user
-    class MockUser:
-        email = "tester@example.com"
-        roles = []
-
-    class MockRequest:
-        scope = {"user": MockUser()}
-
-    request = MockRequest()
-
-    # Retrieve projects using the get_projects function
-    retrieved_projects = get_projects(db_session, request)
-
-    # Ensure at least 2 projects were returned
-    assert len(retrieved_projects) >= 2
-
-    # Find the created projects in the returned list dynamically
-    project_1 = next(p for p in retrieved_projects if p.id == created_project_1.id)
-    project_2 = next(p for p in retrieved_projects if p.id == created_project_2.id)
-
-    # Validate project fields
-    assert project_1.title == project_data_1["title"]
-    assert project_1.description == project_data_1["description"]
-    assert project_1.created_by == project_data_1["created_by"]
-
-    assert project_2.title == project_data_2["title"]
-    assert project_2.description == project_data_2["description"]
-    assert project_2.created_by == project_data_2["created_by"]
-
-    # Optional: check that tasks_to_annotate is present (can be None if no tasks)
-    for project in retrieved_projects:
-        assert hasattr(project, "tasks_to_annotate")
-
-
 def test_get_project_by_id(db_session: SQLAlchemySession):
     """
     Test to get a singualr project given its id.
@@ -183,25 +110,21 @@ def test_create_project_crud(db_session: SQLAlchemySession):
 
 
 def test_update_project_crud(db_session: SQLAlchemySession):
-    """
-    Test update a project attributes (title, description and author)
-    """
-    created_project = create_project_crud(db_session, ProjectBaseDto(**project_data))
+    created_project = create_project_crud(
+        db_session,
+        ProjectBaseDto(**project_data),
+    )
 
     updated_task_data = {
         "title": "Test Project 2",
         "description": "Test description 2",
-        "status": "draft",
-        "annotation_type": "segmentation",
-        "is_published": True,
-        "allow_skip": True,
-        "control_weights": 10,
-        "empty_annotations": True,
-        "pinned_at": "2022-12-27 08:26:49.219717",
-        "created_by": "jane@example.com",
     }
+
     update_project_crud(
-        db_session, ProjectBaseDto(**updated_task_data), created_project.id
+        db_session,
+        ProjectUpdateDto(**updated_task_data),
+        created_project.id,
+        "jane@example.com",
     )
 
     retrieved_updated_project = get_project_by_id(db_session, created_project.id)
@@ -209,7 +132,7 @@ def test_update_project_crud(db_session: SQLAlchemySession):
     assert retrieved_updated_project is not None
     assert retrieved_updated_project.title == updated_task_data["title"]
     assert retrieved_updated_project.description == updated_task_data["description"]
-    assert retrieved_updated_project.created_by == updated_task_data["created_by"]
+    assert retrieved_updated_project.updated_by == "jane@example.com"
 
 
 def test_delete_project_crud(db_session: SQLAlchemySession):

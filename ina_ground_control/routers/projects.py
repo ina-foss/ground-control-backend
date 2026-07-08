@@ -37,6 +37,7 @@ from ina_ground_control.schemas.project_schemas import (
     ProjectListDto,
     ProjectListDtoSummary,
     ProjectParametersResponse,
+    ProjectUpdateDto,
     ProjectWithIdDto,
 )
 from ina_ground_control.services.project_service import (
@@ -49,7 +50,6 @@ from ina_ground_control.services.project_service import (
     get_project_by_id,
     get_project_by_id_based_on_user_role,
     get_project_parameters,
-    get_projects,
     get_projects_count,
     get_projects_summary,
     unarchive_project_service,
@@ -57,28 +57,6 @@ from ina_ground_control.services.project_service import (
 )
 
 router = APIRouter(tags=["project"])
-
-
-@router.get(
-    "/projects",
-    response_model=list[ProjectListDto],
-)
-def read_projects(
-    response: Response,
-    request: Request,
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-) -> list[Project]:
-    """Retrieve a list of projects with pagination support."""
-    # Get total count efficiently with a single COUNT query
-    total_count = get_projects_count(db)
-
-    # Get paginated projects
-    projects = get_projects(db, request, skip=skip, limit=limit)
-
-    response.headers["X-Total-Count"] = str(total_count)
-    return projects
 
 
 @router.get(
@@ -165,7 +143,8 @@ def read_project(
 @router.put("/project/{project_id}", response_model=ProjectWithIdDto)
 def update_project(
     project_id: int,
-    project: ProjectBaseDto,
+    request: Request,
+    project: ProjectUpdateDto,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
         CheckPermissions(
@@ -175,7 +154,9 @@ def update_project(
     # pylint: disable=invalid-name
 ) -> Project:
     """Update an existing project by ID."""
-    updated_project = update_project_crud(db, project, project_id)
+    user = request.scope.get("user", {})
+    email = user.email
+    updated_project = update_project_crud(db, project, project_id, email)
     if updated_project is None:
         logger.error("Failed to update project with id: %d", project_id)
         raise GroundControlException(

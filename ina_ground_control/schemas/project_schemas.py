@@ -29,6 +29,8 @@ class ProjectBaseDto(BaseModel):
     control_weights: Optional[int]
     pinned_at: Optional[datetime]
     created_by: str
+    updated_at: Optional[datetime] = None
+    updated_by: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -88,3 +90,12 @@ class ProjectParametersResponse(BaseModel):
     allow_empty_annotation: bool
     max_tasks_per_person: int
     allow_skip: bool
+
+
+class ProjectUpdateDto(BaseModel):
+    """
+    DTO used to update a project's title and description only.
+    """
+
+    title: Optional[str] = None
+    description: Optional[str] = None
