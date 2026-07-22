@@ -89,6 +89,59 @@ def create_plugin_crud(plugin: PluginCreate, db: Session):
     return db_plugin
 
 
+def update_plugin_crud(plugin_id: int, plugin: PluginCreate, db: Session):
+    """
+    Update an existing plugin in the database.
+
+    Attributes:
+        plugin_id (int): The unique identifier of the plugin to update.
+        plugin (PluginCreate): The plugin data transfer object with the new values.
+        db (Session): The database session used for querying.
+
+    Returns:
+        Plugin: The updated Plugin object, or None if no plugin matches the id.
+    """
+    db_plugin = get_plugin_by_id(db, plugin_id=plugin_id)
+    if db_plugin is None:
+        return None
+
+    config = plugin.config_data
+
+    if config.token_url and config.client_id and config.client_secret:
+        cipher = get_secret_cipher()
+        plain_secret = cipher.decrypt(config.client_secret)
+        request_auth_token(config.token_url, config.client_id, plain_secret)
+        logger.info(
+            "Successfully connected to protected resource: %s", config.data_source
+        )
+
+    plugin_data = plugin.model_dump()
+
+    # Encrypt client_secret before persisting to the database.
+    # Skip if the value is already encrypted (e.g. update sending back the stored value).
+    raw_secret = (
+        plugin_data.get("config_data", {}).get("client_secret")
+        if isinstance(plugin_data.get("config_data"), dict)
+        else None
+    )
+    if raw_secret and not SecretCipher.is_encrypted(raw_secret):
+        cipher = get_secret_cipher()
+        plugin_data["config_data"]["client_secret"] = cipher.encrypt(raw_secret)
+
+    children_data = plugin_data.pop("children", [])
+    for key, value in plugin_data.items():
+        setattr(db_plugin, key, value)
+    # Only touch the children collection when it was explicitly provided in the
+    # request. Reassigning it would otherwise clear existing children through the
+    # delete-orphan cascade when the field is omitted.
+    if "children" in plugin.model_fields_set:
+        db_plugin.children = [Plugin(**child) for child in children_data]
+
+    db.commit()
+    db.refresh(db_plugin)
+    return db_plugin
+
+
 def get_plugins_search(db: Session, plugin_id: int, query: str):
     plugin = get_plugin_by_id(db, plugin_id)
     config = PluginConfigDTO.build(plugin.config_data)

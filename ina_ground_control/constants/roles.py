@@ -124,6 +124,8 @@ class Permission(str, Enum):
     :type CREATE_PLUGIN: str
     :ivar DELETE_PLUGIN: Permission string to delete a plugin.
     :type DELETE_PLUGIN: str
+    :ivar UPDATE_PLUGIN: Permission string to update a plugin.
+    :type UPDATE_PLUGIN: str
     :ivar READ_PLUGIN: Permission string to read a single plugin.
     :type READ_PLUGIN: str
     :ivar GET_TRANSCRIPTION: Permission string to get a transcription.
@@ -217,6 +219,7 @@ class Permission(str, Enum):
     READ_PLUGINS = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.READ_ALL.value}"
     CREATE_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.CREATE.value}"
     DELETE_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.DELETE.value}"
+    UPDATE_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.UPDATE.value}"
     READ_PLUGIN = f"{GROUND_CONTROL}:{Resource.PLUGIN.value}:{Action.READ.value}"
     # Ressource
     GET_TRANSCRIPTION = (
