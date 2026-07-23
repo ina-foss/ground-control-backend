@@ -63,6 +63,7 @@ class TypePlugin(str, Enum):
     INPUT_LABEL = "inputlabel"  # Affiche un champ de saisie de texte simple
     ENTITY_LIST_INPUT = "entitylistinput"  # Affiche une ligne  avec un champ de saisie simple et une liste de choix
     MULTISELECT_OPTIONS = "multiselectoptions"  # Affiche une ligne  avec un bouton qui affiche une liste a cocher et une liste deroulante
+    TIMELINE_ROW = "timelinerow"  # Affiche un nouveau groupe dans les écrans implementant une vis-timeline
 
 
 class DisplayZone(str, Enum):

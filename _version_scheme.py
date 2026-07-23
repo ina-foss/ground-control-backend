@@ -36,11 +36,15 @@ import subprocess
 
 
 def _git(*args: str) -> str:
-    return subprocess.check_output(
-        ["git", *args],
-        cwd=os.path.dirname(os.path.abspath(__file__)),
-        stderr=subprocess.DEVNULL,
-    ).decode().strip()
+    return (
+        subprocess.check_output(
+            ["git", *args],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            stderr=subprocess.DEVNULL,
+        )
+        .decode()
+        .strip()
+    )
 
 
 def _slugify_branch(branch: str) -> str:

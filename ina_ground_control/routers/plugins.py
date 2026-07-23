@@ -42,6 +42,7 @@ from ina_ground_control.services.plugin_service import (
     get_plugin_by_id,
     get_plugins_crud,
     get_plugins_search,
+    update_plugin_crud,
 )
 
 router = APIRouter(tags=["plugin"])
@@ -121,6 +122,33 @@ def create_plugin(plugin: PluginCreate, db: Session = Depends(get_db)):
         raise GroundControlException(
             ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create plugin"
         ) from e
+
+
+# update an existing plugin
+@router.patch(
+    "/plugin/{plugin_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=PluginWithIdDto,
+)
+def update_plugin(
+    plugin_id: int,
+    plugin: PluginCreate,
+    db: Session = Depends(get_db),
+    _authorization_result: AuthorizationResult = Depends(
+        CheckPermissions(
+            [Permission.UPDATE_PLUGIN.value], match_strategy=MatchStrategy.AND
+        )
+    ),
+    # pylint: disable=invalid-name
+):
+    """Update an existing plugin by ID."""
+    updated_plugin = update_plugin_crud(plugin_id, plugin, db)
+    if updated_plugin is None:
+        logger.error("Failed to update plugin with id: %d", plugin_id)
+        raise GroundControlException(
+            ErrorCode.RESOURCE_NOT_FOUND, resource="Plugin", id=plugin_id
+        )
+    return updated_plugin
 
 
 @router.delete(
