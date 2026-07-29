@@ -31,6 +31,13 @@ class StepCreate(BaseModel):
         default=False, description="Allow empty annotations"
     )
     max_tasks_per_person: int = Field(default=1, ge=1, description="Must be at least 1")
+    settings: Optional[dict] = Field(
+        default=None,
+        description=(
+            "Type-specific settings. On create/update, a partial payload is "
+            "validated against the step type and completed with its defaults."
+        ),
+    )
 
 
 class StepDto(StepCreate):

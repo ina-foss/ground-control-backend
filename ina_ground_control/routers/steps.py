@@ -20,12 +20,13 @@ Configuration:
     `src` module.
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, status
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
     CheckPermissions,
     MatchStrategy,
 )
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
@@ -40,6 +41,7 @@ from ina_ground_control.services.step_service import (
     get_steps,
     get_steps_by_project_id,
     update_data_step_crud,
+    update_step_settings_crud,
 )
 
 router = APIRouter(tags=["step"])
@@ -111,6 +113,39 @@ def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_d
             ErrorCode.RESOURCE_NOT_FOUND, resource="Step", id=step_id
         )
     return updated_step
+
+
+# update the type-specific settings of a step
+@router.put("/step/{step_id}/settings", response_model=StepDto)
+def update_step_settings(
+    step_id: int,
+    settings: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Update the settings of a step according to its type.
+
+    The step type determines which settings schema is used to validate the
+    payload and to complete the missing values with the defaults.
+
+    Args:
+        step_id (int): The unique identifier of the step to update.
+        settings (dict): The (possibly partial) settings payload.
+
+    Returns:
+        StepDto: The updated step, including its full settings.
+    Raises:
+        GroundControlException: If the step is not found or the settings are
+            incompatible with the step type.
+    """
+    try:
+        return update_step_settings_crud(db, step_id, settings)
+    except ValidationError as e:
+        logger.error("Invalid settings for step %d: %s", step_id, e)
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details=f"Invalid settings for step type: {e}",
+        ) from e
 
 
 # delete step

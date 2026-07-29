@@ -17,6 +17,7 @@ Classes:
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -93,7 +94,7 @@ class Step(Base):
     max_tasks_per_person: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1
     )
-
+    settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     __table_args__ = (
         CheckConstraint(
             "completeness_rate BETWEEN 0 AND 100", name="check_completeness_rate_range"
