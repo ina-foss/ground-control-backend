@@ -171,6 +171,77 @@ class TestPluginServiceAutoComplete(unittest.TestCase):
         result = self.service.parse(mock_response)
         self.assertEqual(result, expected_result)
 
+    def test_parse_missing_field_on_intermediate_item(self):
+        """Cas 1: a field absent on an intermediate item must not shift the
+        following items' values (regression covered by IAGC_808).
+
+        The `label` is missing on item index 1. The fix aligns every field by
+        the item's real index, so item 1 gets label=None while item 2 keeps
+        its own label instead of inheriting item 3's value positionally.
+        """
+        self.config = PluginConfigAutoComplete(
+            data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
+            search_query="query",
+            data_type=DataTypeEnum.JSON,
+            type=PluginConfigType.PLUGIN_REQUEST_GET,
+            response_id_key="$[*].id",
+            response_label_key="$[*].label",
+        )
+        self.service = PluginServiceAutoComplete(config=self.config)
+
+        mock_response = Mock()
+        mock_response.content = json.dumps(
+            [
+                {"id": "1", "label": "Item 1"},
+                {"id": "2"},  # label manquant sur l'item intermediaire
+                {"id": "3", "label": "Item 3"},
+            ]
+        ).encode("utf-8")
+
+        expected_result = [
+            PluginAutocompleteValueDTO(id="1", label="Item 1"),
+            PluginAutocompleteValueDTO(id="2", label=None),
+            PluginAutocompleteValueDTO(id="3", label="Item 3"),
+        ]
+
+        result = self.service.parse(mock_response)
+        self.assertEqual(result, expected_result)
+
+    def test_parse_multi_valued_field_keeps_last_value(self):
+        """Cas 2: when a field expression matches several values for the same
+        item (a `[*]` sub-array), only the last matched value is retained for
+        that item.
+
+        This freezes the current behaviour of `_extract_field_indexed`, which
+        overwrites the per-index slot on each match. Item 0 exposes two tags
+        (`t0a`, `t0b`) and the DTO keeps only `t0b`.
+        """
+        self.config = PluginConfigAutoComplete(
+            data_source="https://player-expert.d.sas.ina/assets/listOfChannel/tvChannels.json",
+            search_query="query",
+            data_type=DataTypeEnum.JSON,
+            type=PluginConfigType.PLUGIN_REQUEST_GET,
+            response_id_key="$[*].id",
+            response_ext_id_key="$[*].tags[*]",
+        )
+        self.service = PluginServiceAutoComplete(config=self.config)
+
+        mock_response = Mock()
+        mock_response.content = json.dumps(
+            [
+                {"id": "1", "tags": ["t0a", "t0b"]},
+                {"id": "2", "tags": ["t1"]},
+            ]
+        ).encode("utf-8")
+
+        expected_result = [
+            PluginAutocompleteValueDTO(id="1", ext_id="t0b"),
+            PluginAutocompleteValueDTO(id="2", ext_id="t1"),
+        ]
+
+        result = self.service.parse(mock_response)
+        self.assertEqual(result, expected_result)
+
     def test_parse_empty_json(self):
         """Test the `parse` method with an empty JSON response."""
         mock_response = Mock()

@@ -5,6 +5,7 @@ This module provides search operation for plugin.
 
 import json
 import logging
+import re
 
 import requests
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -404,20 +405,18 @@ class PluginServiceAutoComplete(PluginServiceBase):
 
     def _safe_extract_value(self, expr_results: list, index: int):
         """
-        Safely extract value from JSONPath results.
+        Safely read the already-aligned value at a given item index.
 
         Args:
-            expr_results (list): List of JSONPath match results.
+            expr_results (list): Per-item list produced by _extract_field_indexed
+            (same length as the number of items, None where missing).
             index (int): Index to extract from.
 
         Returns:
             The extracted value or None if not available.
         """
-        if index < len(expr_results) and expr_results[index] is not None:
-            try:
-                return str(expr_results[index].value)
-            except AttributeError:
-                return expr_results[index]
+        if 0 <= index < len(expr_results):
+            return expr_results[index]
         return None
 
     def _safe_jsonpath_parse(self, expression: str | None, field_name: str):
@@ -517,71 +516,141 @@ class PluginServiceAutoComplete(PluginServiceBase):
             "link_expr": link_expr,
         }
 
+    def _get_item_index(self, match) -> int | None:
+        """
+        Retrieve the array index of the item this JSONPath match belongs to,
+        by inspecting the full path traversed (e.g. "hits.hits.[3]._source...").
+
+        This is what lets us align a field that is MISSING for some items
+        with the correct item, instead of assuming positional alignment
+        between separately-collected match lists.
+
+        Args:
+            match: A jsonpath_ng match result (from expr.find(data)).
+
+        Returns:
+            int | None: The index of the item in the top-level collection,
+            or None if it could not be determined.
+        """
+        try:
+            full_path_str = str(match.full_path)
+            indices = re.findall(r"\[(\d+)\]", full_path_str)
+            if indices:
+                return int(indices[0])
+        except Exception as e:
+            logger.debug("Could not determine item index for match: %s", e)
+        return None
+
+    def _extract_field_indexed(self, expr, data: dict, num_items: int) -> list:
+        """
+        Extract a field's values aligned by item index, filling missing
+        values with None instead of silently shifting subsequent values.
+
+        Args:
+            expr: Parsed JSONPath expression (or None).
+            data (dict): The JSON data to extract from.
+            num_items (int): Total number of items in the collection
+                (derived from the id expression matches).
+
+        Returns:
+            list: A list of length `num_items`, where each position holds
+            the extracted value for that item, or None if missing.
+        """
+        results: list = [None] * num_items
+        if not expr:
+            return results
+
+        for match in expr.find(data):
+            idx = self._get_item_index(match)
+            if idx is None or idx >= num_items:
+                logger.debug(
+                    "Skipping match with unresolved/out-of-range index for field"
+                )
+                continue
+            try:
+                results[idx] = str(match.value)
+            except AttributeError:
+                results[idx] = match.value
+        return results
+
     def _extract_jsonpath_data(self, data: dict, expressions: dict) -> dict:
         """
-        Extract data using JSONPath expressions.
+        Extract data using JSONPath expressions, aligning every field by
+        the item's real index so a missing field never shifts other values.
 
         Args:
             data (dict): The JSON data to extract from.
             expressions (dict): Dictionary of parsed JSONPath expressions.
 
         Returns:
-            dict: Dictionary containing extracted lists for each field.
+            dict: Dictionary containing extracted lists for each field,
+            each of the same length, with None for missing fields.
         """
+        # ids must be complete for every item — use it to establish the
+        # total number of items and their index space.
+        id_matches = expressions["id_expr"].find(data) if expressions["id_expr"] else []
+        if not id_matches:
+            return {
+                "ids": [],
+                "ext_ids": [],
+                "labels": [],
+                "tag_labels": [],
+                "images": [],
+                "descriptions": [],
+                "categories": [],
+                "group": [],
+                "editable": [],
+                "copyable": [],
+                "tooltip": [],
+                "link": [],
+            }
+
+        max_index = max(
+            (
+                self._get_item_index(m)
+                for m in id_matches
+                if self._get_item_index(m) is not None
+            ),
+            default=len(id_matches) - 1,
+        )
+        num_items = max_index + 1
+
+        ids = self._extract_field_indexed(expressions["id_expr"], data, num_items)
+
         return {
-            "ids": expressions["id_expr"].find(data) if expressions["id_expr"] else [],
-            "ext_ids": (
-                expressions["ext_id_expr"].find(data)
-                if expressions["ext_id_expr"]
-                else []
+            "ids": ids,
+            "ext_ids": self._extract_field_indexed(
+                expressions["ext_id_expr"], data, num_items
             ),
-            "labels": (
-                expressions["label_expr"].find(data)
-                if expressions["label_expr"]
-                else []
+            "labels": self._extract_field_indexed(
+                expressions["label_expr"], data, num_items
             ),
-            "tag_labels": (
-                expressions["tag_label_expr"].find(data)
-                if expressions["tag_label_expr"]
-                else []
+            "tag_labels": self._extract_field_indexed(
+                expressions["tag_label_expr"], data, num_items
             ),
-            "images": (
-                expressions["image_expr"].find(data)
-                if expressions["image_expr"]
-                else []
+            "images": self._extract_field_indexed(
+                expressions["image_expr"], data, num_items
             ),
-            "descriptions": (
-                expressions["description_expr"].find(data)
-                if expressions["description_expr"]
-                else []
+            "descriptions": self._extract_field_indexed(
+                expressions["description_expr"], data, num_items
             ),
-            "categories": (
-                expressions["categories_expr"].find(data)
-                if expressions["categories_expr"]
-                else []
+            "categories": self._extract_field_indexed(
+                expressions["categories_expr"], data, num_items
             ),
-            "group": (
-                expressions["group_expr"].find(data)
-                if expressions["group_expr"]
-                else []
+            "group": self._extract_field_indexed(
+                expressions["group_expr"], data, num_items
             ),
-            "editable": (
-                expressions["editable_expr"].find(data)
-                if expressions["editable_expr"]
-                else []
+            "editable": self._extract_field_indexed(
+                expressions["editable_expr"], data, num_items
             ),
-            "copyable": (
-                expressions["copyable_expr"].find(data)
-                if expressions["copyable_expr"]
-                else []
+            "copyable": self._extract_field_indexed(
+                expressions["copyable_expr"], data, num_items
             ),
-            "tooltip": (
-                expressions["tooltip_expr"].find(data)
-                if expressions["tooltip_expr"]
-                else []
+            "tooltip": self._extract_field_indexed(
+                expressions["tooltip_expr"], data, num_items
             ),
-            "link": (
-                expressions["link_expr"].find(data) if expressions["link_expr"] else []
+            "link": self._extract_field_indexed(
+                expressions["link_expr"], data, num_items
             ),
         }
 
