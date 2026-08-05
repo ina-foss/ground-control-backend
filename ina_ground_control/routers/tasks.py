@@ -22,11 +22,7 @@ Configuration:
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, Query
-from fastapi_keycloak_middleware import (
-    AuthorizationResult,
-    CheckPermissions,
-    MatchStrategy,
-)
+from fastapi_keycloak_middleware import AuthorizationResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -51,6 +47,8 @@ from ina_ground_control.services.task_service import (
     update_task_status_crud,
     update_tasks_status_crud,
 )
+from ina_user_admin.middleware import MatchStrategy
+from ina_user_admin.middleware.auth_dependencies import CheckPermissionsFromDB
 
 router = APIRouter(tags=["task"])
 
@@ -176,9 +174,7 @@ def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.DELETE_TASK.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.DELETE_TASK.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ) -> TaskWithIdDto:

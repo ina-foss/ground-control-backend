@@ -20,11 +20,7 @@ Dependencies:
 import time
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
-from fastapi_keycloak_middleware import (
-    AuthorizationResult,
-    CheckPermissions,
-    MatchStrategy,
-)
+from fastapi_keycloak_middleware import AuthorizationResult
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
@@ -55,6 +51,8 @@ from ina_ground_control.services.project_service import (
     unarchive_project_service,
     update_project_crud,
 )
+from ina_user_admin.middleware import MatchStrategy
+from ina_user_admin.middleware.auth_dependencies import CheckPermissionsFromDB
 
 router = APIRouter(tags=["project"])
 
@@ -100,9 +98,7 @@ def create_project(
     project: ProjectBaseDto,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.CREATE_PROJECT.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.CREATE_PROJECT.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ) -> ProjectDetailDto:
@@ -147,9 +143,7 @@ def update_project(
     project: ProjectUpdateDto,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.UPDATE_PROJECT.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.UPDATE_PROJECT.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ) -> Project:
@@ -174,9 +168,7 @@ def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.DELETE_PROJECT.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.DELETE_PROJECT.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ):
@@ -205,9 +197,7 @@ def finish_project(
     project_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.FINISH_PROJECT.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.FINISH_PROJECT.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name):
 ):
@@ -227,9 +217,7 @@ def archive_project(
     project_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.ARCHIVE_PROJECT.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.ARCHIVE_PROJECT.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name):
 ):
@@ -242,9 +230,7 @@ def unarchive_project(
     project_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.UNARCHIVE_PROJECT.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.UNARCHIVE_PROJECT.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name):
 ):

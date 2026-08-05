@@ -32,12 +32,14 @@ from ina_ground_control.models import (  # pylint: disable=unused-import
     media_projet_association,
     plugin_model,
     project_model,
+    role,
     step_model,
     tag_model,
     tag_project_association,
     task_comment_model,
     task_model,
     user_model,
+    user_role,
 )
 
 # Load environment variables

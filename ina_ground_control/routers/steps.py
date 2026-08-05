@@ -21,11 +21,7 @@ Configuration:
 """
 
 from fastapi import APIRouter, Body, Depends, status
-from fastapi_keycloak_middleware import (
-    AuthorizationResult,
-    CheckPermissions,
-    MatchStrategy,
-)
+from fastapi_keycloak_middleware import AuthorizationResult
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -43,6 +39,8 @@ from ina_ground_control.services.step_service import (
     update_data_step_crud,
     update_step_settings_crud,
 )
+from ina_user_admin.middleware import MatchStrategy
+from ina_user_admin.middleware.auth_dependencies import CheckPermissionsFromDB
 
 router = APIRouter(tags=["step"])
 
@@ -156,9 +154,7 @@ def delete_step(
     step_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.DELETE_STEP.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.DELETE_STEP.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ):
