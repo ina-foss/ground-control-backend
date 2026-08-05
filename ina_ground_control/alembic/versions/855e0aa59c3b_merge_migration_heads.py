@@ -18,8 +18,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # No-op: a merge revision only reconciles divergent branches in the Alembic
+    # graph; it introduces no schema change of its own.
     pass
 
 
 def downgrade() -> None:
+    # No-op: reverting the merge simply restores the two independent heads; there
+    # is no schema change to undo here.
     pass
