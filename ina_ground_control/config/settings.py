@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     sso_realm: str = "ground_control"
     sso_client_id: str = "internal"
     sso_client_secret: str = "internal"
+    sso_audience: str = "ground-control-backend"
+    sso_verify_aud: bool = False
 
     # CORS settings
     cors_allow_credentials: bool = True

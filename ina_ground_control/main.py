@@ -87,11 +87,13 @@ keycloak_config = KeycloakConfiguration(
     authorization_claim="roles",
     use_introspection_endpoint=False,
     swagger_client_id=settings.sso_client_id,
-    decode_options={
-        "verify_signature": True,
-        "verify_aud": False,
-        "verify_exp": True,
-    },
+    # jwcrypto: fournir check_claims desactive le controle par defaut de exp,
+    # il faut donc le redeclarer (None = claim requis, valeur temporelle verifiee)
+    validation_options=(
+        {"check_claims": {"exp": None, "aud": settings.sso_audience}}
+        if settings.sso_verify_aud
+        else {}
+    ),
 )
 
 setup_keycloak_middleware(
