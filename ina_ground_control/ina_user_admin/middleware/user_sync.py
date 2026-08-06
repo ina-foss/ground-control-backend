@@ -74,15 +74,22 @@ async def map_user_from_jwt(request: Request, user_info: object) -> _SyncedUser:
     """
     settings = request.app.state.user_admin_settings
     engine = request.app.state.user_admin_engine
+    unk_email = "unknown@unknown.com"
 
     sub = getattr(user_info, "sub", None)
-    email = getattr(user_info, "email", None) or sub
     firstname = getattr(user_info, "given_name", None)
     lastname = getattr(user_info, "family_name", None)
+    sub = getattr(user_info, "sub", None)
+    preferred_username = getattr(user_info, "preferred_username", None) or getattr(
+        user_info, "client_id", "unknown"
+    )
 
-    if not email:
-        logger.error("JWT user_info has no email or sub claim; cannot sync user.")
-        raise ValueError("Cannot determine user email from JWT claims.")
+    email = getattr(user_info, "email", None) or f"{preferred_username}@unknown.com"
+
+    if not firstname:
+        firstname = email.split("@")[0] if email != unk_email else "Unknown"
+    if not lastname:
+        lastname = ""
 
     jwt_roles: list[str] = []
     if hasattr(user_info, "roles"):
