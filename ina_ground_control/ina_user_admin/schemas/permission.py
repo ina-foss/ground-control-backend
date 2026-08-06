@@ -1,3 +1,5 @@
+"""Pydantic schemas for permission data transfer objects."""
+
 from pydantic import BaseModel
 
 

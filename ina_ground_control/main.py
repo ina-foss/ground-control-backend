@@ -22,6 +22,8 @@ from ina_ground_control.exception.exceptions import (
     GroundControlRequestValidationError,
 )
 from ina_ground_control.exception.handlers import default_exception_handler
+from ina_ground_control.ina_user_admin import create_user_mapper, setup_user_admin
+from ina_ground_control.ina_user_admin.config import UserAdminSettings
 from ina_ground_control.routers import (
     annotations,
     management,
@@ -38,8 +40,6 @@ from ina_ground_control.routers import (
 from ina_ground_control.services.telemetry_service import TelemetryService
 from ina_ground_control.utils.application_helpers import mount_static_directory
 from ina_ground_control.utils.prometheus import PrometheusMiddleware
-from ina_user_admin import create_user_mapper, setup_user_admin
-from ina_user_admin.config import UserAdminSettings
 
 app = FastAPI(
     title=settings.application,

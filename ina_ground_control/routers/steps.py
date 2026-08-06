@@ -28,6 +28,10 @@ from sqlalchemy.orm import Session
 from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.ina_user_admin.middleware import MatchStrategy
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    CheckPermissionsFromDB,
+)
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepCreate, StepDto, StepSummaryDto
 from ina_ground_control.services.step_service import (
@@ -39,8 +43,6 @@ from ina_ground_control.services.step_service import (
     update_data_step_crud,
     update_step_settings_crud,
 )
-from ina_user_admin.middleware import MatchStrategy
-from ina_user_admin.middleware.auth_dependencies import CheckPermissionsFromDB
 
 router = APIRouter(tags=["step"])
 

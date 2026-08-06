@@ -1,12 +1,12 @@
 """Middleware and FastAPI dependencies for authentication and user sync."""
 
-from ina_user_admin.middleware.auth_dependencies import (
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
     AuthorizationResult,
     CheckPermissionsFromDB,
     MatchStrategy,
     get_auth_from_db,
 )
-from ina_user_admin.middleware.user_sync import map_user_from_jwt
+from ina_ground_control.ina_user_admin.middleware.user_sync import map_user_from_jwt
 
 __all__ = [
     "CheckPermissionsFromDB",

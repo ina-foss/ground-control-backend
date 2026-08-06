@@ -1,3 +1,5 @@
+"""Base repository exposing shared database session access."""
+
 from sqlmodel import Session
 
 

@@ -1,7 +1,7 @@
 """Pydantic schemas (DTOs) for ina-user-admin request/response bodies."""
 
-from ina_user_admin.schemas.permission import PermissionDTO
-from ina_user_admin.schemas.user import (
+from ina_ground_control.ina_user_admin.schemas.permission import PermissionDTO
+from ina_ground_control.ina_user_admin.schemas.user import (
     AssignRolesByNameRequest,
     AssignRolesRequest,
     BulkCreateUsersRequest,

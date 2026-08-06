@@ -9,7 +9,7 @@ from typing import Optional
 
 from pydantic import ConfigDict
 
-from ina_user_admin.schemas.user import UserInfoResponse
+from ina_ground_control.ina_user_admin.schemas.user import UserInfoResponse
 
 from .annotation_schemas import AnnotationCreate
 from .project_schemas import ProjectDetailDto

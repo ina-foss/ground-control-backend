@@ -186,8 +186,11 @@ const-rgx=^(_?[A-Z][A-Z0-9_]*|__[a-z0-9_]+__|_?[a-z][a-z0-9_]*)$
 # Regular expression matching correct attribute names
 attr-rgx=^_{0,2}[a-z][a-z0-9_]*$
 
-# Regular expression matching correct argument names
-argument-rgx=^[a-z][a-z0-9_]*$
+# Regular expression matching correct argument names. A leading underscore marks an
+# argument that is required by the framework (e.g. a FastAPI ``Depends`` guard) but
+# intentionally unused in the body; ``ignored-argument-names`` already exempts these
+# from unused-argument, so the name pattern must accept them too.
+argument-rgx=^_{0,2}[a-z][a-z0-9_]*$
 
 # Regular expression matching correct class attribute names
 class-attribute-rgx=^(_?[A-Z][A-Z0-9_]*|__[a-z0-9_]+__|_?[a-z][a-z0-9_]*)$

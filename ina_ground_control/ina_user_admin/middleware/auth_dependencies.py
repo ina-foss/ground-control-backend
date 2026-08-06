@@ -1,3 +1,5 @@
+"""FastAPI dependencies enforcing DB-sourced role permissions."""
+
 import logging
 from enum import Enum
 
@@ -92,14 +94,21 @@ class CheckPermissionsFromDB:
         if hasattr(user, "is_active") and not user.is_active:
             raise HTTPException(status_code=403, detail="User account is deactivated")
 
-        user_roles = [r.name if hasattr(r, "name") else r for r in (getattr(user, "roles", None) or [])]
+        user_roles = [
+            r.name if hasattr(r, "name") else r
+            for r in (getattr(user, "roles", None) or [])
+        ]
 
         matched = [p for p in self.required_permissions if p in user_roles]
 
         if self.strategy == MatchStrategy.AND:
             if len(matched) < len(self.required_permissions):
                 missing = set(self.required_permissions) - set(matched)
-                logger.warning("User %s missing permissions: %s", getattr(user, "email", "?"), missing)
+                logger.warning(
+                    "User %s missing permissions: %s",
+                    getattr(user, "email", "?"),
+                    missing,
+                )
                 raise HTTPException(status_code=403, detail="Insufficient permissions")
         else:  # OR — empty requirements list means "no restriction"
             if self.required_permissions and not matched:

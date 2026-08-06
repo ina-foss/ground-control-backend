@@ -1,3 +1,5 @@
+"""APIRouter exposing user and role administration endpoints."""
+
 import logging
 import math
 from typing import Generator, Literal
@@ -5,10 +7,13 @@ from typing import Generator, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel import Session
 
-from ina_user_admin.config import UserAdminSettings
-from ina_user_admin.middleware.auth_dependencies import AuthorizationResult, CheckPermissionsFromDB
-from ina_user_admin.repository import UserRepository
-from ina_user_admin.schemas import (
+from ina_ground_control.ina_user_admin.config import UserAdminSettings
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    AuthorizationResult,
+    CheckPermissionsFromDB,
+)
+from ina_ground_control.ina_user_admin.repository import UserRepository
+from ina_ground_control.ina_user_admin.schemas import (
     AssignRolesByNameRequest,
     AssignRolesRequest,
     BulkCreateUsersRequest,
@@ -50,10 +55,7 @@ def get_settings(request: Request) -> UserAdminSettings:
     return request.app.state.user_admin_settings
 
 
-async def require_admin(
-    request: Request,
-    db: Session = Depends(get_db),
-) -> AuthorizationResult:
+async def require_admin(request: Request) -> AuthorizationResult:
     """FastAPI dependency that enforces the admin permission for the current request.
 
     The required admin permission is read from ``request.app.state.user_admin_settings``
@@ -61,7 +63,6 @@ async def require_admin(
 
     Args:
         request: The current FastAPI request.
-        db: Database session (injected but not used directly; ensures session lifecycle).
 
     Returns:
         An ``AuthorizationResult`` if the user holds the admin permission.
@@ -119,11 +120,16 @@ def create_user_router() -> APIRouter:
 
     @router.get("/users", response_model=PaginatedUsersResponse)
     async def list_users(
-        request: Request,
         page: int = Query(default=0, ge=0),
         page_size: int = Query(default=20, ge=1, le=100),
         sort_by: Literal[
-            "email", "firstname", "lastname", "is_active", "created_at", "updated_at", "last_login_at"
+            "email",
+            "firstname",
+            "lastname",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "last_login_at",
         ] = "email",
         sort_order: Literal["asc", "desc"] = "asc",
         search: str | None = None,
@@ -133,7 +139,6 @@ def create_user_router() -> APIRouter:
         """Return a paginated list of all users with their roles.
 
         Args:
-            request: The current FastAPI request.
             page: Zero-based page index (default 0).
             page_size: Items per page, max 100 (default 20).
             sort_by: Field to sort by (``email``, ``firstname``, etc.).
@@ -180,7 +185,11 @@ def create_user_router() -> APIRouter:
         repo = UserRepository(db)
         return repo.get_all_users_emails()
 
-    @router.post("/users", response_model=UserWithRolesResponse, status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "/users",
+        response_model=UserWithRolesResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
     async def create_user(
         body: CreateUserRequest,
         _auth: AuthorizationResult = Depends(require_admin),
@@ -209,7 +218,11 @@ def create_user_router() -> APIRouter:
         )
         return _build_user_response(user, repo)
 
-    @router.post("/users/bulk", response_model=list[UserWithRolesResponse], status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "/users/bulk",
+        response_model=list[UserWithRolesResponse],
+        status_code=status.HTTP_201_CREATED,
+    )
     async def bulk_create_users(
         body: BulkCreateUsersRequest,
         _auth: AuthorizationResult = Depends(require_admin),
@@ -305,7 +318,9 @@ def create_user_router() -> APIRouter:
         repo = UserRepository(db)
         admin_user = request.scope.get("user")
         assigned_by = getattr(admin_user, "email", None)
-        user = repo.assign_roles(email=email, role_ids=body.role_ids, assigned_by=assigned_by)
+        user = repo.assign_roles(
+            email=email, role_ids=body.role_ids, assigned_by=assigned_by
+        )
         return _build_user_response(user, repo)
 
     @router.put("/users/{email}/roles", response_model=UserWithRolesResponse)
@@ -334,7 +349,9 @@ def create_user_router() -> APIRouter:
         repo = UserRepository(db)
         admin_user = request.scope.get("user")
         assigned_by = getattr(admin_user, "email", None)
-        user = repo.replace_roles(email=email, role_ids=body.role_ids, assigned_by=assigned_by)
+        user = repo.replace_roles(
+            email=email, role_ids=body.role_ids, assigned_by=assigned_by
+        )
         return _build_user_response(user, repo)
 
     @router.put("/users/{email}/roles/update", response_model=UserWithRolesResponse)
@@ -371,7 +388,9 @@ def create_user_router() -> APIRouter:
         )
         return _build_user_response(user, repo)
 
-    @router.delete("/users/{email}/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+    @router.delete(
+        "/users/{email}/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT
+    )
     async def remove_role(
         email: str,
         role_id: int,
@@ -393,7 +412,8 @@ def create_user_router() -> APIRouter:
         removed = repo.remove_role(email=email, role_id=role_id)
         if not removed:
             raise HTTPException(
-                status_code=404, detail=f"Role assignment not found for user '{email}' and role {role_id}."
+                status_code=404,
+                detail=f"Role assignment not found for user '{email}' and role {role_id}.",
             )
 
     # ------------------------------------------------------------------
@@ -418,7 +438,9 @@ def create_user_router() -> APIRouter:
         roles = repo.get_all_roles()
         return [RoleResponse.model_validate(r) for r in roles]
 
-    @router.post("/roles", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
+    @router.post(
+        "/roles", response_model=RoleResponse, status_code=status.HTTP_201_CREATED
+    )
     async def create_role(
         body: CreateRoleRequest,
         _auth: AuthorizationResult = Depends(require_admin),
@@ -463,7 +485,9 @@ def create_user_router() -> APIRouter:
         repo = UserRepository(db)
         role = repo.get_role(role_id)
         if role is None:
-            raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
+            raise HTTPException(
+                status_code=404, detail=f"Role with id {role_id} not found."
+            )
         return RoleResponse.model_validate(role)
 
     @router.put("/roles/{role_id}", response_model=RoleResponse)
@@ -489,9 +513,13 @@ def create_user_router() -> APIRouter:
             HTTPException: 409 if the new name conflicts with an existing role.
         """
         repo = UserRepository(db)
-        role = repo.update_role(role_id=role_id, name=body.name, description=body.description)
+        role = repo.update_role(
+            role_id=role_id, name=body.name, description=body.description
+        )
         if role is None:
-            raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
+            raise HTTPException(
+                status_code=404, detail=f"Role with id {role_id} not found."
+            )
         return RoleResponse.model_validate(role)
 
     @router.delete("/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -513,6 +541,8 @@ def create_user_router() -> APIRouter:
         repo = UserRepository(db)
         deleted = repo.delete_role(role_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
+            raise HTTPException(
+                status_code=404, detail=f"Role with id {role_id} not found."
+            )
 
     return router

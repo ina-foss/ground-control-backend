@@ -1,3 +1,5 @@
+"""Database access layer for users, roles, and their associations."""
+
 import logging
 from datetime import datetime, timezone
 
@@ -6,10 +8,10 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import col, select
 
+from ina_ground_control.ina_user_admin.repository.base_repository import BaseRepository
 from ina_ground_control.models.role import Role
 from ina_ground_control.models.user_model import User
 from ina_ground_control.models.user_role import UserRole
-from ina_user_admin.repository.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +92,14 @@ class UserRepository(BaseRepository):
         stmt = select(User)
 
         if search:
-            escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            escaped = (
+                search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
             pattern = f"%{escaped}%"
             stmt = stmt.where(
-                col(User.email).ilike(pattern) | col(User.firstname).ilike(pattern) | col(User.lastname).ilike(pattern)
+                col(User.email).ilike(pattern)
+                | col(User.firstname).ilike(pattern)
+                | col(User.lastname).ilike(pattern)
             )
 
         # Determine sort column
@@ -152,16 +158,20 @@ class UserRepository(BaseRepository):
         self._db_session.add(user)
         try:
             self._db_session.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
             self._db_session.rollback()
             logger.warning("Attempted to create duplicate user: %s", email)
-            raise HTTPException(status_code=409, detail=f"User with email '{email}' already exists.")
+            raise HTTPException(
+                status_code=409, detail=f"User with email '{email}' already exists."
+            ) from exc
 
         for role_id in role_ids:
             role = self._db_session.get(Role, role_id)
             if role is None:
                 self._db_session.rollback()
-                raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
+                raise HTTPException(
+                    status_code=404, detail=f"Role with id {role_id} not found."
+                )
             user_role = UserRole(user_email=email, role_id=role_id)
             self._db_session.add(user_role)
 
@@ -189,7 +199,9 @@ class UserRepository(BaseRepository):
         for role_id in role_ids:
             role = self._db_session.get(Role, role_id)
             if role is None:
-                raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
+                raise HTTPException(
+                    status_code=404, detail=f"Role with id {role_id} not found."
+                )
 
         created_users: list[User] = []
         for email in emails:
@@ -237,7 +249,9 @@ class UserRepository(BaseRepository):
             return False
 
         # Remove all user_role entries first
-        user_roles = self._db_session.exec(select(UserRole).where(UserRole.user_email == email)).all()
+        user_roles = self._db_session.exec(
+            select(UserRole).where(UserRole.user_email == email)
+        ).all()
         for ur in user_roles:
             self._db_session.delete(ur)
         self._db_session.flush()
@@ -259,10 +273,16 @@ class UserRepository(BaseRepository):
         Returns:
             A list of ``Role`` objects assigned to the user (may be empty).
         """
-        stmt = select(Role).join(UserRole, UserRole.role_id == Role.id).where(UserRole.user_email == email)
+        stmt = (
+            select(Role)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_email == email)
+        )
         return list(self._db_session.exec(stmt).all())
 
-    def assign_roles(self, email: str, role_ids: list[int], assigned_by: str | None) -> User:
+    def assign_roles(
+        self, email: str, role_ids: list[int], assigned_by: str | None
+    ) -> User:
         """Add roles to a user, preserving any existing role assignments.
 
         Roles that are already assigned are silently ignored (no duplicate entries).
@@ -284,7 +304,10 @@ class UserRepository(BaseRepository):
 
         # Existing role IDs for this user
         existing_role_ids = {
-            ur.role_id for ur in self._db_session.exec(select(UserRole).where(UserRole.user_email == email)).all()
+            ur.role_id
+            for ur in self._db_session.exec(
+                select(UserRole).where(UserRole.user_email == email)
+            ).all()
         }
 
         for role_id in role_ids:
@@ -292,15 +315,21 @@ class UserRepository(BaseRepository):
                 continue
             role = self._db_session.get(Role, role_id)
             if role is None:
-                raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
-            user_role = UserRole(user_email=email, role_id=role_id, assigned_by=assigned_by)
+                raise HTTPException(
+                    status_code=404, detail=f"Role with id {role_id} not found."
+                )
+            user_role = UserRole(
+                user_email=email, role_id=role_id, assigned_by=assigned_by
+            )
             self._db_session.add(user_role)
 
         self._db_session.commit()
         self._db_session.refresh(user)
         return user
 
-    def replace_roles(self, email: str, role_ids: list[int], assigned_by: str | None) -> User:
+    def replace_roles(
+        self, email: str, role_ids: list[int], assigned_by: str | None
+    ) -> User:
         """Replace all of a user's roles with the provided list.
 
         All existing role assignments are removed before the new ones are added.
@@ -323,17 +352,23 @@ class UserRepository(BaseRepository):
         # Validate all roles exist before making any changes
         for role_id in role_ids:
             if self._db_session.get(Role, role_id) is None:
-                raise HTTPException(status_code=404, detail=f"Role with id {role_id} not found.")
+                raise HTTPException(
+                    status_code=404, detail=f"Role with id {role_id} not found."
+                )
 
         # Remove existing assignments
-        existing = self._db_session.exec(select(UserRole).where(UserRole.user_email == email)).all()
+        existing = self._db_session.exec(
+            select(UserRole).where(UserRole.user_email == email)
+        ).all()
         for ur in existing:
             self._db_session.delete(ur)
         self._db_session.flush()
 
         # Add new assignments
         for role_id in role_ids:
-            user_role = UserRole(user_email=email, role_id=role_id, assigned_by=assigned_by)
+            user_role = UserRole(
+                user_email=email, role_id=role_id, assigned_by=assigned_by
+            )
             self._db_session.add(user_role)
 
         self._db_session.commit()
@@ -369,16 +404,22 @@ class UserRepository(BaseRepository):
 
         role_ids: list[int] = []
         for role_name in role_names:
-            role = self._db_session.exec(select(Role).where(Role.name == role_name)).first()
+            role = self._db_session.exec(
+                select(Role).where(Role.name == role_name)
+            ).first()
             if role is None:
                 if not auto_create:
-                    raise HTTPException(status_code=404, detail=f"Role '{role_name}' not found.")
+                    raise HTTPException(
+                        status_code=404, detail=f"Role '{role_name}' not found."
+                    )
                 role = Role(name=role_name)
                 self._db_session.add(role)
                 self._db_session.flush()
             role_ids.append(role.id)  # type: ignore[arg-type]
 
-        return self.replace_roles(email=email, role_ids=role_ids, assigned_by=assigned_by)
+        return self.replace_roles(
+            email=email, role_ids=role_ids, assigned_by=assigned_by
+        )
 
     def remove_role(self, email: str, role_id: int) -> bool:
         """Remove a single role assignment from a user.
@@ -390,7 +431,9 @@ class UserRepository(BaseRepository):
         Returns:
             ``True`` if the assignment existed and was removed, ``False`` otherwise.
         """
-        stmt = select(UserRole).where(UserRole.user_email == email, UserRole.role_id == role_id)
+        stmt = select(UserRole).where(
+            UserRole.user_email == email, UserRole.role_id == role_id
+        )
         user_role = self._db_session.exec(stmt).first()
         if user_role is None:
             return False
@@ -438,15 +481,19 @@ class UserRepository(BaseRepository):
         self._db_session.add(role)
         try:
             self._db_session.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
             self._db_session.rollback()
             logger.warning("Attempted to create duplicate role: %s", name)
-            raise HTTPException(status_code=409, detail=f"Role with name '{name}' already exists.")
+            raise HTTPException(
+                status_code=409, detail=f"Role with name '{name}' already exists."
+            ) from exc
         self._db_session.commit()
         self._db_session.refresh(role)
         return role
 
-    def update_role(self, role_id: int, name: str | None, description: str | None) -> Role | None:
+    def update_role(
+        self, role_id: int, name: str | None, description: str | None
+    ) -> Role | None:
         """Update an existing role's name and/or description.
 
         Only provided (non-``None``) fields are updated.
@@ -474,9 +521,11 @@ class UserRepository(BaseRepository):
 
         try:
             self._db_session.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
             self._db_session.rollback()
-            raise HTTPException(status_code=409, detail=f"Role with name '{name}' already exists.")
+            raise HTTPException(
+                status_code=409, detail=f"Role with name '{name}' already exists."
+            ) from exc
 
         self._db_session.commit()
         self._db_session.refresh(role)
@@ -500,7 +549,9 @@ class UserRepository(BaseRepository):
             return False
 
         # Remove all user_role entries referencing this role
-        user_roles = self._db_session.exec(select(UserRole).where(UserRole.role_id == role_id)).all()
+        user_roles = self._db_session.exec(
+            select(UserRole).where(UserRole.role_id == role_id)
+        ).all()
         for ur in user_roles:
             self._db_session.delete(ur)
         self._db_session.flush()
@@ -513,7 +564,9 @@ class UserRepository(BaseRepository):
     # JWT sync
     # ------------------------------------------------------------------
 
-    def _sync_prefixed_jwt_roles(self, email: str, jwt_roles: list[str], role_prefix: str) -> None:
+    def _sync_prefixed_jwt_roles(
+        self, email: str, jwt_roles: list[str], role_prefix: str
+    ) -> None:
         """Additively assign the prefixed JWT roles to a user.
 
         Only roles whose name starts with ``role_prefix`` are considered, so
@@ -533,10 +586,14 @@ class UserRepository(BaseRepository):
 
         existing_role_ids = {
             ur.role_id
-            for ur in self._db_session.exec(select(UserRole).where(UserRole.user_email == email)).all()
+            for ur in self._db_session.exec(
+                select(UserRole).where(UserRole.user_email == email)
+            ).all()
         }
         for role_name in prefixed_roles:
-            role = self._db_session.exec(select(Role).where(Role.name == role_name)).first()
+            role = self._db_session.exec(
+                select(Role).where(Role.name == role_name)
+            ).first()
             if role is None:
                 role = Role(name=role_name)
                 self._db_session.add(role)
@@ -580,7 +637,9 @@ class UserRepository(BaseRepository):
 
         if existing is None:
             # New user: create + sync roles from JWT
-            user = User(email=email, firstname=firstname, lastname=lastname, last_login_at=now)
+            user = User(
+                email=email, firstname=firstname, lastname=lastname, last_login_at=now
+            )
             self._db_session.add(user)
             self._db_session.flush()
 

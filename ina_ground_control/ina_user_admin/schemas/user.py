@@ -1,3 +1,5 @@
+"""Pydantic request/response schemas for users and roles."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr

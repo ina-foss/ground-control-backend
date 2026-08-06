@@ -26,6 +26,10 @@ from sqlalchemy.orm import Session
 from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.ina_user_admin.middleware import MatchStrategy
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    CheckPermissionsFromDB,
+)
 from ina_ground_control.models.project_model import Project
 from ina_ground_control.schemas.project_schemas import (
     ProjectBaseDto,
@@ -51,8 +55,6 @@ from ina_ground_control.services.project_service import (
     unarchive_project_service,
     update_project_crud,
 )
-from ina_user_admin.middleware import MatchStrategy
-from ina_user_admin.middleware.auth_dependencies import CheckPermissionsFromDB
 
 router = APIRouter(tags=["project"])
 

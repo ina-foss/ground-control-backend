@@ -15,8 +15,16 @@ from sqlmodel import Session, SQLModel, create_engine, select
 
 # Import models so that SQLModel.metadata is populated (required for create_all / Alembic)
 import ina_ground_control.models  # noqa: F401
-from ina_user_admin.config import UserAdminSettings
-from ina_user_admin.routers import create_user_router, create_userinfo_router
+from ina_ground_control.ina_user_admin.config import UserAdminSettings
+from ina_ground_control.ina_user_admin.middleware.user_sync import _SyncedUser
+from ina_ground_control.ina_user_admin.repository import UserRepository
+from ina_ground_control.ina_user_admin.routers import (
+    create_user_router,
+    create_userinfo_router,
+)
+from ina_ground_control.models.role import Role
+from ina_ground_control.models.user_model import User
+from ina_ground_control.models.user_role import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +60,12 @@ def setup_user_admin(app: FastAPI, settings: UserAdminSettings) -> None:
     user_router = create_user_router()
     userinfo_router = create_userinfo_router()
 
-    app.include_router(user_router, prefix=settings.router_prefix, tags=settings.router_tags)
-    app.include_router(userinfo_router, prefix=settings.router_prefix, tags=settings.router_tags)
+    app.include_router(
+        user_router, prefix=settings.router_prefix, tags=settings.router_tags
+    )
+    app.include_router(
+        userinfo_router, prefix=settings.router_prefix, tags=settings.router_tags
+    )
 
 
 def create_user_mapper(
@@ -75,11 +87,6 @@ def create_user_mapper(
     Returns:
         An async user mapper function.
     """
-    from ina_user_admin.middleware.user_sync import _SyncedUser
-    from ina_ground_control.models.role import Role
-    from ina_ground_control.models.user_model import User
-    from ina_ground_control.models.user_role import UserRole
-    from ina_user_admin.repository import UserRepository
 
     async def _mapper(userinfo: dict[str, Any]) -> _SyncedUser | None:
         if not isinstance(userinfo, dict) or not userinfo:
@@ -120,7 +127,9 @@ def create_user_mapper(
             db_user = session.exec(select(User).where(User.email == email)).first()
             roles = list(
                 session.exec(
-                    select(Role).join(UserRole, UserRole.role_id == Role.id).where(UserRole.user_email == email)
+                    select(Role)
+                    .join(UserRole, UserRole.role_id == Role.id)
+                    .where(UserRole.user_email == email)
                 ).all()
             )
 

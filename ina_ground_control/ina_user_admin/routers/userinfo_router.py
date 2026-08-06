@@ -1,6 +1,11 @@
+"""APIRouter exposing the OIDC-style ``/userinfo`` endpoint."""
+
 from fastapi import APIRouter, HTTPException, Request
 
-from ina_user_admin.schemas import RoleResponse, UserWithRolesResponse
+from ina_ground_control.ina_user_admin.schemas import (
+    RoleResponse,
+    UserWithRolesResponse,
+)
 
 
 def create_userinfo_router() -> APIRouter:
@@ -40,7 +45,15 @@ def create_userinfo_router() -> APIRouter:
             if hasattr(r, "name"):
                 roles.append(RoleResponse.model_validate(r))
             else:
-                roles.append(RoleResponse(id=None, name=str(r), description=None, created_at=None, updated_at=None))
+                roles.append(
+                    RoleResponse(
+                        id=None,
+                        name=str(r),
+                        description=None,
+                        created_at=None,
+                        updated_at=None,
+                    )
+                )
 
         return UserWithRolesResponse(
             sub=getattr(user, "sub", None),

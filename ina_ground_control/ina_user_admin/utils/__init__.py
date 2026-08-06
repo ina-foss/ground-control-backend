@@ -1,6 +1,6 @@
 """Utility functions for ina-user-admin."""
 
-from ina_user_admin.utils.permission_utils import (
+from ina_ground_control.ina_user_admin.utils.permission_utils import (
     filter_roles_by_prefix,
     has_all_permissions,
     has_any_permission,

@@ -30,6 +30,10 @@ from ina_ground_control import get_db, logger
 from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.ina_user_admin.middleware import MatchStrategy
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    CheckPermissionsFromDB,
+)
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.task_schemas import (
@@ -47,8 +51,6 @@ from ina_ground_control.services.task_service import (
     update_task_status_crud,
     update_tasks_status_crud,
 )
-from ina_user_admin.middleware import MatchStrategy
-from ina_user_admin.middleware.auth_dependencies import CheckPermissionsFromDB
 
 router = APIRouter(tags=["task"])
 

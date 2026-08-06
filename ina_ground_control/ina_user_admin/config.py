@@ -1,3 +1,5 @@
+"""Settings model for the ina-user-admin package."""
+
 from pydantic_settings import BaseSettings
 
 

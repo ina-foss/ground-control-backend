@@ -1,9 +1,12 @@
+"""Synchronisation of authenticated JWT users into the local database."""
+
 import logging
 from datetime import datetime
 
 from fastapi import Request
 from sqlmodel import Session, select
 
+from ina_ground_control.ina_user_admin.repository import UserRepository
 from ina_ground_control.models.role import Role
 from ina_ground_control.models.user_model import User
 from ina_ground_control.models.user_role import UserRole
@@ -87,8 +90,6 @@ async def map_user_from_jwt(request: Request, user_info: object) -> _SyncedUser:
         jwt_roles = list(raw) if raw else []
 
     with Session(engine) as session:
-        from ina_user_admin.repository import UserRepository
-
         repo = UserRepository(session)
         repo.sync_user_from_jwt(
             email=email,
@@ -103,7 +104,9 @@ async def map_user_from_jwt(request: Request, user_info: object) -> _SyncedUser:
         db_user = session.exec(select(User).where(User.email == email)).first()
         roles = list(
             session.exec(
-                select(Role).join(UserRole, UserRole.role_id == Role.id).where(UserRole.user_email == email)
+                select(Role)
+                .join(UserRole, UserRole.role_id == Role.id)
+                .where(UserRole.user_email == email)
             ).all()
         )
 
