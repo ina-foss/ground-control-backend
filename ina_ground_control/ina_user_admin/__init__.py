@@ -94,15 +94,22 @@ def create_user_mapper(
 
         settings: UserAdminSettings = app.state.user_admin_settings
         engine = app.state.user_admin_engine
+        unk_email = "unknown@unknown.com"
 
         sub = userinfo.get("sub")
-        email = userinfo.get("email") or sub
-        if not email:
-            return None
-
         firstname = userinfo.get("given_name", "")
         lastname = userinfo.get("family_name", "")
         jwt_roles = userinfo.get("roles") or []
+        preferred_username = userinfo.get(
+            "preferred_username",
+            userinfo.get("preferred_username", userinfo.get("client_id", "unknown")),
+        )
+        email = userinfo.get("email", preferred_username + "@unknown.com")
+
+        if not firstname:
+            firstname = email.split("@")[0] if email != unk_email else "Unknown"
+        if not lastname:
+            lastname = ""
 
         with Session(engine) as session:
             repo = UserRepository(session)
