@@ -82,7 +82,7 @@ Documentation = "https://git.infra.sas.ina/ia/code/ground-control/docs.git"
 "Bug Tracker" = "https://git.infra.sas.ina/ia/code/ground-control/backend/issues"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling<1.32"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
