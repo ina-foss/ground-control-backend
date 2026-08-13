@@ -21,16 +21,16 @@ Dependencies:
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
-from fastapi_keycloak_middleware import (
-    AuthorizationResult,
-    CheckPermissions,
-    MatchStrategy,
-)
+from fastapi_keycloak_middleware import AuthorizationResult
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.ina_user_admin.middleware import MatchStrategy
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    CheckPermissionsFromDB,
+)
 from ina_ground_control.models.plugin.plugin_autocomplete_value_dto import (
     PluginAutocompleteValueDTO,
 )
@@ -135,9 +135,7 @@ def update_plugin(
     plugin: PluginCreate,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.UPDATE_PLUGIN.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.UPDATE_PLUGIN.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ):
@@ -160,9 +158,7 @@ def delete_plugin(
     plugin_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.DELETE_PLUGIN.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.DELETE_PLUGIN.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ):
