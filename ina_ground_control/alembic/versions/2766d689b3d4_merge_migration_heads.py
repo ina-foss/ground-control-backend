@@ -18,8 +18,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # No database changes are required for this migration.
     pass
 
 
 def downgrade() -> None:
+    # This migration only handles the downgrade operation; no upgrade changes are required.
     pass
