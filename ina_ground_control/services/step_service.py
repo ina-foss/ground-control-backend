@@ -11,6 +11,9 @@ from ina_ground_control import logger
 from ina_ground_control.constants.enums import Status
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.models.step_model import Step
+from ina_ground_control.schemas.settings_step_schemas.step_settings_factory import (
+    build_step_settings,
+)
 from ina_ground_control.schemas.step_schemas import StepCreate, StepSummaryDto
 
 
@@ -64,7 +67,13 @@ def create_step_crud(step: StepCreate, db: Session):
     Returns:
         Step: The newly created Step object.
     """
-    db_step = Step(**step.model_dump())
+    step_data = step.model_dump()
+    # Generate the type-specific settings, applying defaults when the front-end
+    # sends nothing or only a subset of the fields.
+    step_data["settings"] = build_step_settings(
+        step.annotation_type, step_data.get("settings")
+    )
+    db_step = Step(**step_data)
     db.add(db_step)
     db.commit()
     db.refresh(db_step)
@@ -84,8 +93,38 @@ def update_data_step_crud(step_id: int, step: StepCreate, db: Session):
         Step: The updated Step object if the step exists, otherwise None.
     """
     db_step = get_step_by_id(db, step_id=step_id)
-    for key, value in step.model_dump().items():
+    step_data = step.model_dump()
+    # Only rebuild settings when they were explicitly provided; otherwise keep
+    # the stored settings untouched so an ordinary data update never wipes them.
+    settings_payload = step_data.pop("settings", None)
+    for key, value in step_data.items():
         setattr(db_step, key, value)
+    if "settings" in step.model_fields_set:
+        db_step.settings = build_step_settings(step.annotation_type, settings_payload)
+    db.commit()
+    db.refresh(db_step)
+    return db_step
+
+
+def update_step_settings_crud(db: Session, step_id: int, settings: dict) -> Step:
+    """
+    Update the type-specific settings of an existing step.
+
+    The step type drives which settings schema is applied: the received payload
+    is validated and completed with the type defaults, so the persisted JSON is
+    always compatible with the step type.
+
+    Attributes:
+        db (Session): The database session used for querying.
+        step_id (int): The unique identifier of the step to update.
+        settings (dict): The (possibly partial) settings payload.
+
+    Returns:
+        Step: The updated Step object.
+    """
+    db_step = get_step_by_id(db, step_id=step_id)
+    db_step.settings = build_step_settings(db_step.annotation_type, settings)
+    db_step.updated_at = func.now()
     db.commit()
     db.refresh(db_step)
     return db_step

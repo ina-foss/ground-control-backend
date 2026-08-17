@@ -90,7 +90,15 @@ def get_relevant_task_for_user(project, user_email: str):
     )
 
     all_filtered_tasks = high_priority_tasks + medium_priority_tasks + pending_tasks
-    project.tasks_to_annotate = [all_filtered_tasks[0]] if all_filtered_tasks else None
+    # ``tasks_to_annotate`` is a computed, non-persisted attribute read back by
+    # ``ProjectListDto``. SQLModel/Pydantic table instances reject assignment of
+    # undeclared fields (and ``__pydantic_extra__`` is None for ORM-loaded rows),
+    # so set it directly on the instance dict, as SQLAlchemy models allowed.
+    object.__setattr__(
+        project,
+        "tasks_to_annotate",
+        [all_filtered_tasks[0]] if all_filtered_tasks else None,
+    )
     return project
 
 

@@ -22,11 +22,7 @@ Configuration:
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, Query
-from fastapi_keycloak_middleware import (
-    AuthorizationResult,
-    CheckPermissions,
-    MatchStrategy,
-)
+from fastapi_keycloak_middleware import AuthorizationResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -34,6 +30,10 @@ from ina_ground_control import get_db, logger
 from ina_ground_control.constants.enums import Status
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.ina_user_admin.middleware import MatchStrategy
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    CheckPermissionsFromDB,
+)
 from ina_ground_control.schemas.annotation_schemas import AnnotationFullCreate
 from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.task_schemas import (
@@ -176,9 +176,7 @@ def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.DELETE_TASK.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.DELETE_TASK.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ) -> TaskWithIdDto:

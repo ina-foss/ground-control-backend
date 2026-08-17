@@ -20,17 +20,18 @@ Configuration:
     `src` module.
 """
 
-from fastapi import APIRouter, Depends, status
-from fastapi_keycloak_middleware import (
-    AuthorizationResult,
-    CheckPermissions,
-    MatchStrategy,
-)
+from fastapi import APIRouter, Body, Depends, status
+from fastapi_keycloak_middleware import AuthorizationResult
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.ina_user_admin.middleware import MatchStrategy
+from ina_ground_control.ina_user_admin.middleware.auth_dependencies import (
+    CheckPermissionsFromDB,
+)
 from ina_ground_control.models.step_model import Step
 from ina_ground_control.schemas.step_schemas import StepCreate, StepDto, StepSummaryDto
 from ina_ground_control.services.step_service import (
@@ -40,6 +41,7 @@ from ina_ground_control.services.step_service import (
     get_steps,
     get_steps_by_project_id,
     update_data_step_crud,
+    update_step_settings_crud,
 )
 
 router = APIRouter(tags=["step"])
@@ -113,6 +115,39 @@ def update_data_step(step_id: int, step: StepCreate, db: Session = Depends(get_d
     return updated_step
 
 
+# update the type-specific settings of a step
+@router.put("/step/{step_id}/settings", response_model=StepDto)
+def update_step_settings(
+    step_id: int,
+    settings: dict = Body(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Update the settings of a step according to its type.
+
+    The step type determines which settings schema is used to validate the
+    payload and to complete the missing values with the defaults.
+
+    Args:
+        step_id (int): The unique identifier of the step to update.
+        settings (dict): The (possibly partial) settings payload.
+
+    Returns:
+        StepDto: The updated step, including its full settings.
+    Raises:
+        GroundControlException: If the step is not found or the settings are
+            incompatible with the step type.
+    """
+    try:
+        return update_step_settings_crud(db, step_id, settings)
+    except ValidationError as e:
+        logger.error("Invalid settings for step %d: %s", step_id, e)
+        raise GroundControlException(
+            ErrorCode.GENERIC_CLIENT_ERROR,
+            details=f"Invalid settings for step type: {e}",
+        ) from e
+
+
 # delete step
 @router.delete(
     "/step/{step_id}", status_code=status.HTTP_200_OK, response_model=StepCreate
@@ -121,9 +156,7 @@ def delete_step(
     step_id: int,
     db: Session = Depends(get_db),
     _authorization_result: AuthorizationResult = Depends(
-        CheckPermissions(
-            [Permission.DELETE_STEP.value], match_strategy=MatchStrategy.AND
-        )
+        CheckPermissionsFromDB([Permission.DELETE_STEP.value], MatchStrategy.AND)
     ),
     # pylint: disable=invalid-name
 ):

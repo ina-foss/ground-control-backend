@@ -136,3 +136,13 @@ class TaskDataType(str, Enum):
 
     LDD = "ldd"
     AMALIA = "amalia"
+
+
+class SpanMode(str, Enum):
+    MONO = "mono"
+    MULTI = "multi"
+
+
+class LaunchMode(str, Enum):
+    CLICK = "click"
+    CTRL_CLICK = "ctrl_click"

@@ -259,6 +259,7 @@ class Permission(str, Enum):
     GET_USER_BY_EMAIL = (
         f"{GROUND_CONTROL}:{Resource.USER.value}:{Action.GET_USER_BY_EMAIL.value}"
     )
+    ACCESS_CONTROL = f"{GROUND_CONTROL}:access-control:manage"
 
     @staticmethod
     def get_value_if_exists(value: str):

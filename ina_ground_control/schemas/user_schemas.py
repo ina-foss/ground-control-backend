@@ -9,13 +9,14 @@ from typing import Optional
 
 from pydantic import ConfigDict
 
+from ina_ground_control.ina_user_admin.schemas.user import UserInfoResponse
+
 from .annotation_schemas import AnnotationCreate
 from .project_schemas import ProjectDetailDto
 from .task_schemas import TaskListDto
-from .user_base_schemas import UserBaseDto
 
 
-class UserDto(UserBaseDto):
+class UserDto(UserInfoResponse):
     """
     DTO representing a user object, extending UserBaseDto with associated projects.
     """

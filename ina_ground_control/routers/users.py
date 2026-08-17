@@ -11,57 +11,9 @@ from sqlalchemy.orm import Session
 from ina_ground_control import get_db, logger
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
-from ina_ground_control.schemas.user_base_schemas import UserBaseDto
-from ina_ground_control.schemas.user_schemas import UserDto
-from ina_ground_control.services.user_service import (
-    create_user_crud,
-    get_user_by_email_crud,
-    get_users,
-)
+from ina_ground_control.services.user_service import get_user_by_email_crud
 
 router = APIRouter(tags=["user"])
-
-
-@router.get("/users", response_model=list[UserDto], response_model_by_alias=False)
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """
-    Retrieve a list of users with pagination support.
-
-    Args:
-        skip (int): Number of users to skip.
-        limit (int): Maximum number of users to retrieve.
-
-    Returns:
-        List[UserDto]: A paginated list of user DTOs.
-    """
-    try:
-        users = get_users(db, skip=skip, limit=limit)
-        return users
-    except Exception as e:
-        logger.error("Failed to retrieve users: %s", e)
-        raise GroundControlException(
-            ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to retrieve users"
-        ) from e
-
-
-@router.post("/user", response_model=UserDto, response_model_by_alias=False)
-def create_user(user: UserBaseDto, db: Session = Depends(get_db)):
-    """
-    Create a new User object in database
-    """
-    try:
-        return create_user_crud(db, user)
-    except Exception as e:
-        logger.error("Failed to create user: %s", e)
-        raise GroundControlException(
-            ErrorCode.GENERIC_CLIENT_ERROR, details="Failed to create user"
-        ) from e
-
-
-@router.get("/user/roles", response_model=Permission)
-def get_all_roles():
-    roles = Permission.CREATE_TASK_COMMENT
-    return roles
 
 
 @router.get("/user/")
@@ -75,3 +27,9 @@ def get_user_by_email(email: EmailStr, db: Session = Depends(get_db)):
         raise GroundControlException(
             ErrorCode.RESOURCE_NOT_FOUND, resource="User", id=email
         ) from e
+
+
+@router.get("/user/roles", response_model=Permission)
+def get_all_roles():
+    roles = Permission.CREATE_TASK_COMMENT
+    return roles

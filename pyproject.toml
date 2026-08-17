@@ -31,7 +31,6 @@ dependencies = [
     "pydantic>=2.10,<3.0.0",
     # Remove pinned pydantic-core - let pydantic manage its own core version
     "pydantic[email]",
-    "sqlalchemy>=2.0.35",
     "uvicorn[standard]==0.42.0",
     "psycopg2-binary",
     "requests>=2.32.0",
@@ -50,6 +49,7 @@ dependencies = [
     "sparqlwrapper>=2.0.0",
     "httpx==0.28.1",
     "cryptography>=45.0.4",
+    "sqlmodel>=0.0.39",
 ]
 
 [project.optional-dependencies]
@@ -82,7 +82,7 @@ Documentation = "https://git.infra.sas.ina/ia/code/ground-control/docs.git"
 "Bug Tracker" = "https://git.infra.sas.ina/ia/code/ground-control/backend/issues"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling<1.32"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]

@@ -3,22 +3,22 @@ This module defines the MediaProject model, which represents an association
 between Media and Project entities in the database.
 """
 
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
-
-from ina_ground_control.models import Base
+from sqlalchemy import Column, ForeignKey
+from sqlmodel import Field, SQLModel
 
 
-class MediaProject(Base):
+class MediaProject(SQLModel, table=True):
     """
     MediaProject model that defines the relationship between media and projects.
 
     Attributes:
-        media_id (Mapped[int]): Foreign key referencing the Media entity.
-        project_id (Mapped[int]): Foreign key referencing the Project entity.
+        media_id (int): Foreign key referencing the Media entity.
+        project_id (int): Foreign key referencing the Project entity.
     """
 
     __tablename__ = "media_project"
 
-    media_id: Mapped[int] = mapped_column(ForeignKey("media.id"), primary_key=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"), primary_key=True)
+    media_id: int = Field(sa_column=Column(ForeignKey("media.id"), primary_key=True))
+    project_id: int = Field(
+        sa_column=Column(ForeignKey("project.id"), primary_key=True)
+    )

@@ -1,14 +1,12 @@
 """
-Define the SQLAlchemy models and enums for the plugin management application.
+Define the SQLModel models and enums for the plugin management application.
 
 This module includes:
 1. The definition of the `Plugin` model, which represents a plugin configuration record in the database.
    It includes attributes such as `name`, `type`, and `configData`, along with constraints to enforce data integrity.
-2. The `TypePlugin` enum, which defines the available plugin types (e.g., `LABEL`, `AUTOCOMPLETE`).
 
 Classes:
-    TypePlugin (PyEnum): Enum representing the different types of plugins available.
-    Plugin (Base): SQLAlchemy model representing a plugin configuration record in the database.
+    Plugin (SQLModel): SQLModel model representing a plugin configuration record in the database.
 
 Features:
 - The `Plugin` model ensures that the `name` field is in lowercase and does not contain
@@ -19,25 +17,35 @@ required keys like `type` (string) and `datasource` (valid URL), either in the a
 
 # pylint: disable=unsubscriptable-object
 import re
+from typing import Optional
 
-from sqlalchemy import JSON, Boolean, CheckConstraint, Enum, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+)
+from sqlalchemy.orm import relationship, validates
+from sqlmodel import Field, Relationship, SQLModel
 
 from ina_ground_control.constants.enums import DisplayZone, TypePlugin
-from ina_ground_control.models import Base
 
 
-class Plugin(Base):
+class Plugin(SQLModel, table=True):
     """
     Represents a plugin configuration record in the database.
 
     Attributes:
-        id (Mapped[int]): The unique identifier (Primary Key).
-        name (Mapped[str]): The name of the configuration. Must be in lowercase and must not contain spaces.
-        type (Mapped[TypePlugin]): The type of plugin configuration.
-        step_id (Mapped[int]): The foreign key linking to the step table.
-        config_data (Mapped[dict]): Additional configuration data.
-        display_config (Mapped[dict | None]): Additional configuration for the display zone.
+        id (int): The unique identifier (Primary Key).
+        name (str): The name of the configuration. Must be in lowercase and must not contain spaces.
+        type (TypePlugin): The type of plugin configuration.
+        step_id (int): The foreign key linking to the step table.
+        config_data (dict): Additional configuration data.
+        display_config (Optional[dict]): Additional configuration for the display zone.
     Table constraints:
         - "check_name_lowercase": Ensures the 'name' field is always in lowercase.
         - "check_name_no_spaces": Ensures the 'name' field does not contain spaces.
@@ -45,26 +53,43 @@ class Plugin(Base):
 
     __tablename__ = "plugin"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String)
-    data_categories: Mapped[str] = mapped_column(String)
-    type: Mapped[TypePlugin] = mapped_column(Enum(TypePlugin))
-    display_zone: Mapped[DisplayZone] = mapped_column(Enum(DisplayZone))
-    step_id: Mapped[int] = mapped_column(ForeignKey("step.id"))
-    available_plugins: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    config_data: Mapped[dict] = mapped_column(JSON)
-    display_config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    enable_search: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
-    data_property: Mapped[str | None] = mapped_column(String, nullable=True)
-    parent_id: Mapped[int | None] = mapped_column(
-        ForeignKey("plugin.id"), nullable=True
+    id: Optional[int] = Field(default=None, sa_column=Column(Integer, primary_key=True))
+    name: str = Field(sa_column=Column(String, nullable=False))
+    data_categories: str = Field(sa_column=Column(String, nullable=False))
+    type: TypePlugin = Field(sa_column=Column(Enum(TypePlugin), nullable=False))
+    display_zone: DisplayZone = Field(
+        sa_column=Column(Enum(DisplayZone), nullable=False)
+    )
+    step_id: int = Field(sa_column=Column(ForeignKey("step.id"), nullable=False))
+    available_plugins: Optional[dict] = Field(
+        default=None, sa_column=Column(JSON, nullable=True)
+    )
+    config_data: dict = Field(sa_column=Column(JSON, nullable=False))
+    display_config: Optional[dict] = Field(
+        default=None, sa_column=Column(JSON, nullable=True)
+    )
+    enable_search: Optional[bool] = Field(
+        sa_column=Column(Boolean, default=False, nullable=True)
+    )
+    data_property: Optional[str] = Field(
+        default=None, sa_column=Column(String, nullable=True)
+    )
+    parent_id: Optional[int] = Field(
+        default=None, sa_column=Column(ForeignKey("plugin.id"), nullable=True)
     )
 
-    parent: Mapped["Plugin"] = relationship(
-        "Plugin", back_populates="children", remote_side="Plugin.id"
+    parent: Optional["Plugin"] = Relationship(
+        sa_relationship=relationship(
+            "Plugin", back_populates="children", remote_side="Plugin.id"
+        )
     )
-    children: Mapped[list["Plugin"]] = relationship(
-        "Plugin", back_populates="parent", cascade="all, delete-orphan", lazy="joined"
+    children: list["Plugin"] = Relationship(
+        sa_relationship=relationship(
+            "Plugin",
+            back_populates="parent",
+            cascade="all, delete-orphan",
+            lazy="joined",
+        )
     )
 
     __table_args__ = (

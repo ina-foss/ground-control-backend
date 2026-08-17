@@ -15,12 +15,15 @@ from fastapi_keycloak_middleware import (
     setup_keycloak_middleware,
 )
 
-from ina_ground_control import get_engine, logger, map_user, settings
+from ina_ground_control import get_engine, logger, settings
+from ina_ground_control.constants.roles import GROUND_CONTROL, Permission
 from ina_ground_control.exception.exceptions import (
     GroundControlException,
     GroundControlRequestValidationError,
 )
 from ina_ground_control.exception.handlers import default_exception_handler
+from ina_ground_control.ina_user_admin import create_user_mapper, setup_user_admin
+from ina_ground_control.ina_user_admin.config import UserAdminSettings
 from ina_ground_control.routers import (
     annotations,
     management,
@@ -45,24 +48,50 @@ app = FastAPI(
     debug=settings.debug,
 )
 
+# 1.auth Load settings from environment variables (USER_ADMIN_ prefix)
+settings_auth = UserAdminSettings(
+    app_name=settings.application,
+    role_prefix=GROUND_CONTROL,
+    admin_permission=Permission.ACCESS_CONTROL.value,
+    database_url=(
+        f"{settings.db_server}://{settings.db_username}:{settings.db_password}"
+        f"@{settings.db_hostname}:{settings.db_port}/{settings.db_database}"
+    ),
+    keycloak_url=settings.sso_url,
+    keycloak_realm=settings.sso_realm,
+    keycloak_client_id=settings.sso_client_id,
+    router_prefix="",  # adjust if your API is mounted under a prefix
+    create_tables=False,  # set False in production if using Alembic
+    auto_create_user=True,  # Auto create user
+)
+setup_user_admin(app, settings_auth)
+
 # Set up Keycloak
 keycloak_config = KeycloakConfiguration(
     url=settings.sso_url,
     realm=settings.sso_realm,
     client_id=settings.sso_client_id,
     client_secret=settings.sso_client_secret,
-    claims=["openid", "email", "profile", "roles"],
+    claims=[
+        "sub",
+        "email",
+        "given_name",
+        "family_name",
+        "preferred_username",
+        "openid",
+    ],
     reject_on_missing_claim=False,
     verify=True,
-    authorization_method=AuthorizationMethod.CLAIM,
-    authorization_claim="roles",
+    authorization_method=AuthorizationMethod.NONE,
     use_introspection_endpoint=False,
     swagger_client_id=settings.sso_client_id,
-    decode_options={
-        "verify_signature": True,
-        "verify_aud": False,
-        "verify_exp": True,
-    },
+    # jwcrypto: fournir check_claims desactive le controle par defaut de exp,
+    # il faut donc le redeclarer (None = claim requis, valeur temporelle verifiee)
+    validation_options=(
+        {"check_claims": {"exp": None, "aud": settings.sso_audience}}
+        if settings.sso_verify_aud
+        else {}
+    ),
 )
 
 setup_keycloak_middleware(
@@ -76,7 +105,7 @@ setup_keycloak_middleware(
         "/redoc",
         "/static/*",
     ],
-    user_mapper=map_user,
+    user_mapper=create_user_mapper(app),
 )
 
 # Add router

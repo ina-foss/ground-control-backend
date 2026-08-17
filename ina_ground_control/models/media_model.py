@@ -1,41 +1,47 @@
 """
-Define the SqlAlchemy models and enums for the project management application.
+Define the SQLModel models and enums for the project management application.
 
 This module includes the definition of the media model.
 The Media model represents a media record in the database and includes various attributes
 such as url and relationships with other models like Project and Task.
 
 Classes:
-    Media (Base): SqlAlchemy model representing a media record in the database.
+    Media (SQLModel): SQLModel model representing a media record in the database.
 """
 
-from sqlalchemy import Enum, String
+from typing import Optional
+
+from sqlalchemy import Column, Enum, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 from ina_ground_control.constants.enums import MediaType
-from ina_ground_control.models import Base
 from ina_ground_control.models.task_model import Task
 
 
-class Media(Base):
+class Media(SQLModel, table=True):
     """
     Represents a media record in the database.
 
     Attributes:
-        id (Mapped[int]): The unique identifier of the media (Primary Key).
-        url (Mapped[str]): The URL of the media.
-        type (Mapped[MediaType]): The type of the media.
-        player_parameters (Mapped[JSON]): Configuration options for the media player.
-        details (Mapped[JSON]): Additional metadata or details about the media.
-        tasks (Mapped[Relationship]): Relationship to the Task model representing tasks within the media.
+        id (int): The unique identifier of the media (Primary Key).
+        url (str): The URL of the media.
+        type (MediaType): The type of the media.
+        player_parameters (Optional[dict]): Configuration options for the media player.
+        details (Optional[dict]): Additional metadata or details about the media.
+        tasks (Relationship): Relationship to the Task model representing tasks within the media.
     """
 
     __tablename__ = "media"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    url: Mapped[str] = mapped_column(String, nullable=False)
-    type: Mapped[MediaType] = mapped_column(Enum(MediaType), nullable=False)
-    player_parameters: Mapped[JSON | None] = mapped_column(JSON, nullable=True)
-    details: Mapped[JSON | None] = mapped_column(JSON, nullable=True)
-    tasks: Mapped[list["Task"]] = relationship("Task", backref="media", cascade="all")
+    id: Optional[int] = Field(default=None, sa_column=Column(Integer, primary_key=True))
+    url: str = Field(sa_column=Column(String, nullable=False))
+    type: MediaType = Field(sa_column=Column(Enum(MediaType), nullable=False))
+    player_parameters: Optional[dict] = Field(
+        default=None, sa_column=Column(JSON, nullable=True)
+    )
+    details: Optional[dict] = Field(default=None, sa_column=Column(JSON, nullable=True))
+    tasks: list["Task"] = Relationship(
+        sa_relationship=relationship("Task", backref="media", cascade="all")
+    )

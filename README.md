@@ -1,4 +1,4 @@
-Met# Ground Control
+# Ground Control
 
 Ground Control is an audio/video corpus annotation application developed by [INA](http://www.ina.fr) and distributed under an MIT license.
 It is partially funded by BPI as part of the France 2030 [ArGiMi project](https://www.ina.fr/institut-national-audiovisuel/research/argimi-project).
