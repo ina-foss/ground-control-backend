@@ -6,6 +6,9 @@ from ina_ground_control.constants.enums import SpanMode
 from ina_ground_control.schemas.settings_step_schemas.common_settings import (
     DisplayableStepSettings,
 )
+from ina_ground_control.schemas.settings_step_schemas.step_settings_enum import (
+    SpanAction,
+)
 
 
 class Metadata(BaseModel):
@@ -29,3 +32,11 @@ class SpanMetadata(BaseModel):
 class SpanSettings(DisplayableStepSettings):
     mode: SpanMode = SpanMode.MONO
     metadata: SpanMetadata = Field(default_factory=SpanMetadata)
+    actions: list[SpanAction] = Field(
+        default=[
+            SpanAction.ADD,
+            SpanAction.EDIT_PROPERTIES,
+            SpanAction.EDIT_EDGES,
+            SpanAction.REMOVE,
+        ]
+    )

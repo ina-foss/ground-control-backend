@@ -2,11 +2,15 @@
 Ground control application, including routes, middleware, and configuration.
 """
 
+import importlib
+import inspect
 import logging
+import pkgutil
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.constants import REF_TEMPLATE
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi_keycloak_middleware import (
@@ -14,6 +18,8 @@ from fastapi_keycloak_middleware import (
     KeycloakConfiguration,
     setup_keycloak_middleware,
 )
+from pydantic import BaseModel
+from pydantic.errors import PydanticInvalidForJsonSchema
 
 from ina_ground_control import get_engine, logger, settings
 from ina_ground_control.constants.roles import GROUND_CONTROL, Permission
@@ -171,6 +177,45 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
+SCHEMAS_PACKAGE = "ina_ground_control.schemas"
+
+
+def add_all_schemas(openapi_schema: dict) -> None:
+    """
+    Expose every Pydantic model declared in `ina_ground_control.schemas`
+    (and its subpackages) under `components.schemas`, including the models
+    that are not referenced by any route.
+    """
+    schemas = openapi_schema["components"].setdefault("schemas", {})
+    package = importlib.import_module(SCHEMAS_PACKAGE)
+
+    for module_info in pkgutil.walk_packages(
+        package.__path__, prefix=f"{SCHEMAS_PACKAGE}."
+    ):
+        module = importlib.import_module(module_info.name)
+        for _, model in inspect.getmembers(module, inspect.isclass):
+            # Only models declared in this very module, to skip the ones
+            # simply imported from elsewhere (pydantic, other modules, ...)
+            if not issubclass(model, BaseModel) or model.__module__ != module.__name__:
+                continue
+            try:
+                model_schema = model.model_json_schema(ref_template=REF_TEMPLATE)
+            except PydanticInvalidForJsonSchema:
+                logger.warning(
+                    "Skipping %s.%s: no JSON schema can be generated",
+                    module.__name__,
+                    model.__name__,
+                )
+                continue
+            # Nested models are referenced as `#/components/schemas/<Model>`,
+            # so their definitions are hoisted next to the model itself.
+            for name, definition in model_schema.pop("$defs", {}).items():
+                schemas.setdefault(name, definition)
+            # `setdefault`: never override a schema already built by FastAPI
+            # from the routes, it may carry route-specific tweaks.
+            schemas.setdefault(model.__name__, model_schema)
+
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -187,6 +232,9 @@ def custom_openapi():
         # Add components if missing
         if "components" not in openapi_schema:
             openapi_schema["components"] = {}
+
+        # Add every schema of ina_ground_control.schemas
+        add_all_schemas(openapi_schema)
 
         # Add securitySchemes if missing
         if "securitySchemes" not in openapi_schema["components"]:
