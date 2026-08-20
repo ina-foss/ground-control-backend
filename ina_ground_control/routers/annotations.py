@@ -111,7 +111,7 @@ def get_annotation_by_task_id(
     return annotations
 
 
-@router.patch("/annotation/", response_model=AnnotationDto)
+@router.patch("/annotation/{annotation_id}", response_model=AnnotationDto)
 def update_annotation_result(
     annotation_id: int, result: Dict[str, Any], db: Session = Depends(get_db)
 ) -> AnnotationDto:
