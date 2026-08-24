@@ -89,16 +89,24 @@ def get_annotation_by_task_id(
         - Regular users can only retrieve **their own** annotations.
     """
     user = request.scope.get("user", {})
-    email = user.email
-    roles = user.roles
-
-    if Permission.REVIEW_ANNOTATION.value in roles or user_email == "":
+    request_email = user.email
+    user_roles = [
+        r.name if hasattr(r, "name") else r
+        for r in (getattr(user, "roles", None) or [])
+    ]
+    # only block the viusalization of another person annotation
+    # if the user don't have the annotation-review role
+    if (
+        direction == InOutEnum.OUT
+        and Permission.REVIEW_ANNOTATION.value not in user_roles
+    ):
+        # Send back the annotation of the request sender
         annotations = get_annotations_by_task_id_crud(
-            db, task_id=task_id, direction=direction, user_email=user_email
+            db, task_id=task_id, direction=direction, user_email=request_email
         )
     else:
         annotations = get_annotations_by_task_id_crud(
-            db, task_id=task_id, direction=direction, user_email=email
+            db, task_id=task_id, direction=direction, user_email=user_email
         )
     return annotations
 
