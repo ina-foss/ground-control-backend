@@ -66,6 +66,7 @@ class DisplayConfig(BaseModel):
     default_value: Optional[str] = None
     is_verifiable: Optional[bool] = False
     is_required: Optional[bool] = False
+    count_visibility: Optional[bool] = True
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True, extra="allow"
     )
