@@ -70,6 +70,21 @@ class TaskListDto(TaskCreateDto):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TaskListPerStep(TaskCreateDto):
+    """
+    DTO for listing tasks, extending TaskCreateDto with additional
+     fields relevant for listing tasks.
+    """
+
+    id: int
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    task_comments: list[TaskCommentDto] = []
+    annotations: list[AnnotationWithIdDto]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 from .media_schemas import MediaDto
 from .step_schemas import StepProjectDto
 

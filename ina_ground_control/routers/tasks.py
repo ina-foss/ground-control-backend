@@ -19,15 +19,22 @@ Configuration:
     `src` module.
 """
 
+from datetime import datetime
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi_keycloak_middleware import AuthorizationResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ina_ground_control import get_db, logger
-from ina_ground_control.constants.enums import Status
+from ina_ground_control.constants.enums import (
+    ExpirationFilter,
+    InOutEnum,
+    SearchMode,
+    Status,
+    TaskSearchField,
+)
 from ina_ground_control.constants.roles import Permission
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
 from ina_ground_control.ina_user_admin.middleware import MatchStrategy
@@ -39,14 +46,17 @@ from ina_ground_control.schemas.media_schemas import MediaCreate
 from ina_ground_control.schemas.task_schemas import (
     TaskBaseDto,
     TaskListDto,
+    TaskListPerStep,
     TaskWithIdDto,
 )
 from ina_ground_control.services.annotation_service import create_annotation_crud
 from ina_ground_control.services.media_service import create_media_crud
 from ina_ground_control.services.task_service import (
+    count_tasks_by_step_crud,
     create_task_crud,
     delete_task_crud,
     get_task_by_id,
+    get_tasks_by_step_crud,
     update_data_task_crud,
     update_task_status_crud,
     update_tasks_status_crud,
@@ -70,6 +80,196 @@ def read_task(task_id: int, db: Session = Depends(get_db)):
     """
     task = get_task_by_id(db, task_id=task_id)
     return task
+
+
+@router.get("/step/{step_id}/tasks", response_model=list[TaskListPerStep])
+def read_step_tasks(
+    step_id: int,
+    response: Response,
+    search: str = Query(
+        None, description="Text searched in name, instruction or documentation"
+    ),
+    search_mode: SearchMode = Query(
+        SearchMode.EXACT,
+        description="'exact' (SQL substring) or 'fuzzy' (typo/accent tolerant)",
+    ),
+    search_fields: list[TaskSearchField] = Query(
+        default_factory=lambda: [TaskSearchField.NAME],
+        description=(
+            "Restrict the text search to these task fields "
+            "(name/instruction/documentation). Default value is name."
+        ),
+    ),
+    min_score: float = Query(
+        70.0, ge=0, le=100, description="Minimum similarity score for fuzzy search"
+    ),
+    tasks_ids: list[int] = Query(None, description="Restrict to this set of task ids"),
+    status: Status = Query(None, description="Task status"),
+    expiration: ExpirationFilter = Query(
+        None, description="Expiration filter: expired, active or all"
+    ),
+    created_from: datetime = Query(
+        None,
+        description=(
+            "Inclusive lower bound on the creation date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T00:00:00"],
+    ),
+    created_to: datetime = Query(
+        None,
+        description=(
+            "Inclusive upper bound on the creation date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T23:59:59"],
+    ),
+    updated_from: datetime = Query(
+        None,
+        description=(
+            "Inclusive lower bound on the update date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T00:00:00"],
+    ),
+    updated_to: datetime = Query(
+        None,
+        description=(
+            "Inclusive upper bound on the update date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T23:59:59"],
+    ),
+    annotation_user_email: str = Query(
+        None, description="Keep tasks having an annotation from this author"
+    ),
+    annotation_status: Status = Query(
+        None, description="Keep tasks having an annotation with this status"
+    ),
+    annotation_created_from: datetime = Query(
+        None,
+        description=(
+            "Inclusive lower bound on the annotation creation date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T00:00:00"],
+    ),
+    annotation_created_to: datetime = Query(
+        None,
+        description=(
+            "Inclusive upper bound on the annotation creation date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T23:59:59"],
+    ),
+    annotation_updated_from: datetime = Query(
+        None,
+        description=(
+            "Inclusive lower bound on the annotation update date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T00:00:00"],
+    ),
+    annotation_updated_to: datetime = Query(
+        None,
+        description=(
+            "Inclusive upper bound on the annotation update date. "
+            "ISO 8601 format, e.g. 2026-06-07 or 2026-06-07T14:30:00"
+        ),
+        examples=["2026-06-07T23:59:59"],
+    ),
+    annotation_direction: InOutEnum = Query(
+        InOutEnum.OUT,
+        description="Direction of the annotations the annotation_* filters target",
+    ),
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+) -> list[TaskListPerStep]:
+    """
+    Retrieve the paginated tasks of a step, with optional cumulative filters.
+
+    Pagination mirrors the projects listing: ``skip``/``limit`` query params and
+    the total number of matching tasks exposed through the ``X-Total-Count``
+    response header.
+
+    Args:
+        step_id (int): The step whose tasks are listed.
+        search (str): Optional text searched in name/instruction/documentation.
+        search_mode (SearchMode): ``EXACT`` (SQL substring) or ``FUZZY`` (typo tolerant).
+        search_fields (list[TaskSearchField]): Task fields the search targets
+            (defaults to name/instruction/documentation when omitted).
+        min_score (float): Minimum similarity score for fuzzy search.
+        tasks_ids (list[int]): Optional restriction to a set of task ids.
+        status (Status): Optional exact match on the task status.
+        expiration (ExpirationFilter): Optional expiration restriction.
+        created_from (datetime): Optional inclusive lower bound on the creation date.
+        created_to (datetime): Optional inclusive upper bound on the creation date.
+        updated_from (datetime): Optional inclusive lower bound on the update date.
+        updated_to (datetime): Optional inclusive upper bound on the update date.
+        annotation_user_email (str): Optional author of an OUT annotation of the task.
+        annotation_status (Status): Optional status of an OUT annotation of the task.
+        annotation_created_from (datetime): Optional lower bound on the annotation creation date.
+        annotation_created_to (datetime): Optional upper bound on the annotation creation date.
+        annotation_updated_from (datetime): Optional lower bound on the annotation update date.
+        annotation_updated_to (datetime): Optional upper bound on the annotation update date.
+        annotation_direction (InOutEnum): Direction (in/out, default out) of the annotations
+            targeted by the annotation_* filters.
+
+    Returns:
+        list[TaskListPerStep]: The matching tasks for the requested page.
+    """
+    # Empty selection behaves like "all fields".
+    fields = [field.value for field in search_fields] if search_fields else None
+
+    total_count = count_tasks_by_step_crud(
+        db,
+        step_id,
+        tasks_ids=tasks_ids,
+        status=status,
+        expiration=expiration,
+        created_from=created_from,
+        created_to=created_to,
+        updated_from=updated_from,
+        updated_to=updated_to,
+        search=search,
+        search_mode=search_mode,
+        search_fields=fields,
+        min_score=min_score,
+        annotation_user_email=annotation_user_email,
+        annotation_status=annotation_status,
+        annotation_created_from=annotation_created_from,
+        annotation_created_to=annotation_created_to,
+        annotation_updated_from=annotation_updated_from,
+        annotation_updated_to=annotation_updated_to,
+        annotation_direction=annotation_direction,
+    )
+    tasks = get_tasks_by_step_crud(
+        db,
+        step_id,
+        tasks_ids=tasks_ids,
+        status=status,
+        expiration=expiration,
+        created_from=created_from,
+        created_to=created_to,
+        updated_from=updated_from,
+        updated_to=updated_to,
+        search=search,
+        search_mode=search_mode,
+        search_fields=fields,
+        min_score=min_score,
+        annotation_user_email=annotation_user_email,
+        annotation_status=annotation_status,
+        annotation_created_from=annotation_created_from,
+        annotation_created_to=annotation_created_to,
+        annotation_updated_from=annotation_updated_from,
+        annotation_updated_to=annotation_updated_to,
+        annotation_direction=annotation_direction,
+        skip=skip,
+        limit=limit,
+    )
+    response.headers["X-Total-Count"] = str(total_count)
+    return tasks
 
 
 @router.post("/task", response_model=TaskWithIdDto)

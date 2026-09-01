@@ -138,6 +138,46 @@ class TaskDataType(str, Enum):
     AMALIA = "amalia"
 
 
+class ExpirationFilter(str, Enum):
+    """
+    Enum representing the expiration filter applied when listing tasks.
+
+    Attributes:
+        EXPIRED (str): Only tasks whose expiration_date is before now.
+        ACTIVE (str): Only tasks whose expiration_date is now/in the future or unset.
+        ALL (str): No restriction on the expiration_date.
+    """
+
+    EXPIRED = "expired"
+    ACTIVE = "active"
+    ALL = "all"
+
+
+class TaskSearchField(str, Enum):
+    """
+    Enum representing the task textual fields that can be searched.
+
+    Values match the ``Task`` attribute names so they can be used directly.
+    """
+
+    NAME = "name"
+    INSTRUCTION = "instruction"
+    DOCUMENTATION = "documentation"
+
+
+class SearchMode(str, Enum):
+    """
+    Enum representing how the text search is performed.
+
+    Attributes:
+        EXACT (str): SQL case-insensitive substring match (ILIKE).
+        FUZZY (str): In-memory typo/accent tolerant matching.
+    """
+
+    EXACT = "exact"
+    FUZZY = "fuzzy"
+
+
 class SpanMode(str, Enum):
     MONO = "mono"
     MULTI = "multi"

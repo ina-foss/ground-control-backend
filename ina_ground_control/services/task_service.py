@@ -4,16 +4,24 @@ This module provides CRUD operations for tasks.
 It includes functions to retrieve a task by ID, create a new task, and update an existing task.
 """
 
-from typing import Any, Dict, List
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import func, update
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy.orm import Session, selectinload
 
 from ina_ground_control import logger
-from ina_ground_control.constants.enums import InOutEnum, Status
+from ina_ground_control.constants.enums import (
+    ExpirationFilter,
+    InOutEnum,
+    SearchMode,
+    Status,
+)
 from ina_ground_control.exception.exceptions import ErrorCode, GroundControlException
+from ina_ground_control.models.annotation_model import Annotation
+from ina_ground_control.models.annotation_task_association import AnnotationTask
 from ina_ground_control.models.task_model import Task
-from ina_ground_control.schemas.task_schemas import TaskBaseDto
+from ina_ground_control.schemas.task_schemas import TaskBaseDto, TaskListPerStep
 from ina_ground_control.services.annotation_service import (
     get_annotations_by_task_id_crud,
 )
@@ -25,6 +33,32 @@ from ina_ground_control.services.step_service import (
     get_step_by_id,
     update_step_status_crud,
 )
+from ina_ground_control.utils.fuzzy_search import FuzzySearchEngine
+
+# Task textual columns that the ``search`` filter can target. The keys are the
+# public field names accepted by the API / services; the values are the columns.
+_TASK_SEARCH_COLUMNS = {
+    "name": Task.name,
+    "instruction": Task.instruction,
+    "documentation": Task.documentation,
+}
+
+
+def _resolve_search_columns(search_fields: Optional[list[str]]) -> list:
+    """Return the columns to search, defaulting to all when ``search_fields`` is None.
+
+    Raises:
+        ValueError: If ``search_fields`` contains an unsupported field name.
+    """
+    if search_fields is None:
+        return list(_TASK_SEARCH_COLUMNS.values())
+    invalid = [f for f in search_fields if f not in _TASK_SEARCH_COLUMNS]
+    if invalid:
+        raise ValueError(
+            f"Invalid search field(s): {invalid}. "
+            f"Allowed fields: {list(_TASK_SEARCH_COLUMNS)}"
+        )
+    return [_TASK_SEARCH_COLUMNS[f] for f in search_fields]
 
 
 def get_task_by_id(db: Session, task_id: int) -> Task:
@@ -45,6 +79,292 @@ def get_task_by_id(db: Session, task_id: int) -> Task:
             ErrorCode.RESOURCE_NOT_FOUND, resource="Task", id=task_id
         )
     return task
+
+
+def _build_step_tasks_filters(
+    step_id: int,
+    tasks_ids: Optional[list[int]] = None,
+    status: Optional[Status] = None,
+    expiration: Optional[ExpirationFilter] = None,
+    created_from: Optional[datetime] = None,
+    created_to: Optional[datetime] = None,
+    updated_from: Optional[datetime] = None,
+    updated_to: Optional[datetime] = None,
+    search: Optional[str] = None,
+    search_mode: SearchMode = SearchMode.EXACT,
+    search_fields: Optional[list[str]] = None,
+    annotation_user_email: Optional[str] = None,
+    annotation_status: Optional[Status] = None,
+    annotation_created_from: Optional[datetime] = None,
+    annotation_created_to: Optional[datetime] = None,
+    annotation_updated_from: Optional[datetime] = None,
+    annotation_updated_to: Optional[datetime] = None,
+    annotation_direction: InOutEnum = InOutEnum.OUT,
+) -> list:
+    """
+    Build the list of SQLAlchemy filter clauses used to list the tasks of a step.
+
+    The clauses are cumulative and shared between the count and the paginated
+    queries so that both stay perfectly consistent. Only SQL-expressible filters
+    live here: the ``exact`` text search is turned into an ``ILIKE`` clause across
+    ``name``/``instruction``/``documentation``, whereas the ``fuzzy`` text search
+    is intentionally NOT added (it is applied in memory by the service layer).
+
+    The ``annotation_*`` filters keep the tasks that have at least one annotation
+    (in the ``annotation_direction`` direction, OUT by default) matching every
+    provided annotation criterion (a single ``EXISTS`` correlated subquery, so no
+    row duplication).
+
+    Attributes:
+        step_id (int): The step whose tasks are listed (always applied).
+        tasks_ids (Optional[list[int]]): Restrict to this set of task ids.
+        status (Optional[Status]): Exact match on the task status.
+        expiration (Optional[ExpirationFilter]): Expiration restriction.
+        created_from (Optional[datetime]): Inclusive lower bound on the creation date.
+        created_to (Optional[datetime]): Inclusive upper bound on the creation date.
+        updated_from (Optional[datetime]): Inclusive lower bound on the update date.
+        updated_to (Optional[datetime]): Inclusive upper bound on the update date.
+        search (Optional[str]): Text searched in name/instruction/documentation.
+        search_mode (SearchMode): ``EXACT`` (SQL ILIKE) or ``FUZZY`` (in memory).
+        search_fields (Optional[list[str]]): Subset of name/instruction/documentation
+            to search. ``None`` searches them all (only used with ``exact`` here;
+            the ``fuzzy`` path forwards it to the search engine).
+        annotation_user_email (Optional[str]): Exact match on the annotation author.
+        annotation_status (Optional[Status]): Exact match on the annotation status.
+        annotation_created_from (Optional[datetime]): Inclusive lower bound on the
+            annotation creation date.
+        annotation_created_to (Optional[datetime]): Inclusive upper bound on the
+            annotation creation date.
+        annotation_updated_from (Optional[datetime]): Inclusive lower bound on the
+            annotation update date.
+        annotation_updated_to (Optional[datetime]): Inclusive upper bound on the
+            annotation update date.
+        annotation_direction (InOutEnum): Direction of the annotations the other
+            ``annotation_*`` filters apply to (defaults to OUT).
+
+    Returns:
+        list: The list of filter clauses to pass to ``and_``.
+    """
+    filters = [Task.step_id == step_id]
+
+    if tasks_ids:
+        filters.append(Task.id.in_(tasks_ids))
+    if status is not None:
+        filters.append(Task.status == status)
+
+    if expiration in (ExpirationFilter.EXPIRED, ExpirationFilter.ACTIVE):
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if expiration == ExpirationFilter.EXPIRED:
+            # Expired: expiration date strictly before now.
+            filters.append(Task.expiration_date < now)
+        else:
+            # Active: expiration date now/in the future, or no expiration set.
+            filters.append(
+                or_(Task.expiration_date >= now, Task.expiration_date.is_(None))
+            )
+    # ExpirationFilter.ALL (or None) adds no expiration restriction.
+
+    # Creation date: inclusive range. Each bound is applied independently so a
+    # single bound narrows the query on that side only.
+    if created_from is not None:
+        filters.append(Task.created_at >= created_from)
+    if created_to is not None:
+        filters.append(Task.created_at <= created_to)
+
+    # Update date: inclusive range, same independent-bound behaviour.
+    if updated_from is not None:
+        filters.append(Task.updated_at >= updated_from)
+    if updated_to is not None:
+        filters.append(Task.updated_at <= updated_to)
+
+    # Exact text search is expressible in SQL; the fuzzy variant is applied in
+    # memory by the service layer, so it must not add a clause here.
+    if search and search_mode == SearchMode.EXACT:
+        like = f"%{search}%"
+        columns = _resolve_search_columns(search_fields)
+        if columns:
+            filters.append(or_(*(column.ilike(like) for column in columns)))
+
+    # Annotation filters: keep tasks having at least one OUT annotation matching
+    # every provided criterion, via a single correlated EXISTS subquery.
+    annotation_conditions = []
+    if annotation_user_email:
+        annotation_conditions.append(Annotation.user_email == annotation_user_email)
+    if annotation_status is not None:
+        annotation_conditions.append(Annotation.annotation_status == annotation_status)
+    if annotation_created_from is not None:
+        annotation_conditions.append(Annotation.created_at >= annotation_created_from)
+    if annotation_created_to is not None:
+        annotation_conditions.append(Annotation.created_at <= annotation_created_to)
+    if annotation_updated_from is not None:
+        annotation_conditions.append(Annotation.updated_at >= annotation_updated_from)
+    if annotation_updated_to is not None:
+        annotation_conditions.append(Annotation.updated_at <= annotation_updated_to)
+
+    if annotation_conditions:
+        filters.append(
+            select(AnnotationTask.task_id)
+            .join(Annotation, Annotation.id == AnnotationTask.annotation_id)
+            .where(
+                AnnotationTask.task_id == Task.id,
+                AnnotationTask.direction == annotation_direction,
+                *annotation_conditions,
+            )
+            .exists()
+        )
+
+    return filters
+
+
+def _fetch_filtered_tasks_query(db: Session, filters: list):
+    """Base query for the tasks of a step.
+
+    Only the relationships required by :class:`TaskListPerStep` (``annotations``
+    and ``task_comments``) are eager-loaded, to avoid N+1 while not fetching the
+    unused ``step``/``project``/``media`` graphs.
+    """
+    return (
+        db.query(Task)
+        .filter(and_(*filters))
+        .options(
+            selectinload(Task.annotations),
+            selectinload(Task.task_comments),
+        )
+    )
+
+
+def _fuzzy_ranked_tasks(
+    db: Session,
+    filters: list,
+    search: str,
+    min_score: float,
+    search_fields: Optional[list[str]] = None,
+) -> List[Task]:
+    """Load the structurally-filtered tasks and rank them by fuzzy score (best first)."""
+    tasks = _fetch_filtered_tasks_query(db, filters).all()
+    engine = FuzzySearchEngine(min_score=min_score)
+    return [
+        result.item
+        for result in engine.search_tasks(tasks, search, search_fields=search_fields)
+    ]
+
+
+def count_tasks_by_step_crud(
+    db: Session,
+    step_id: int,
+    tasks_ids: Optional[list[int]] = None,
+    status: Optional[Status] = None,
+    expiration: Optional[ExpirationFilter] = None,
+    created_from: Optional[datetime] = None,
+    created_to: Optional[datetime] = None,
+    updated_from: Optional[datetime] = None,
+    updated_to: Optional[datetime] = None,
+    search: Optional[str] = None,
+    search_mode: SearchMode = SearchMode.EXACT,
+    search_fields: Optional[list[str]] = None,
+    min_score: float = 70.0,
+    annotation_user_email: Optional[str] = None,
+    annotation_status: Optional[Status] = None,
+    annotation_created_from: Optional[datetime] = None,
+    annotation_created_to: Optional[datetime] = None,
+    annotation_updated_from: Optional[datetime] = None,
+    annotation_updated_to: Optional[datetime] = None,
+    annotation_direction: InOutEnum = InOutEnum.OUT,
+) -> int:
+    """
+    Count the tasks of a step matching the given filters.
+
+    For the SQL path (no search or ``exact`` search) a single ``COUNT`` query is
+    used. For ``fuzzy`` search the structurally-filtered tasks are ranked in
+    memory and the number of matches above ``min_score`` is returned.
+    """
+    filters = _build_step_tasks_filters(
+        step_id,
+        tasks_ids=tasks_ids,
+        status=status,
+        expiration=expiration,
+        created_from=created_from,
+        created_to=created_to,
+        updated_from=updated_from,
+        updated_to=updated_to,
+        search=search,
+        search_mode=search_mode,
+        search_fields=search_fields,
+        annotation_user_email=annotation_user_email,
+        annotation_status=annotation_status,
+        annotation_created_from=annotation_created_from,
+        annotation_created_to=annotation_created_to,
+        annotation_updated_from=annotation_updated_from,
+        annotation_updated_to=annotation_updated_to,
+        annotation_direction=annotation_direction,
+    )
+    if search and search_mode == SearchMode.FUZZY:
+        return len(_fuzzy_ranked_tasks(db, filters, search, min_score, search_fields))
+    return db.query(func.count(Task.id)).filter(and_(*filters)).scalar()
+
+
+def get_tasks_by_step_crud(
+    db: Session,
+    step_id: int,
+    tasks_ids: Optional[list[int]] = None,
+    status: Optional[Status] = None,
+    expiration: Optional[ExpirationFilter] = None,
+    created_from: Optional[datetime] = None,
+    created_to: Optional[datetime] = None,
+    updated_from: Optional[datetime] = None,
+    updated_to: Optional[datetime] = None,
+    search: Optional[str] = None,
+    search_mode: SearchMode = SearchMode.EXACT,
+    search_fields: Optional[list[str]] = None,
+    min_score: float = 70.0,
+    annotation_user_email: Optional[str] = None,
+    annotation_status: Optional[Status] = None,
+    annotation_created_from: Optional[datetime] = None,
+    annotation_created_to: Optional[datetime] = None,
+    annotation_updated_from: Optional[datetime] = None,
+    annotation_updated_to: Optional[datetime] = None,
+    annotation_direction: InOutEnum = InOutEnum.OUT,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[TaskListPerStep]:
+    """
+    Retrieve the paginated, filtered tasks of a step.
+
+    Structured filters (and the ``exact`` text search) are applied directly in
+    SQL with the serialization relationships eager-loaded to avoid N+1. The
+    ``fuzzy`` text search loads the structurally-filtered tasks, ranks them in
+    memory (best score first) and paginates the ranked list.
+    """
+    filters = _build_step_tasks_filters(
+        step_id,
+        tasks_ids=tasks_ids,
+        status=status,
+        expiration=expiration,
+        created_from=created_from,
+        created_to=created_to,
+        updated_from=updated_from,
+        updated_to=updated_to,
+        search=search,
+        search_mode=search_mode,
+        search_fields=search_fields,
+        annotation_user_email=annotation_user_email,
+        annotation_status=annotation_status,
+        annotation_created_from=annotation_created_from,
+        annotation_created_to=annotation_created_to,
+        annotation_updated_from=annotation_updated_from,
+        annotation_updated_to=annotation_updated_to,
+        annotation_direction=annotation_direction,
+    )
+    if search and search_mode == SearchMode.FUZZY:
+        ranked = _fuzzy_ranked_tasks(db, filters, search, min_score, search_fields)
+        return ranked[skip : skip + limit]
+    return (
+        _fetch_filtered_tasks_query(db, filters)
+        .order_by(Task.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def create_task_crud(task: TaskBaseDto, db: Session):
